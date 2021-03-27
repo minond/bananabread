@@ -1,7 +1,7 @@
 val dottyVersion = "3.0.0-RC1"
 
 lazy val root = project
-  .in(file("."))
+  .in(file("src"))
   .settings(
     name := "bisquit",
     version := "0.1.0",
