@@ -3,8 +3,19 @@ package parser
 
 import scala.util.{Try, Success, Failure}
 
+case class SyntaxExtension(uniops: Seq[String], binops: Seq[String]) {
+  def isUniop(lexeme: String) = uniops.contains(lexeme)
+  def isBinop(lexeme: String) = binops.contains(lexeme)
+  def withUniop(lexeme: String) = SyntaxExtension(lexeme +: uniops, binops)
+  def withBinop(lexeme: String) = SyntaxExtension(uniops, lexeme +: binops)
+}
 
-def parse(sourceName: String, string: String): Iterator[Either[ast.SyntaxErr, ast.Token]] =
+object SyntaxExtension {
+  def withUniop(lexeme: String) = SyntaxExtension(Seq.empty, Seq.empty).withUniop(lexeme)
+  def withBinop(lexeme: String) = SyntaxExtension(Seq.empty, Seq.empty).withBinop(lexeme)
+}
+
+def parse(sourceName: String, string: String, syext: SyntaxExtension): Iterator[Either[ast.SyntaxErr, ast.Token]] =
   val stream = string.iterator.zipWithIndex.buffered
   for
     (head, offset) <- stream if !head.isWhitespace
@@ -13,6 +24,17 @@ def parse(sourceName: String, string: String): Iterator[Either[ast.SyntaxErr, as
 
 def nextToken(head: Char, tail: BufferedIterator[(Char, Int)], loc: ast.Location): Either[ast.SyntaxErr, ast.Token] =
   head match {
+    case ',' => Right(ast.Comma(loc))
+    case '.' => Right(ast.Dot(loc))
+    case ':' => Right(ast.Colon(loc))
+    case '=' => Right(ast.Equal(loc))
+    case '(' => Right(ast.OpenParen(loc))
+    case ')' => Right(ast.CloseParen(loc))
+    case '{' => Right(ast.OpenCurlyParen(loc))
+    case '}' => Right(ast.CloseCurlyParen(loc))
+    case '[' => Right(ast.OpenSquareBraket(loc))
+    case ']' => Right(ast.CloseSquareBraket(loc))
+
     case head if isNumHead(head) =>
       val rest = takeWhile(tail, isNumTail).mkString
       val lexeme = head +: rest
@@ -20,6 +42,13 @@ def nextToken(head: Char, tail: BufferedIterator[(Char, Int)], loc: ast.Location
         case Failure(_) => Left(ast.BadNumErr(lexeme, loc))
         case Success(_) => Right(ast.Num(lexeme, loc))
       }
+
+    case head if isIdHead(head) =>
+      val rest = takeWhile(tail, isIdTail).mkString
+      val lexeme = head +: rest
+      Right(ast.Id(lexeme, loc))
+
+    case _ => Left(ast.UnknownCharErr(head, loc))
   }
 
 
@@ -38,10 +67,26 @@ def le[T <: Char](x: T) = bipred(x)(_ <= _)
 def is[T <: Char](x: T) = bipred(x)(_ == _)
 def not[T <: Char](f: Pred[T]) = flpreds(Seq(f))(_ && !_)
 def and[T <: Char](fs: Pred[T]*) = flpreds(fs)(_ && _)
-def or[T <: Char](fs: Pred[T]*) = flpreds(fs)(_ || _)
+def or[T <: Char](fs: Pred[T]*) = flpreds(fs, false)(_ || _)
 
-val isNumHead = and(ge('0'), le('9'))
-val isNumTail = or(isNumHead, is('.'))
+val isWhitespace = (c: Char) => c.isWhitespace
+val isNumHead = and(ge('0'),
+                    le('9'))
+val isNumTail = or(isNumHead,
+                   is('.'))
+val isIdTail = and(not(isWhitespace),
+                   not(is('(')),
+                   not(is(')')),
+                   not(is('{')),
+                   not(is('}')),
+                   not(is('[')),
+                   not(is(']')),
+                   not(is(',')),
+                   not(is('.')),
+                   not(is('=')),
+                   not(is(':')))
+val isIdHead = and(isIdTail,
+                   not(isNumTail))
 
 def takeWhile[T](source: BufferedIterator[(T, _)], pred: Pred[T]): List[T] =
   def aux(buff: List[T]): List[T] =
