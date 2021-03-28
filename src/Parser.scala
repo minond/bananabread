@@ -60,13 +60,10 @@ def nextToken(head: Char, tail: BufferedIterator[(Char, Int)], loc: ast.Location
 
 
 type Pred[T] = T => Boolean
-type Preds[T] = Seq[Pred[T]]
 type Predcond = (Boolean, Boolean) => Boolean
 
-def flpreds[T](preds: Preds[T], id: Boolean = true)(cond: Predcond) =
+def flpreds[T](preds: Seq[Pred[T]], id: Boolean = true)(cond: Predcond) =
   (c: T) => preds.foldLeft(id)((acc, pred) => cond(acc, pred(c)))
-def pred[T]()(pred: => Pred[T]) =
-  (c: T) => pred(c)
 
 def ge[T <: Char](x: T) = (c: T) => c >= x
 def le[T <: Char](x: T) = (c: T) => c <= x
