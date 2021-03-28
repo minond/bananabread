@@ -16,17 +16,28 @@ object Syntax {
 }
 
 def parse(sourceName: String, sourceString: String, syntax: Syntax): Either[ast.SyntaxErr, List[ast.Expr]] =
-  tokenize(sourceName, sourceString).flatMap { tokens => parse(tokens, syntax) }
+  tokenize(sourceName, sourceString).flatMap { tokens => parse(sourceName, tokens.iterator.buffered, syntax) }
 
-def parse(tokens: List[ast.Token], syntax: Syntax): Either[ast.SyntaxErr, List[ast.Expr]] =
-  Right(List.empty)
+def parse(sourceName: String, tokens: BufferedIterator[ast.Token], syntax: Syntax): Either[ast.SyntaxErr, List[ast.Expr]] =
+  squisherr(
+    tokens
+      .map { (token) => nextExpr(token, tokens, sourceName, syntax) }
+      .toList
+  )
+
+def nextExpr(head: ast.Token, tail: BufferedIterator[ast.Token], sourceName: String, syntax: Syntax): Either[ast.SyntaxErr, ast.Expr] =
+  head match {
+    case lit: ast.Num => Right(lit)
+  }
 
 def tokenize(sourceName: String, sourceString: String): Either[ast.SyntaxErr, List[ast.Token]] =
-  val stream = sourceString.iterator.zipWithIndex.buffered
+  tokenize(sourceName, sourceString.iterator.zipWithIndex.buffered)
+
+def tokenize(sourceName: String, sourceStream: BufferedIterator[(Char, Int)]): Either[ast.SyntaxErr, List[ast.Token]] =
   squisherr(
-    stream
+    sourceStream
       .filter { (c, _) => !c.isWhitespace }
-      .map { (c, i) => nextToken(c, stream, ast.Location(sourceName, i)) }
+      .map { (c, i) => nextToken(c, sourceStream, ast.Location(sourceName, i)) }
       .toList)
 
 def nextToken(head: Char, tail: BufferedIterator[(Char, Int)], loc: ast.Location): Either[ast.SyntaxErr, ast.Token] =
