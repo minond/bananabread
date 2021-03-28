@@ -19,11 +19,9 @@ def parse(sourceName: String, sourceString: String, syntax: Syntax): Either[ast.
   tokenize(sourceName, sourceString).flatMap { tokens => parse(sourceName, tokens.iterator.buffered, syntax) }
 
 def parse(sourceName: String, tokens: BufferedIterator[ast.Token], syntax: Syntax): Either[ast.SyntaxErr, List[ast.Expr]] =
-  squisherr(
-    tokens
-      .map { (token) => nextExpr(token, tokens, sourceName, syntax) }
-      .toList
-  )
+  tokens
+    .map { (token) => nextExpr(token, tokens, sourceName, syntax) }
+    .squished
 
 def nextExpr(head: ast.Token, tail: BufferedIterator[ast.Token], sourceName: String, syntax: Syntax): Either[ast.SyntaxErr, ast.Expr] =
   head match {
@@ -34,11 +32,10 @@ def tokenize(sourceName: String, sourceString: String): Either[ast.SyntaxErr, Li
   tokenize(sourceName, sourceString.iterator.zipWithIndex.buffered)
 
 def tokenize(sourceName: String, sourceStream: BufferedIterator[(Char, Int)]): Either[ast.SyntaxErr, List[ast.Token]] =
-  squisherr(
-    sourceStream
-      .filter { (c, _) => !c.isWhitespace }
-      .map { (c, i) => nextToken(c, sourceStream, ast.Location(sourceName, i)) }
-      .toList)
+  sourceStream
+    .filter { (c, _) => !c.isWhitespace }
+    .map { (c, i) => nextToken(c, sourceStream, ast.Location(sourceName, i)) }
+    .squished
 
 def nextToken(head: Char, tail: BufferedIterator[(Char, Int)], loc: ast.Location): Either[ast.SyntaxErr, ast.Token] =
   head match {
@@ -105,7 +102,12 @@ def takeWhile[T](source: BufferedIterator[(T, _)], pred: Pred[T]): List[T] =
       else buff
   aux(List.empty)
 
-def squisherr[L, R](eithers: List[Either[L, R]]): Either[L, List[R]] =
-  eithers.foldLeft[Either[L, List[R]]](Right(List.empty)) { (acc, x) =>
-    acc.flatMap(xs => x.map(xs :+ _))
-  }
+implicit class Eithers[L, R](val eithers: Iterator[Either[L, R]]) {
+  /** Converts a [[Iterator[Either[L, R]]]] into an [[Either[L, List[R]]]].
+   */
+  def squished: Either[L, List[R]] =
+    eithers.foldLeft[Either[L, List[R]]](Right(List())) {
+      (acc, x) =>
+        acc.flatMap(xs => x.map(xs :+ _))
+    }
+}
