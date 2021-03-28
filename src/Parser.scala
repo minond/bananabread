@@ -60,38 +60,29 @@ def nextToken(head: Char, tail: BufferedIterator[(Char, Int)], loc: ast.Location
 
 
 type Pred[T] = T => Boolean
-type Predbiop[T] = (T, T) => Boolean
 type Preds[T] = Seq[Pred[T]]
 type Predcond = (Boolean, Boolean) => Boolean
 
 def flpreds[T](preds: Preds[T], id: Boolean = true)(cond: Predcond) =
   (c: T) => preds.foldLeft(id)((acc, pred) => cond(acc, pred(c)))
-def bipred[T](x: T)(pred: Predbiop[T]) =
-  (c: T) => pred(c, x)
+def pred[T]()(pred: => Pred[T]) =
+  (c: T) => pred(c)
 
-def ge[T <: Char](x: T) = bipred(x)(_ >= _)
-def le[T <: Char](x: T) = bipred(x)(_ <= _)
-def is[T <: Char](x: T) = bipred(x)(_ == _)
+def ge[T <: Char](x: T) = (c: T) => c >= x
+def le[T <: Char](x: T) = (c: T) => c <= x
+def is[T <: Char](x: T) = (c: T) => c == x
+def oneof[T <: Char](xs: T*) = (c: T) => xs.contains(c)
 def not[T <: Char](f: Pred[T]) = flpreds(Seq(f))(_ && !_)
 def and[T <: Char](fs: Pred[T]*) = flpreds(fs)(_ && _)
 def or[T <: Char](fs: Pred[T]*) = flpreds(fs, false)(_ || _)
 
-val isWhitespace = (c: Char) => c.isWhitespace
+val isWhitespace = oneof(' ', '\t', '\r', '\n', '\f')
 val isNumHead = and(ge('0'),
                     le('9'))
 val isNumTail = or(isNumHead,
                    is('.'))
 val isIdTail = and(not(isWhitespace),
-                   not(is('(')),
-                   not(is(')')),
-                   not(is('{')),
-                   not(is('}')),
-                   not(is('[')),
-                   not(is(']')),
-                   not(is(',')),
-                   not(is('.')),
-                   not(is('=')),
-                   not(is(':')))
+                   not(oneof('(', ')', '{', '}', '[', ']', ',', '.', '=', ':')))
 val isIdHead = and(isIdTail,
                    not(isNumTail))
 
