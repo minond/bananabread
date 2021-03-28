@@ -1,8 +1,9 @@
 package bisquit
 
-import parser.{parse, SyntaxExtension}
+import parser.{tokenize, parse, Syntax}
 
 
 def main(args: Array[String]) =
-  val ext = SyntaxExtension.withUniop("-").withBinop("+").withBinop("-")
-  println(parse("<stdin>", "  4.3 + 3 a(1,2,345)", ext).toList)
+  val syntax = Syntax.withUniop("-").withBinop("+").withBinop("-")
+  println(tokenize("<stdin>", "  4.3 + 3 + a(1,2,345)"))
+  println(parse("<stdin>", "  4.3 + 3 + a(1,2,345)", syntax))

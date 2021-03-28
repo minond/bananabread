@@ -3,24 +3,31 @@ package parser
 
 import scala.util.{Try, Success, Failure}
 
-case class SyntaxExtension(uniops: Seq[String], binops: Seq[String]) {
+case class Syntax(uniops: Seq[String], binops: Seq[String]) {
   def isUniop(lexeme: String) = uniops.contains(lexeme)
   def isBinop(lexeme: String) = binops.contains(lexeme)
-  def withUniop(lexeme: String) = SyntaxExtension(lexeme +: uniops, binops)
-  def withBinop(lexeme: String) = SyntaxExtension(uniops, lexeme +: binops)
+  def withUniop(lexeme: String) = Syntax(lexeme +: uniops, binops)
+  def withBinop(lexeme: String) = Syntax(uniops, lexeme +: binops)
 }
 
-object SyntaxExtension {
-  def withUniop(lexeme: String) = SyntaxExtension(Seq.empty, Seq.empty).withUniop(lexeme)
-  def withBinop(lexeme: String) = SyntaxExtension(Seq.empty, Seq.empty).withBinop(lexeme)
+object Syntax {
+  def withUniop(lexeme: String) = Syntax(Seq.empty, Seq.empty).withUniop(lexeme)
+  def withBinop(lexeme: String) = Syntax(Seq.empty, Seq.empty).withBinop(lexeme)
 }
 
-def parse(sourceName: String, string: String, syext: SyntaxExtension): Iterator[Either[ast.SyntaxErr, ast.Token]] =
-  val stream = string.iterator.zipWithIndex.buffered
-  for
-    (head, offset) <- stream if !head.isWhitespace
-  yield
-    nextToken(head, stream, ast.Location(sourceName, offset))
+def parse(sourceName: String, sourceString: String, syntax: Syntax): Either[ast.SyntaxErr, List[ast.Expr]] =
+  tokenize(sourceName, sourceString).flatMap { tokens => parse(tokens, syntax) }
+
+def parse(tokens: List[ast.Token], syntax: Syntax): Either[ast.SyntaxErr, List[ast.Expr]] =
+  Right(List.empty)
+
+def tokenize(sourceName: String, sourceString: String): Either[ast.SyntaxErr, List[ast.Token]] =
+  val stream = sourceString.iterator.zipWithIndex.buffered
+  squisherr(
+    stream
+      .filter { (c, _) => !c.isWhitespace }
+      .map { (c, i) => nextToken(c, stream, ast.Location(sourceName, i)) }
+      .toList)
 
 def nextToken(head: Char, tail: BufferedIterator[(Char, Int)], loc: ast.Location): Either[ast.SyntaxErr, ast.Token] =
   head match {
@@ -98,3 +105,8 @@ def takeWhile[T](source: BufferedIterator[(T, _)], pred: Pred[T]): List[T] =
       then aux(buff :+ source.next._1)
       else buff
   aux(List.empty)
+
+def squisherr[L, R](eithers: List[Either[L, R]]): Either[L, List[R]] =
+  eithers.foldLeft[Either[L, List[R]]](Right(List.empty)) { (acc, x) =>
+    acc.flatMap(xs => x.map(xs :+ _))
+  }
