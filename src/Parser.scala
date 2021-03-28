@@ -4,10 +4,14 @@ package parser
 import scala.util.{Try, Success, Failure}
 
 case class Syntax(uniops: Seq[String], binops: Seq[String]) {
+  def isUniop(id: ast.Id) = uniops.contains(id.lexeme)
   def isUniop(lexeme: String) = uniops.contains(lexeme)
+  def isBinop(id: ast.Id) = binops.contains(id.lexeme)
   def isBinop(lexeme: String) = binops.contains(lexeme)
   def withUniop(lexeme: String) = Syntax(lexeme +: uniops, binops)
+  def withUniop(id: ast.Id) = Syntax(id.lexeme +: uniops, binops)
   def withBinop(lexeme: String) = Syntax(uniops, lexeme +: binops)
+  def withBinop(id: ast.Id) = Syntax(uniops, id.lexeme +: binops)
 }
 
 object Syntax {
@@ -25,7 +29,22 @@ def parse(sourceName: String, tokens: BufferedIterator[ast.Token], syntax: Synta
 
 def nextExpr(head: ast.Token, tail: BufferedIterator[ast.Token], sourceName: String, syntax: Syntax): Either[ast.SyntaxErr, ast.Expr] =
   head match {
-    case lit: ast.Num => Right(lit)
+    case lit: ast.Literal =>
+      tail.headOption match {
+        case Some(op: ast.Id) if syntax.isBinop(op) =>
+          skip(tail).headOption match {
+            case Some(_) =>
+              nextExpr(tail.next, tail, sourceName, syntax).map { rhs =>
+                ast.Binop(lit, op, rhs)
+              }
+
+            case None =>
+              Left(ast.UnexpectedEofErr(op))
+          }
+
+        case Some(_) => Right(lit)
+        case None => Right(lit)
+      }
   }
 
 def tokenize(sourceName: String, sourceString: String): Either[ast.SyntaxErr, List[ast.Token]] =
@@ -102,8 +121,12 @@ def takeWhile[T](source: BufferedIterator[(T, _)], pred: Pred[T]): List[T] =
       else buff
   aux(List.empty)
 
+def skip[T](it: BufferedIterator[T]): BufferedIterator[T] =
+  it.next
+  it
+
 implicit class Eithers[L, R](val eithers: Iterator[Either[L, R]]) {
-  /** Converts a [[Iterator[Either[L, R]]]] into an [[Either[L, List[R]]]].
+  /** Converts an [[Iterator[Either[L, R]]]] into an [[Either[L, List[R]]]].
    */
   def squished: Either[L, List[R]] =
     eithers.foldLeft[Either[L, List[R]]](Right(List())) {

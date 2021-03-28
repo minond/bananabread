@@ -6,6 +6,7 @@ package ast
 
 sealed class Token(loc: Location) extends Located, At(loc)
 sealed trait Expr extends Located
+sealed trait Literal extends Expr
 
 
 // Tokens
@@ -25,15 +26,15 @@ case class CloseSquareBraket(loc: Location) extends Token(loc)
 
 // Token expressions
 
-case class Num(lexeme: String, loc: Location) extends Token(loc) with Expr
-case class Str(lexeme: String, loc: Location) extends Token(loc) with Expr
-case class Id(lexeme: String, loc: Location) extends Token(loc) with Expr
+case class Num(lexeme: String, loc: Location) extends Token(loc) with Expr, Literal
+case class Str(lexeme: String, loc: Location) extends Token(loc) with Expr, Literal
+case class Id(lexeme: String, loc: Location) extends Token(loc) with Expr, Literal
 
 
 // Expressions
 
-case class Binop(lhs: Token, op: Token, rhs: Token) extends Expr with At(op.location)
-case class Uniop(op: Token, rhs: Token) extends Expr with At(op.location)
+case class Binop(lhs: Expr, op: Id, rhs: Expr) extends Expr with At(op.location)
+case class Uniop(op: Id, rhs: Expr) extends Expr with At(op.location)
 case class App(lambda: Expr, args: List[Expr]) extends Expr with At(lambda.location)
 
 
@@ -42,6 +43,7 @@ case class App(lambda: Expr, args: List[Expr]) extends Expr with At(lambda.locat
 sealed trait SyntaxErr(loc: Location) extends Located { def location = loc }
 case class BadNumErr(lexeme: String, loc: Location) extends SyntaxErr(loc)
 case class UnknownCharErr(char: Char, loc: Location) extends SyntaxErr(loc)
+case class UnexpectedEofErr(prev: Located) extends SyntaxErr(prev.location)
 
 
 // Token/expression location information
