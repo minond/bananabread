@@ -20,37 +20,43 @@ object Syntax {
 }
 
 def parse(sourceName: String, sourceString: String, syntax: Syntax): Either[ast.SyntaxErr, List[ast.Expr]] =
-  tokenize(sourceName, sourceString).flatMap { tokens => parse(sourceName, tokens.iterator.buffered, syntax) }
+  tokenize(sourceName, sourceString, syntax).flatMap { tokens => parse(sourceName, tokens.iterator.buffered, syntax) }
 
 def parse(sourceName: String, tokens: BufferedIterator[ast.Token], syntax: Syntax): Either[ast.SyntaxErr, List[ast.Expr]] =
   tokens
-    .map { (token) => nextExpr(token, tokens, sourceName, syntax) }
+    .map { (token) => parseExpr(token, tokens, sourceName, syntax) }
     .squished
 
-def nextExpr(head: ast.Token, tail: BufferedIterator[ast.Token], sourceName: String, syntax: Syntax): Either[ast.SyntaxErr, ast.Expr] =
+def parseExpr(head: ast.Token, tail: BufferedIterator[ast.Token], sourceName: String, syntax: Syntax): Either[ast.SyntaxErr, ast.Expr] =
   head match {
+    case op: ast.Id if syntax.isUniop(op) =>
+      for rhs <- expectExpr(op, tail, sourceName, syntax)
+      yield ast.Uniop(op, rhs)
+
     case lit: ast.Literal =>
       tail.headOption match {
         case Some(op: ast.Id) if syntax.isBinop(op) =>
-          skip(tail).headOption match {
-            case Some(_) =>
-              nextExpr(tail.next, tail, sourceName, syntax).map { rhs =>
-                ast.Binop(lit, op, rhs)
-              }
-
-            case None =>
-              Left(ast.UnexpectedEofErr(op))
-          }
+          for rhs <- expectExpr(op, skip(tail), sourceName, syntax)
+          yield ast.Binop(lit, op, rhs)
 
         case Some(_) => Right(lit)
         case None => Right(lit)
       }
   }
 
-def tokenize(sourceName: String, sourceString: String): Either[ast.SyntaxErr, List[ast.Token]] =
-  tokenize(sourceName, sourceString.iterator.zipWithIndex.buffered)
+def expectExpr(head: ast.Token, tail: BufferedIterator[ast.Token], sourceName: String, syntax: Syntax): Either[ast.SyntaxErr, ast.Expr] =
+  tail.headOption match {
+    case Some(_) =>
+      parseExpr(tail.next, tail, sourceName, syntax)
 
-def tokenize(sourceName: String, sourceStream: BufferedIterator[(Char, Int)]): Either[ast.SyntaxErr, List[ast.Token]] =
+    case None =>
+      Left(ast.UnexpectedEofErr(head))
+  }
+
+def tokenize(sourceName: String, sourceString: String, syntax: Syntax): Either[ast.SyntaxErr, List[ast.Token]] =
+  tokenize(sourceName, sourceString.iterator.zipWithIndex.buffered, syntax)
+
+def tokenize(sourceName: String, sourceStream: BufferedIterator[(Char, Int)], syntax: Syntax): Either[ast.SyntaxErr, List[ast.Token]] =
   sourceStream
     .filter { (c, _) => !c.isWhitespace }
     .map { (c, i) => nextToken(c, sourceStream, ast.Location(sourceName, i)) }
