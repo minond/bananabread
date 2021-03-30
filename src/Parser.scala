@@ -22,6 +22,9 @@ def parseExpr(head: ast.Token, tail: BufferedIterator[ast.Token], sourceName: St
 
     case lit: ast.Literal =>
       tail.headOption match {
+        case Some(op: ast.Id) if syntax.isPostfix(op) =>
+          Right(ast.Uniop(op, lit))
+
         case Some(op: ast.Id) if syntax.isInfix(op) =>
           for rhs <- expectExpr(op, skip(tail), sourceName, syntax)
           yield ast.Binop(lit, op, rhs)

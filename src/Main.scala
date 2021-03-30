@@ -11,6 +11,7 @@ def main(args: Array[String]) =
                        .withInfix("@")
                        .withInfix("::")
                        .withInfix(":")
+                       .withPostfix("!")
 
   // println(tokenize("<stdin>", "  4.3 + 3 + a(1,2,345)", syntax))
   // println(parse("<stdin>", "  4.3 + 54.764", syntax))
@@ -22,4 +23,5 @@ def main(args: Array[String]) =
   println(parse("<stdin>", "_1+_2@3", syntax))
   println(parse("<stdin>", "a::b", syntax))
   println(parse("<stdin>", "a : b", syntax))
+  println(parse("<stdin>", "a!", syntax))
   // println(parse("<stdin>", "  4.3 + 3 + a(1,2,345)", syntax))
