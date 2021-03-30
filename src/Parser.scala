@@ -3,21 +3,8 @@ package parser
 
 import scala.util.{Try, Success, Failure}
 
-case class Syntax(uniops: Seq[String], binops: Seq[String]) {
-  def isUniop(id: ast.Id) = uniops.contains(id.lexeme)
-  def isUniop(lexeme: String) = uniops.contains(lexeme)
-  def isBinop(id: ast.Id) = binops.contains(id.lexeme)
-  def isBinop(lexeme: String) = binops.contains(lexeme)
-  def withUniop(lexeme: String) = Syntax(lexeme +: uniops, binops)
-  def withUniop(id: ast.Id) = Syntax(id.lexeme +: uniops, binops)
-  def withBinop(lexeme: String) = Syntax(uniops, lexeme +: binops)
-  def withBinop(id: ast.Id) = Syntax(uniops, id.lexeme +: binops)
-}
 
-object Syntax {
-  def withUniop(lexeme: String) = Syntax(Seq.empty, Seq.empty).withUniop(lexeme)
-  def withBinop(lexeme: String) = Syntax(Seq.empty, Seq.empty).withBinop(lexeme)
-}
+// Main parser/lexer
 
 def parse(sourceName: String, sourceString: String, syntax: Syntax): Either[ast.SyntaxErr, List[ast.Expr]] =
   tokenize(sourceName, sourceString, syntax).flatMap { tokens => parse(sourceName, tokens.iterator.buffered, syntax) }
@@ -29,13 +16,13 @@ def parse(sourceName: String, tokens: BufferedIterator[ast.Token], syntax: Synta
 
 def parseExpr(head: ast.Token, tail: BufferedIterator[ast.Token], sourceName: String, syntax: Syntax): Either[ast.SyntaxErr, ast.Expr] =
   head match {
-    case op: ast.Id if syntax.isUniop(op) =>
+    case op: ast.Id if syntax.isPrefix(op) =>
       for rhs <- expectExpr(op, tail, sourceName, syntax)
       yield ast.Uniop(op, rhs)
 
     case lit: ast.Literal =>
       tail.headOption match {
-        case Some(op: ast.Id) if syntax.isBinop(op) =>
+        case Some(op: ast.Id) if syntax.isInfix(op) =>
           for rhs <- expectExpr(op, skip(tail), sourceName, syntax)
           yield ast.Binop(lit, op, rhs)
 
@@ -59,15 +46,13 @@ def tokenize(sourceName: String, sourceString: String, syntax: Syntax): Either[a
 def tokenize(sourceName: String, sourceStream: BufferedIterator[(Char, Int)], syntax: Syntax): Either[ast.SyntaxErr, List[ast.Token]] =
   sourceStream
     .filter { (c, _) => !c.isWhitespace }
-    .map { (c, i) => nextToken(c, sourceStream, ast.Location(sourceName, i)) }
+    .map { (c, i) => nextToken(c, sourceStream, ast.Location(sourceName, i), syntax) }
     .squished
 
-def nextToken(head: Char, tail: BufferedIterator[(Char, Int)], loc: ast.Location): Either[ast.SyntaxErr, ast.Token] =
+def nextToken(head: Char, tail: BufferedIterator[(Char, Int)], loc: ast.Location, syntax: Syntax): Either[ast.SyntaxErr, ast.Token] =
   head match {
     case ',' => Right(ast.Comma(loc))
     case '.' => Right(ast.Dot(loc))
-    case ':' => Right(ast.Colon(loc))
-    case '=' => Right(ast.Equal(loc))
     case '(' => Right(ast.OpenParen(loc))
     case ')' => Right(ast.CloseParen(loc))
     case '{' => Right(ast.OpenCurlyParen(loc))
@@ -78,6 +63,7 @@ def nextToken(head: Char, tail: BufferedIterator[(Char, Int)], loc: ast.Location
     case head if isNumHead(head) =>
       val rest = takeWhile(tail, isNumTail).mkString
       val lexeme = head +: rest
+
       Try { lexeme.toFloat } match {
         case Failure(_) => Left(ast.BadNumErr(lexeme, loc))
         case Success(_) => Right(ast.Num(lexeme, loc))
@@ -86,11 +72,40 @@ def nextToken(head: Char, tail: BufferedIterator[(Char, Int)], loc: ast.Location
     case head if isIdHead(head) =>
       val rest = takeWhile(tail, isIdTail).mkString
       val lexeme = head +: rest
+
       Right(ast.Id(lexeme, loc))
 
-    case _ => Left(ast.UnknownCharErr(head, loc))
+    case head =>
+      val rest = takeWhile(tail, and(not(isIdTail), not(isWhitespace))).mkString
+      val lexeme = head +: rest
+
+      Right(ast.Id(lexeme, loc))
   }
 
+
+// Syntax extensions
+
+case class Syntax(prefix: Seq[String] = Seq.empty, infix: Seq[String] = Seq.empty, postfix: Seq[String] = Seq.empty) {
+  def isOp(id: ast.Id) = isPrefix(id) || isInfix(id) || isPostfix(id)
+  def isOp(lexeme: String) = isPrefix(lexeme) || isInfix(lexeme) || isPostfix(lexeme)
+
+  def isPrefix(id: ast.Id) = prefix.contains(id.lexeme)
+  def isPrefix(lexeme: String) = prefix.contains(lexeme)
+  def isInfix(id: ast.Id) = infix.contains(id.lexeme)
+  def isInfix(lexeme: String) = infix.contains(lexeme)
+  def isPostfix(id: ast.Id) = postfix.contains(id.lexeme)
+  def isPostfix(lexeme: String) = postfix.contains(lexeme)
+
+  def withPrefix(lexeme: String) = Syntax(lexeme +: prefix, infix, postfix)
+  def withPrefix(id: ast.Id) = Syntax(id.lexeme +: prefix, infix, postfix)
+  def withInfix(lexeme: String) = Syntax(prefix, lexeme +: infix, postfix)
+  def withInfix(id: ast.Id) = Syntax(prefix, id.lexeme +: infix, postfix)
+  def withPostfix(lexeme: String) = Syntax(prefix, infix, lexeme +: postfix)
+  def withPostfix(id: ast.Id) = Syntax(prefix, infix, id.lexeme +: postfix)
+}
+
+
+// Parser predicates and combinators
 
 type Pred[T] = T => Boolean
 type Predcond = (Boolean, Boolean) => Boolean
@@ -107,14 +122,22 @@ def and[T <: Char](fs: Pred[T]*) = flpreds(fs)(_ && _)
 def or[T <: Char](fs: Pred[T]*) = flpreds(fs, false)(_ || _)
 
 val isWhitespace = oneof(' ', '\t', '\r', '\n', '\f')
-val isNumHead = and(ge('0'),
+val isLetter = or(and(ge('a'), le('z')),
+                  and(ge('A'), le('Z')))
+val isNumeric = and(ge('0'),
                     le('9'))
+val isNumHead = isNumeric
 val isNumTail = or(isNumHead,
                    is('.'))
 val isIdTail = and(not(isWhitespace),
-                   not(oneof('(', ')', '{', '}', '[', ']', ',', '.', '=', ':')))
+                   or(isNumeric,
+                      isLetter,
+                      is('_')))
 val isIdHead = and(isIdTail,
-                   not(isNumTail))
+                   not(isNumeric))
+
+
+// Predicate/combinator stream processors
 
 def takeWhile[T](source: BufferedIterator[(T, _)], pred: Pred[T]): List[T] =
   def aux(buff: List[T]): List[T] =

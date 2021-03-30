@@ -14,8 +14,6 @@ sealed trait Literal extends Expr
 case class Eof(loc: Location) extends Token(loc)
 case class Comma(loc: Location) extends Token(loc)
 case class Dot(loc: Location) extends Token(loc)
-case class Colon(loc: Location) extends Token(loc)
-case class Equal(loc: Location) extends Token(loc)
 case class OpenParen(loc: Location) extends Token(loc)
 case class CloseParen(loc: Location) extends Token(loc)
 case class OpenCurlyParen(loc: Location) extends Token(loc)
@@ -42,7 +40,6 @@ case class App(lambda: Expr, args: List[Expr]) extends Expr with At(lambda.locat
 
 sealed trait SyntaxErr(loc: Location) extends Located { def location = loc }
 case class BadNumErr(lexeme: String, loc: Location) extends SyntaxErr(loc)
-case class UnknownCharErr(char: Char, loc: Location) extends SyntaxErr(loc)
 case class UnexpectedEofErr(prev: Located) extends SyntaxErr(prev.location)
 
 
