@@ -88,23 +88,27 @@ def nextToken(head: Char, tail: BufferedIterator[(Char, Int)], loc: ast.Location
 
 // Syntax extensions
 
-case class Syntax(prefix: Seq[String] = Seq.empty, infix: Seq[String] = Seq.empty, postfix: Seq[String] = Seq.empty) {
+case class Syntax(
+  prefix: Map[String, Int] = Map.empty,
+  infix: Map[String, Int] = Map.empty,
+  postfix: Map[String, Int] = Map.empty,
+) {
   def isOp(id: ast.Id) = isPrefix(id) || isInfix(id) || isPostfix(id)
   def isOp(lexeme: String) = isPrefix(lexeme) || isInfix(lexeme) || isPostfix(lexeme)
 
-  def isPrefix(id: ast.Id) = prefix.contains(id.lexeme)
-  def isPrefix(lexeme: String) = prefix.contains(lexeme)
-  def isInfix(id: ast.Id) = infix.contains(id.lexeme)
-  def isInfix(lexeme: String) = infix.contains(lexeme)
-  def isPostfix(id: ast.Id) = postfix.contains(id.lexeme)
-  def isPostfix(lexeme: String) = postfix.contains(lexeme)
+  def isPrefix(id: ast.Id) = prefix.keySet.contains(id.lexeme)
+  def isPrefix(lexeme: String) = prefix.keySet.contains(lexeme)
+  def isInfix(id: ast.Id) = infix.keySet.contains(id.lexeme)
+  def isInfix(lexeme: String) = infix.keySet.contains(lexeme)
+  def isPostfix(id: ast.Id) = postfix.keySet.contains(id.lexeme)
+  def isPostfix(lexeme: String) = postfix.keySet.contains(lexeme)
 
-  def withPrefix(lexeme: String) = Syntax(lexeme +: prefix, infix, postfix)
-  def withPrefix(id: ast.Id) = Syntax(id.lexeme +: prefix, infix, postfix)
-  def withInfix(lexeme: String) = Syntax(prefix, lexeme +: infix, postfix)
-  def withInfix(id: ast.Id) = Syntax(prefix, id.lexeme +: infix, postfix)
-  def withPostfix(lexeme: String) = Syntax(prefix, infix, lexeme +: postfix)
-  def withPostfix(id: ast.Id) = Syntax(prefix, infix, id.lexeme +: postfix)
+  def withPrefix(precedence: Int, lexeme: String) = Syntax(prefix + (lexeme -> precedence), infix, postfix)
+  def withPrefix(precedence: Int, id: ast.Id) = Syntax(prefix + (id.lexeme -> precedence), infix, postfix)
+  def withInfix(precedence: Int, lexeme: String) = Syntax(prefix, infix + (lexeme -> precedence), postfix)
+  def withInfix(precedence: Int, id: ast.Id) = Syntax(prefix, infix + (id.lexeme -> precedence), postfix)
+  def withPostfix(precedence: Int, lexeme: String) = Syntax(prefix, infix, postfix + (lexeme -> precedence))
+  def withPostfix(precedence: Int, id: ast.Id) = Syntax(prefix, infix, postfix + (id.lexeme -> precedence))
 }
 
 
