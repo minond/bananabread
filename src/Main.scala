@@ -25,4 +25,5 @@ def main(args: Array[String]) =
   println(parse("<stdin>", "1 + 2 * 3", syntax))
   println(parse("<stdin>", "1 * 2 + 3!", syntax))
   println(parse("<stdin>", "a!", syntax))
-  println(tokenize("<stdin>", "  4.3 + 3 + -a(1,2,345)!", syntax))
+  println(parse("<stdin>", "  4.3 + 3 + -a(1,2,345)!", syntax))
+  println(parse("<stdin>", "abc(1, 2, 3)", syntax))

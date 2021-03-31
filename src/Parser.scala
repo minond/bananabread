@@ -2,6 +2,7 @@ package bisquit
 package parser
 
 import scala.util.{Try, Success, Failure}
+import scala.reflect.ClassTag
 
 
 // Main parser/lexer
@@ -37,9 +38,34 @@ def parseExpr(head: ast.Token, tail: BufferedIterator[ast.Token], sourceName: St
               case _ => ast.Binop(lit, op, rhs)
             }
 
+        case Some(paren: ast.OpenParen) =>
+          parseNextExprsByUntil[ast.Comma, ast.CloseParen](paren, skip(tail), sourceName, syntax).map { args =>
+            ast.App(lit, args)
+          }
+
         case Some(_) => Right(lit)
         case None => Right(lit)
       }
+  }
+
+def parseNextExprsByUntil[By: ClassTag, Until: ClassTag](head: ast.Token, tail: BufferedIterator[ast.Token], sourceName: String, syntax: Syntax, acc: List[ast.Expr] = List.empty): Either[ast.SyntaxErr, List[ast.Expr]] =
+  tail.headOption match {
+    case Some(_: Until) =>
+      tail.next
+      Right(acc)
+
+    case Some(by: By) =>
+      parseNextExpr(tail.next, tail, sourceName, syntax).flatMap { expr =>
+        parseNextExprsByUntil[By, Until](head, tail, sourceName, syntax, acc :+ expr)
+      }
+
+    case Some(_) =>
+      parseExpr(tail.next, tail, sourceName, syntax).flatMap { expr =>
+        parseNextExprsByUntil[By, Until](head, tail, sourceName, syntax, acc :+ expr)
+      }
+
+    case None =>
+      Left(ast.UnexpectedEofErr(head))
   }
 
 def parseNextExpr(head: ast.Token, tail: BufferedIterator[ast.Token], sourceName: String, syntax: Syntax): Either[ast.SyntaxErr, ast.Expr] =
