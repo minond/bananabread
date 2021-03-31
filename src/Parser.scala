@@ -17,24 +17,32 @@ def parse(sourceName: String, tokens: BufferedIterator[ast.Token], syntax: Synta
 def parseExpr(head: ast.Token, tail: BufferedIterator[ast.Token], sourceName: String, syntax: Syntax): Either[ast.SyntaxErr, ast.Expr] =
   head match {
     case op: ast.Id if syntax.isPrefix(op) =>
-      for rhs <- expectExpr(op, tail, sourceName, syntax)
+      for rhs <- parseNextExpr(op, tail, sourceName, syntax)
       yield ast.Uniop(op, rhs)
 
     case lit: ast.Literal =>
       tail.headOption match {
         case Some(op: ast.Id) if syntax.isPostfix(op) =>
+          tail.next
           Right(ast.Uniop(op, lit))
 
         case Some(op: ast.Id) if syntax.isInfix(op) =>
-          for rhs <- expectExpr(op, skip(tail), sourceName, syntax)
-          yield ast.Binop(lit, op, rhs)
+          for rhs <- parseNextExpr(op, skip(tail), sourceName, syntax)
+          yield
+            rhs match {
+              case ast.Binop(nextLhs, nextOp, nextRhs) if syntax.isInfix(nextOp) &&
+                syntax.infixPrecedence(op) > syntax.infixPrecedence(nextOp) =>
+                  ast.Binop(ast.Binop(lit, op, nextLhs), nextOp, nextRhs)
+
+              case _ => ast.Binop(lit, op, rhs)
+            }
 
         case Some(_) => Right(lit)
         case None => Right(lit)
       }
   }
 
-def expectExpr(head: ast.Token, tail: BufferedIterator[ast.Token], sourceName: String, syntax: Syntax): Either[ast.SyntaxErr, ast.Expr] =
+def parseNextExpr(head: ast.Token, tail: BufferedIterator[ast.Token], sourceName: String, syntax: Syntax): Either[ast.SyntaxErr, ast.Expr] =
   tail.headOption match {
     case Some(_) =>
       parseExpr(tail.next, tail, sourceName, syntax)
@@ -102,6 +110,13 @@ case class Syntax(
   def isInfix(lexeme: String) = infix.keySet.contains(lexeme)
   def isPostfix(id: ast.Id) = postfix.keySet.contains(id.lexeme)
   def isPostfix(lexeme: String) = postfix.keySet.contains(lexeme)
+
+  def prefixPrecedence(id: ast.Id) = postfix.get(id.lexeme).get
+  def prefixPrecedence(lexeme: String) = postfix.get(lexeme).get
+  def infixPrecedence(id: ast.Id) = infix.get(id.lexeme).get
+  def infixPrecedence(lexeme: String) = infix.get(lexeme).get
+  def postfixPrecedence(id: ast.Id) = postfix.get(id.lexeme).get
+  def postfixPrecedence(lexeme: String) = postfix.get(lexeme).get
 
   def withPrefix(precedence: Int, lexeme: String) = Syntax(prefix + (lexeme -> precedence), infix, postfix)
   def withPrefix(precedence: Int, id: ast.Id) = Syntax(prefix + (id.lexeme -> precedence), infix, postfix)
