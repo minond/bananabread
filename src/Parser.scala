@@ -48,7 +48,13 @@ def parseExpr(head: ast.Token, tail: BufferedIterator[ast.Token], sourceName: St
       }
   }
 
-def parseNextExprsByUntil[By: ClassTag, Until: ClassTag](head: ast.Token, tail: BufferedIterator[ast.Token], sourceName: String, syntax: Syntax, acc: List[ast.Expr] = List.empty): Either[ast.SyntaxErr, List[ast.Expr]] =
+def parseNextExprsByUntil[By: ClassTag, Until: ClassTag](
+    head: ast.Token,
+    tail: BufferedIterator[ast.Token],
+    sourceName: String,
+    syntax: Syntax,
+    acc: List[ast.Expr] = List.empty
+): Either[ast.SyntaxErr, List[ast.Expr]] =
   tail.headOption match {
     case Some(_: Until) =>
       tail.next
