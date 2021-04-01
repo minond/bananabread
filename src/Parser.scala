@@ -1,21 +1,25 @@
 package bisquit
 package parser
 
+import ast.{Token, Expr, SyntaxErr => Err}
+
 import scala.util.{Try, Success, Failure}
 import scala.reflect.ClassTag
 
 
+type Tokens = BufferedIterator[Token]
+
 // Main parser/lexer
 
-def parse(sourceName: String, sourceString: String, syntax: Syntax): Either[ast.SyntaxErr, List[ast.Expr]] =
+def parse(sourceName: String, sourceString: String, syntax: Syntax): Either[Err, List[Expr]] =
   tokenize(sourceName, sourceString, syntax).flatMap { tokens => parse(sourceName, tokens.iterator.buffered, syntax) }
 
-def parse(sourceName: String, tokens: BufferedIterator[ast.Token], syntax: Syntax): Either[ast.SyntaxErr, List[ast.Expr]] =
+def parse(sourceName: String, tokens: Tokens, syntax: Syntax): Either[Err, List[Expr]] =
   tokens
     .map { (token) => parseExpr(token, tokens, sourceName, syntax) }
     .squished
 
-def parseExpr(head: ast.Token, tail: BufferedIterator[ast.Token], sourceName: String, syntax: Syntax): Either[ast.SyntaxErr, ast.Expr] =
+def parseExpr(head: Token, tail: Tokens, sourceName: String, syntax: Syntax): Either[Err, Expr] =
   parseExprCont(head match {
     case op: ast.Id if syntax.isPrefix(op) =>
       for rhs <- parseNextExpr(op, tail, sourceName, syntax)
@@ -32,20 +36,10 @@ def parseExpr(head: ast.Token, tail: BufferedIterator[ast.Token], sourceName: St
       Right(lit)
   }, tail, sourceName, syntax)
 
-def parseExprCont(
-  currRes: Either[ast.SyntaxErr, ast.Expr],
-  tail: BufferedIterator[ast.Token],
-  sourceName: String,
-  syntax: Syntax,
-): Either[ast.SyntaxErr, ast.Expr] =
+def parseExprCont(currRes: Either[Err, Expr], tail: Tokens, sourceName: String, syntax: Syntax): Either[Err, Expr] =
   currRes.flatMap { curr => parseExprCont(curr, tail, sourceName, syntax) }
 
-def parseExprCont(
-  curr: ast.Expr,
-  tail: BufferedIterator[ast.Token],
-  sourceName: String,
-  syntax: Syntax,
-): Either[ast.SyntaxErr, ast.Expr] =
+def parseExprCont(curr: Expr, tail: Tokens, sourceName: String, syntax: Syntax): Either[Err, Expr] =
   tail.headOption match {
     case Some(op: ast.Id) if syntax.isPostfix(op) =>
       tail.next
@@ -72,12 +66,12 @@ def parseExprCont(
   }
 
 def parseNextExprsByUntil[By: ClassTag, Until: ClassTag](
-    head: ast.Token,
-    tail: BufferedIterator[ast.Token],
-    sourceName: String,
-    syntax: Syntax,
-    acc: List[ast.Expr] = List.empty
-): Either[ast.SyntaxErr, List[ast.Expr]] =
+  head: Token,
+  tail: Tokens,
+  sourceName: String,
+  syntax: Syntax,
+  acc: List[Expr] = List.empty
+): Either[Err, List[Expr]] =
   tail.headOption match {
     case Some(_: Until) =>
       tail.next
@@ -97,7 +91,7 @@ def parseNextExprsByUntil[By: ClassTag, Until: ClassTag](
       Left(ast.UnexpectedEofErr(head))
   }
 
-def parseNextExpr(head: ast.Token, tail: BufferedIterator[ast.Token], sourceName: String, syntax: Syntax): Either[ast.SyntaxErr, ast.Expr] =
+def parseNextExpr(head: Token, tail: Tokens, sourceName: String, syntax: Syntax): Either[Err, Expr] =
   parseExprCont(tail.headOption match {
     case Some(_) =>
       parseExpr(tail.next, tail, sourceName, syntax)
@@ -106,16 +100,16 @@ def parseNextExpr(head: ast.Token, tail: BufferedIterator[ast.Token], sourceName
       Left(ast.UnexpectedEofErr(head))
   }, tail, sourceName, syntax)
 
-def tokenize(sourceName: String, sourceString: String, syntax: Syntax): Either[ast.SyntaxErr, List[ast.Token]] =
+def tokenize(sourceName: String, sourceString: String, syntax: Syntax): Either[Err, List[Token]] =
   tokenize(sourceName, sourceString.iterator.zipWithIndex.buffered, syntax)
 
-def tokenize(sourceName: String, sourceStream: BufferedIterator[(Char, Int)], syntax: Syntax): Either[ast.SyntaxErr, List[ast.Token]] =
+def tokenize(sourceName: String, sourceStream: BufferedIterator[(Char, Int)], syntax: Syntax): Either[Err, List[Token]] =
   sourceStream
     .filter { (c, _) => !c.isWhitespace }
     .map { (c, i) => nextToken(c, sourceStream, ast.Location(sourceName, i), syntax) }
     .squished
 
-def nextToken(head: Char, tail: BufferedIterator[(Char, Int)], loc: ast.Location, syntax: Syntax): Either[ast.SyntaxErr, ast.Token] =
+def nextToken(head: Char, tail: BufferedIterator[(Char, Int)], loc: ast.Location, syntax: Syntax): Either[Err, Token] =
   head match {
     case Tokens.COMMA => Right(ast.Comma(loc))
     case Tokens.DOT => Right(ast.Dot(loc))
@@ -256,7 +250,7 @@ def skip[T](it: BufferedIterator[T]): BufferedIterator[T] =
   it.next
   it
 
-def eat[T: ClassTag](head: ast.Token, tail: BufferedIterator[ast.Token]): Either[ast.SyntaxErr, T] =
+def eat[T: ClassTag](head: Token, tail: Tokens): Either[Err, T] =
   tail.headOption match {
     case Some(token: T) =>
       tail.next
