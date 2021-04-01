@@ -16,36 +16,59 @@ def parse(sourceName: String, tokens: BufferedIterator[ast.Token], syntax: Synta
     .squished
 
 def parseExpr(head: ast.Token, tail: BufferedIterator[ast.Token], sourceName: String, syntax: Syntax): Either[ast.SyntaxErr, ast.Expr] =
-  head match {
+  parseExprCont(head match {
     case op: ast.Id if syntax.isPrefix(op) =>
       for rhs <- parseNextExpr(op, tail, sourceName, syntax)
       yield ast.Uniop(op, rhs)
 
+    case paren: ast.OpenParen =>
+      for
+        inner <- parseExpr(tail.next, tail, sourceName, syntax)
+        _ <- eat[ast.CloseParen](paren, tail)
+      yield
+        inner
+
     case lit: ast.Literal =>
-      tail.headOption match {
-        case Some(op: ast.Id) if syntax.isPostfix(op) =>
-          tail.next
-          Right(ast.Uniop(op, lit))
+      Right(lit)
+  }, tail, sourceName, syntax)
 
-        case Some(op: ast.Id) if syntax.isInfix(op) =>
-          for rhs <- parseNextExpr(op, skip(tail), sourceName, syntax)
-          yield
-            rhs match {
-              case ast.Binop(nextLhs, nextOp, nextRhs) if syntax.isInfix(nextOp) &&
-                syntax.infixPrecedence(op) > syntax.infixPrecedence(nextOp) =>
-                  ast.Binop(ast.Binop(lit, op, nextLhs), nextOp, nextRhs)
+def parseExprCont(
+  currRes: Either[ast.SyntaxErr, ast.Expr],
+  tail: BufferedIterator[ast.Token],
+  sourceName: String,
+  syntax: Syntax,
+): Either[ast.SyntaxErr, ast.Expr] =
+  currRes.flatMap { curr => parseExprCont(curr, tail, sourceName, syntax) }
 
-              case _ => ast.Binop(lit, op, rhs)
-            }
+def parseExprCont(
+  curr: ast.Expr,
+  tail: BufferedIterator[ast.Token],
+  sourceName: String,
+  syntax: Syntax,
+): Either[ast.SyntaxErr, ast.Expr] =
+  tail.headOption match {
+    case Some(op: ast.Id) if syntax.isPostfix(op) =>
+      tail.next
+      Right(ast.Uniop(op, curr))
 
-        case Some(paren: ast.OpenParen) =>
-          parseNextExprsByUntil[ast.Comma, ast.CloseParen](paren, skip(tail), sourceName, syntax).map { args =>
-            ast.App(lit, args)
-          }
+    case Some(op: ast.Id) if syntax.isInfix(op) =>
+      for rhs <- parseNextExpr(op, skip(tail), sourceName, syntax)
+      yield
+        rhs match {
+          case ast.Binop(nextLhs, nextOp, nextRhs) if syntax.isInfix(nextOp) &&
+            syntax.infixPrecedence(op) > syntax.infixPrecedence(nextOp) =>
+              ast.Binop(ast.Binop(curr, op, nextLhs), nextOp, nextRhs)
 
-        case Some(_) => Right(lit)
-        case None => Right(lit)
-      }
+          case _ => ast.Binop(curr, op, rhs)
+        }
+
+    case Some(paren: ast.OpenParen) =>
+      parseExprCont(parseNextExprsByUntil[ast.Comma, ast.CloseParen](paren, skip(tail), sourceName, syntax).map { args =>
+        ast.App(curr, args)
+      }, tail, sourceName, syntax)
+
+    case Some(_) => Right(curr)
+    case None => Right(curr)
   }
 
 def parseNextExprsByUntil[By: ClassTag, Until: ClassTag](
@@ -75,13 +98,13 @@ def parseNextExprsByUntil[By: ClassTag, Until: ClassTag](
   }
 
 def parseNextExpr(head: ast.Token, tail: BufferedIterator[ast.Token], sourceName: String, syntax: Syntax): Either[ast.SyntaxErr, ast.Expr] =
-  tail.headOption match {
+  parseExprCont(tail.headOption match {
     case Some(_) =>
       parseExpr(tail.next, tail, sourceName, syntax)
 
     case None =>
       Left(ast.UnexpectedEofErr(head))
-  }
+  }, tail, sourceName, syntax)
 
 def tokenize(sourceName: String, sourceString: String, syntax: Syntax): Either[ast.SyntaxErr, List[ast.Token]] =
   tokenize(sourceName, sourceString.iterator.zipWithIndex.buffered, syntax)
@@ -94,14 +117,14 @@ def tokenize(sourceName: String, sourceStream: BufferedIterator[(Char, Int)], sy
 
 def nextToken(head: Char, tail: BufferedIterator[(Char, Int)], loc: ast.Location, syntax: Syntax): Either[ast.SyntaxErr, ast.Token] =
   head match {
-    case ',' => Right(ast.Comma(loc))
-    case '.' => Right(ast.Dot(loc))
-    case '(' => Right(ast.OpenParen(loc))
-    case ')' => Right(ast.CloseParen(loc))
-    case '{' => Right(ast.OpenCurlyParen(loc))
-    case '}' => Right(ast.CloseCurlyParen(loc))
-    case '[' => Right(ast.OpenSquareBraket(loc))
-    case ']' => Right(ast.CloseSquareBraket(loc))
+    case Tokens.COMMA => Right(ast.Comma(loc))
+    case Tokens.DOT => Right(ast.Dot(loc))
+    case Tokens.OPENPAREN => Right(ast.OpenParen(loc))
+    case Tokens.CLOSEPAREN => Right(ast.CloseParen(loc))
+    case Tokens.OPENCURLYBRAKET => Right(ast.OpenCurlyParen(loc))
+    case Tokens.CLOSECURLYPAREN => Right(ast.CloseCurlyParen(loc))
+    case Tokens.OPENSQUAREBRAKET => Right(ast.OpenSquareBraket(loc))
+    case Tokens.CLOSESQUAREBRAKET => Right(ast.CloseSquareBraket(loc))
 
     case head if isNumHead(head) =>
       val rest = takeWhile(tail, isNumTail).mkString
@@ -119,14 +142,36 @@ def nextToken(head: Char, tail: BufferedIterator[(Char, Int)], loc: ast.Location
       Right(ast.Id(lexeme, loc))
 
     case head =>
-      val rest = takeWhile(tail, and(not(isIdTail), not(isWhitespace))).mkString
+      val rest = takeWhile(tail, isUnknownTail).mkString
       val lexeme = head +: rest
 
       Right(ast.Id(lexeme, loc))
   }
 
 
-// Syntax extensions
+// Syntax definition and extensions
+
+object Tokens {
+  val COMMA = ','
+  val DOT = '.'
+  val OPENPAREN = '('
+  val CLOSEPAREN = ')'
+  val OPENCURLYBRAKET = '{'
+  val CLOSECURLYPAREN = '}'
+  val OPENSQUAREBRAKET = '['
+  val CLOSESQUAREBRAKET = ']'
+
+  val all = Seq(
+    COMMA,
+    DOT,
+    OPENPAREN,
+    CLOSEPAREN,
+    OPENCURLYBRAKET,
+    CLOSECURLYPAREN,
+    OPENSQUAREBRAKET,
+    CLOSESQUAREBRAKET,
+  )
+}
 
 case class Syntax(
   prefix: Map[String, Int] = Map.empty,
@@ -189,6 +234,9 @@ val isIdTail = and(not(isWhitespace),
                       is('_')))
 val isIdHead = and(isIdTail,
                    not(isNumeric))
+val isUnknownTail = and(not(isIdTail),
+                        not(isWhitespace),
+                        not(oneof(Tokens.all:_*)))
 
 
 // Predicate/combinator stream processors
@@ -207,6 +255,16 @@ def takeWhile[T](source: BufferedIterator[(T, _)], pred: Pred[T]): List[T] =
 def skip[T](it: BufferedIterator[T]): BufferedIterator[T] =
   it.next
   it
+
+def eat[T: ClassTag](head: ast.Token, tail: BufferedIterator[ast.Token]): Either[ast.SyntaxErr, T] =
+  tail.headOption match {
+    case Some(token: T) =>
+      tail.next
+      Right(token)
+
+    case Some(unexpected) => Left(ast.UnexpectedTokenErr[T](unexpected))
+    case None => Left(ast.UnexpectedEofErr(head))
+  }
 
 implicit class Eithers[L, R](val eithers: Iterator[Either[L, R]]) {
   /** Converts an [[Iterator[Either[L, R]]]] into an [[Either[L, List[R]]]].
