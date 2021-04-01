@@ -121,7 +121,7 @@ def nextToken(head: Char, tail: BufferedIterator[(Char, Int)], loc: ast.Location
     case Tokens.DOT => Right(ast.Dot(loc))
     case Tokens.OPENPAREN => Right(ast.OpenParen(loc))
     case Tokens.CLOSEPAREN => Right(ast.CloseParen(loc))
-    case Tokens.OPENCURLYBRAKET => Right(ast.OpenCurlyParen(loc))
+    case Tokens.OPENCURLYPAREN => Right(ast.OpenCurlyParen(loc))
     case Tokens.CLOSECURLYPAREN => Right(ast.CloseCurlyParen(loc))
     case Tokens.OPENSQUAREBRAKET => Right(ast.OpenSquareBraket(loc))
     case Tokens.CLOSESQUAREBRAKET => Right(ast.CloseSquareBraket(loc))
@@ -156,7 +156,7 @@ object Tokens {
   val DOT = '.'
   val OPENPAREN = '('
   val CLOSEPAREN = ')'
-  val OPENCURLYBRAKET = '{'
+  val OPENCURLYPAREN = '{'
   val CLOSECURLYPAREN = '}'
   val OPENSQUAREBRAKET = '['
   val CLOSESQUAREBRAKET = ']'
@@ -166,7 +166,7 @@ object Tokens {
     DOT,
     OPENPAREN,
     CLOSEPAREN,
-    OPENCURLYBRAKET,
+    OPENCURLYPAREN,
     CLOSECURLYPAREN,
     OPENSQUAREBRAKET,
     CLOSESQUAREBRAKET,
