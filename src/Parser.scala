@@ -1,4 +1,4 @@
-package bisquit
+package sourdough
 package parser
 
 import ast.{Token, Expr, SyntaxErr => Err}

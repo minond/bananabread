@@ -1,4 +1,4 @@
-package bisquit
+package sourdough
 
 import parser.{tokenize, parse, Syntax}
 
