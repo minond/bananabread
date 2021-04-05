@@ -8,6 +8,7 @@ lazy val root = project
 
     scalaVersion := dottyVersion,
     scalaSource in Test := baseDirectory.value / "test",
+    mainClass in (Compile, run) := Some("sourdough.Main")
 
     // libraryDependencies += "org.scalactic" %% "scalactic" % "3.2.0",
     // libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.0" % Test,
