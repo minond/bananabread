@@ -31,3 +31,4 @@ def main(args: Array[String]) =
   println(parse("<stdin>", "1 + 2 * 3", syntax))
   println(parse("<stdin>", "1 + (2 * 3)", syntax))
   println(parse("<stdin>", "genfunc(a, b)(c, d, 1 + 2) + (2!)!", syntax))
+  println(parse("<stdin>", "fn(1, func (a, b, c) = 3.14 * a + a * a)(1, 2, 3 + 4) + 5", syntax))

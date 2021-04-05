@@ -21,6 +21,14 @@ def parse(sourceName: String, tokens: Tokens, syntax: Syntax): Either[Err, List[
 
 def parseExpr(head: Token, tail: Tokens, sourceName: String, syntax: Syntax): Either[Err, Expr] =
   parseExprCont(head match {
+    case func: ast.Id if Word.isFunc(func) =>
+      for
+        args <- parseNextExprsByUntil[ast.Comma, ast.CloseParen](func, skip(tail), sourceName, syntax)
+        eq <- eat(Word.EQ, func, tail)
+        body <- parseNextExpr(eq, tail, sourceName, syntax)
+      yield
+        ast.Lambda(args, body)
+
     case op: ast.Id if syntax.isPrefix(op) =>
       for rhs <- parseNextExpr(op, tail, sourceName, syntax)
       yield ast.Uniop(op, rhs)
@@ -167,6 +175,15 @@ object Tokens {
   )
 }
 
+object Word {
+  val FUNC = "func"
+  val EQ = "="
+
+  def is(id: ast.Id, word: String) = id.lexeme == word
+  def isFunc(id: ast.Id) = is(id, FUNC)
+  def isEq(id: ast.Id) = is(id, EQ)
+}
+
 case class Syntax(
   prefix: Map[String, Int] = Map.empty,
   infix: Map[String, Int] = Map.empty,
@@ -257,6 +274,16 @@ def eat[T: ClassTag](head: Token, tail: Tokens): Either[Err, T] =
       Right(token)
 
     case Some(unexpected) => Left(ast.UnexpectedTokenErr[T](unexpected))
+    case None => Left(ast.UnexpectedEofErr(head))
+  }
+
+def eat(word: String, head: Token, tail: Tokens): Either[Err, Token] =
+  tail.headOption match {
+    case Some(id: ast.Id) if Word.is(id, word) =>
+      tail.next
+      Right(id)
+
+    case Some(unexpected) => Left(ast.UnexpectedTokenErr(unexpected))
     case None => Left(ast.UnexpectedEofErr(head))
   }
 

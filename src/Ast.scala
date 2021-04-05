@@ -34,6 +34,7 @@ case class Id(lexeme: String, loc: Location) extends Token(loc) with Expr, Liter
 case class Binop(lhs: Expr, op: Id, rhs: Expr) extends Expr with At(op.location), Print(s"($op $lhs $rhs)")
 case class Uniop(op: Id, operand: Expr) extends Expr with At(op.location), Print(s"($op $operand)")
 case class App(lambda: Expr, args: List[Expr]) extends Expr with At(lambda.location), Print(s"(${(lambda +: args).mkString(" ")})")
+case class Lambda(args: List[Expr], body: Expr) extends Expr with At(body.location), Print(s"{${args.mkString(", ")} = $body}")
 
 
 // Errors
