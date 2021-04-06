@@ -10,5 +10,5 @@ lazy val root = project
     scalaSource in Test := baseDirectory.value / "test",
 
     // libraryDependencies += "org.scalactic" %% "scalactic" % "3.2.0",
-    // libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.0" % Test,
+    libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.4" % Test,
   )
