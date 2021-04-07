@@ -16,10 +16,10 @@ class ParserTests extends AnyFlatSpec with should.Matchers:
                        .withInfix(2, "-")
                        .withPostfix(10, "!")
 
-  def exprsOf(code: String, syntax: Syntax = stdOps): List[String] =
-    parse("<test>", code, syntax).right.get.map(_.toString)
+  def exprsOf(code: String, syntax: Syntax = stdOps) =
+    parse("<test>", code, syntax).getOrElse(???).map(_.toString)
 
-  def astOf(code: String, syntax: Syntax = stdOps): String =
+  def astOf(code: String, syntax: Syntax = stdOps) =
     exprsOf(code, syntax).head
 
   it should "parse prefix operators" in {

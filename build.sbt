@@ -9,6 +9,6 @@ lazy val root = project
     scalaVersion := dottyVersion,
     scalaSource in Test := baseDirectory.value / "test",
 
-    // libraryDependencies += "org.scalactic" %% "scalactic" % "3.2.0",
     libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.4" % Test,
+    libraryDependencies += "org.scalacheck" %% "scalacheck" % "1.15.3" % Test,
   )
