@@ -21,6 +21,16 @@ def parse(sourceName: String, tokens: Tokens, syntax: Syntax): Either[Err, List[
 
 def parseExpr(head: Token, tail: Tokens, sourceName: String, syntax: Syntax): Either[Err, Expr] =
   parseExprCont(head match {
+    case op: ast.Id if syntax.isPrefix(op) =>
+      for rhs <- parseExpr(tail.next, tail, sourceName, syntax)
+      yield ast.Uniop(op, rhs)
+
+    case _ =>
+      parsePrimary(head, tail, sourceName, syntax)
+  }, tail, sourceName, syntax)
+
+def parsePrimary(head: Token, tail: Tokens, sourceName: String, syntax: Syntax): Either[Err, Expr] =
+  head match {
     case func: ast.Id if Word.isFunc(func) =>
       for
         args <- parseNextExprsByUntil[ast.Comma, ast.CloseParen](func, skip(tail), sourceName, syntax)
@@ -28,10 +38,6 @@ def parseExpr(head: Token, tail: Tokens, sourceName: String, syntax: Syntax): Ei
         body <- parseNextExpr(eq, tail, sourceName, syntax)
       yield
         ast.Lambda(args, body)
-
-    case op: ast.Id if syntax.isPrefix(op) =>
-      for rhs <- parseNextExpr(op, tail, sourceName, syntax)
-      yield ast.Uniop(op, rhs)
 
     case paren: ast.OpenParen =>
       for
@@ -42,7 +48,10 @@ def parseExpr(head: Token, tail: Tokens, sourceName: String, syntax: Syntax): Ei
 
     case lit: ast.Literal =>
       Right(lit)
-  }, tail, sourceName, syntax)
+
+    case unexpected =>
+      Left(ast.UnexpectedTokenErr(unexpected))
+  }
 
 def parseExprCont(currRes: Either[Err, Expr], tail: Tokens, sourceName: String, syntax: Syntax): Either[Err, Expr] =
   currRes.flatMap { curr => parseExprCont(curr, tail, sourceName, syntax) }
@@ -100,13 +109,13 @@ def parseNextExprsByUntil[By: ClassTag, Until: ClassTag](
   }
 
 def parseNextExpr(head: Token, tail: Tokens, sourceName: String, syntax: Syntax): Either[Err, Expr] =
-  parseExprCont(tail.headOption match {
+  tail.headOption match {
     case Some(_) =>
       parseExpr(tail.next, tail, sourceName, syntax)
 
     case None =>
       Left(ast.UnexpectedEofErr(head))
-  }, tail, sourceName, syntax)
+  }
 
 def tokenize(sourceName: String, sourceString: String, syntax: Syntax): Either[Err, List[Token]] =
   tokenize(sourceName, sourceString.iterator.zipWithIndex.buffered, syntax)
