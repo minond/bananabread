@@ -66,11 +66,11 @@ def parseExprCont(curr: Expr, tail: Tokens, sourceName: String, syntax: Syntax):
       for rhs <- parseNextExpr(op, skip(tail), sourceName, syntax)
       yield
         rhs match {
-          case ast.Binop(nextLhs, nextOp, nextRhs) if syntax.isInfix(nextOp) &&
+          case ast.Binop(nextOp, nextLhs, nextRhs) if syntax.isInfix(nextOp) &&
             syntax.infixPrecedence(op) > syntax.infixPrecedence(nextOp) =>
-              ast.Binop(ast.Binop(curr, op, nextLhs), nextOp, nextRhs)
+              ast.Binop(nextOp, ast.Binop(op, curr, nextLhs), nextRhs)
 
-          case _ => ast.Binop(curr, op, rhs)
+          case _ => ast.Binop(op, curr, rhs)
         }
 
     case Some(paren: ast.OpenParen) =>

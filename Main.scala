@@ -36,8 +36,10 @@ def main(args: Array[String]) =
   println(parse("<stdin>", "abc(1, 2, 3)!", syntax))
   println(parse("<stdin>", "(1 + 2) * 3", syntax))
   println(parse("<stdin>", "1 + 2 * 3", syntax))
-  println(parse("<stdin>", "1 + (2 * 3)", syntax)) // Breaks when * is not an infix operator.
+  println(parse("<stdin>", "1 + (2 * 3)", syntax))
   println(parse("<stdin>", "genfunc(a, b)(c, d, 1 + 2) + (2!)!", syntax))
   println(parse("<stdin>", "fn(1, func (a, b, c) = 3.14 * a + a * a)(1, 2, 3 + 4) + 5", syntax))
-  println(parse("<stdin>", "*a * *b", syntax)) // FIXED: Does not parse first prefix operator correctly.
+  println(parse("<stdin>", "*a * *b", syntax))
   println(parse("<stdin>", "∀ n ∈ N : n^2 > n", syntax))
+  println(parse("<stdin>", "fn(1, func (a, b, c) = 3.14 * a + a * a)(1, 2, 3 + 4) + 5", syntax).map(ir1.lift))
+  println(parse("<stdin>", "∀ n ∈ N : n^2 > n", syntax).map(ir1.lift))
