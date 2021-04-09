@@ -54,10 +54,9 @@ trait At(loc: Location) { def location = loc }
 
 // Debugging and printing
 
-trait Print(inner: String = "") { self =>
-  override def toString =
-    self match {
-      case _: Expr => inner
-      case _ => getClass.getSimpleName.toUpperCase
-    }
-}
+trait Print(inner: String = ""):
+  self =>
+    override def toString =
+      self match
+        case _: Expr => inner
+        case _ => getClass.getSimpleName.toUpperCase

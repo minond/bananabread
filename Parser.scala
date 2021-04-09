@@ -21,43 +21,41 @@ def parse(sourceName: String, tokens: Tokens, syntax: Syntax): Either[Err, List[
 
 def parseExpr(head: Token, tail: Tokens, sourceName: String, syntax: Syntax): Either[Err, Expr] =
   parseExprCont(head match {
-    case op: ast.Id if syntax.isPrefix(op) =>
-      for rhs <- parseExpr(tail.next, tail, sourceName, syntax)
-      yield ast.Uniop(op, rhs)
-
-    case _ =>
-      parsePrimary(head, tail, sourceName, syntax)
+    case op: ast.Id if syntax.isPrefix(op) => parseUniop(op, tail, sourceName, syntax)
+    case _ => parsePrimary(head, tail, sourceName, syntax)
   }, tail, sourceName, syntax)
 
+def parseUniop(op: ast.Id, tail: Tokens, sourceName: String, syntax: Syntax): Either[Err, ast.Uniop] =
+  for rhs <- parseExpr(tail.next, tail, sourceName, syntax)
+  yield ast.Uniop(op, rhs)
+
 def parsePrimary(head: Token, tail: Tokens, sourceName: String, syntax: Syntax): Either[Err, Expr] =
-  head match {
-    case func: ast.Id if Word.isFunc(func) =>
-      for
-        args <- parseNextExprsByUntil[ast.Comma, ast.CloseParen](func, skip(tail), sourceName, syntax)
-        eq <- eat(Word.EQ, func, tail)
-        body <- parseNextExpr(eq, tail, sourceName, syntax)
-      yield
-        ast.Lambda(args, body)
+  head match
+    case func: ast.Id if Word.isFunc(func) => parseLambda(func, tail, sourceName, syntax)
+    case paren: ast.OpenParen => parseGroup(paren, tail, sourceName, syntax)
+    case lit: ast.Literal => Right(lit)
+    case unexpected => Left(ast.UnexpectedTokenErr(unexpected))
 
-    case paren: ast.OpenParen =>
-      for
-        inner <- parseExpr(tail.next, tail, sourceName, syntax)
-        _ <- eat[ast.CloseParen](paren, tail)
-      yield
-        inner
+def parseLambda(func: Token, tail: Tokens, sourceName: String, syntax: Syntax): Either[Err, ast.Lambda] =
+  for
+    args <- parseNextExprsByUntil[ast.Comma, ast.CloseParen](func, skip(tail), sourceName, syntax)
+    eq <- eat(Word.EQ, func, tail)
+    body <- parseNextExpr(eq, tail, sourceName, syntax)
+  yield
+    ast.Lambda(args, body)
 
-    case lit: ast.Literal =>
-      Right(lit)
-
-    case unexpected =>
-      Left(ast.UnexpectedTokenErr(unexpected))
-  }
+def parseGroup(paren: Token, tail: Tokens, sourceName: String, syntax: Syntax): Either[Err, Expr] =
+  for
+    inner <- parseExpr(tail.next, tail, sourceName, syntax)
+    _ <- eat[ast.CloseParen](paren, tail)
+  yield
+    inner
 
 def parseExprCont(currRes: Either[Err, Expr], tail: Tokens, sourceName: String, syntax: Syntax): Either[Err, Expr] =
   currRes.flatMap { curr => parseExprCont(curr, tail, sourceName, syntax) }
 
 def parseExprCont(curr: Expr, tail: Tokens, sourceName: String, syntax: Syntax): Either[Err, Expr] =
-  tail.headOption match {
+  tail.headOption match
     case Some(op: ast.Id) if syntax.isPostfix(op) =>
       tail.next
       Right(ast.Uniop(op, curr))
@@ -65,13 +63,12 @@ def parseExprCont(curr: Expr, tail: Tokens, sourceName: String, syntax: Syntax):
     case Some(op: ast.Id) if syntax.isInfix(op) =>
       for rhs <- parseNextExpr(op, skip(tail), sourceName, syntax)
       yield
-        rhs match {
+        rhs match
           case ast.Binop(nextOp, nextLhs, nextRhs) if syntax.isInfix(nextOp) &&
             syntax.infixPrecedence(op) > syntax.infixPrecedence(nextOp) =>
               ast.Binop(nextOp, ast.Binop(op, curr, nextLhs), nextRhs)
 
           case _ => ast.Binop(op, curr, rhs)
-        }
 
     case Some(paren: ast.OpenParen) =>
       parseExprCont(parseNextExprsByUntil[ast.Comma, ast.CloseParen](paren, skip(tail), sourceName, syntax).map { args =>
@@ -80,7 +77,6 @@ def parseExprCont(curr: Expr, tail: Tokens, sourceName: String, syntax: Syntax):
 
     case Some(_) => Right(curr)
     case None => Right(curr)
-  }
 
 def parseNextExprsByUntil[By: ClassTag, Until: ClassTag](
   head: Token,
@@ -89,7 +85,7 @@ def parseNextExprsByUntil[By: ClassTag, Until: ClassTag](
   syntax: Syntax,
   acc: List[Expr] = List.empty
 ): Either[Err, List[Expr]] =
-  tail.headOption match {
+  tail.headOption match
     case Some(_: Until) =>
       tail.next
       Right(acc)
@@ -106,16 +102,11 @@ def parseNextExprsByUntil[By: ClassTag, Until: ClassTag](
 
     case None =>
       Left(ast.UnexpectedEofErr(head))
-  }
 
 def parseNextExpr(head: Token, tail: Tokens, sourceName: String, syntax: Syntax): Either[Err, Expr] =
-  tail.headOption match {
-    case Some(_) =>
-      parseExpr(tail.next, tail, sourceName, syntax)
-
-    case None =>
-      Left(ast.UnexpectedEofErr(head))
-  }
+  tail.headOption match
+    case Some(_) => parseExpr(tail.next, tail, sourceName, syntax)
+    case None => Left(ast.UnexpectedEofErr(head))
 
 def tokenize(sourceName: String, sourceString: String, syntax: Syntax): Either[Err, List[Token]] =
   tokenize(sourceName, sourceString.iterator.zipWithIndex.buffered, syntax)
@@ -127,7 +118,7 @@ def tokenize(sourceName: String, sourceStream: BufferedIterator[(Char, Int)], sy
     .squished
 
 def nextToken(head: Char, tail: BufferedIterator[(Char, Int)], loc: ast.Location, syntax: Syntax): Either[Err, Token] =
-  head match {
+  head match
     case Tokens.COMMA => Right(ast.Comma(loc))
     case Tokens.DOT => Right(ast.Dot(loc))
     case Tokens.OPENPAREN => Right(ast.OpenParen(loc))
@@ -141,10 +132,9 @@ def nextToken(head: Char, tail: BufferedIterator[(Char, Int)], loc: ast.Location
       val rest = takeWhile(tail, isNumTail).mkString
       val lexeme = head +: rest
 
-      Try { lexeme.toFloat } match {
+      Try { lexeme.toFloat } match
         case Failure(_) => Left(ast.BadNumErr(lexeme, loc))
         case Success(_) => Right(ast.Num(lexeme, loc))
-      }
 
     case head if isIdHead(head) =>
       val rest = takeWhile(tail, isIdTail).mkString
@@ -157,7 +147,6 @@ def nextToken(head: Char, tail: BufferedIterator[(Char, Int)], loc: ast.Location
       val lexeme = head +: rest
 
       Right(ast.Id(lexeme, loc))
-  }
 
 
 // Syntax definition and extensions
@@ -277,24 +266,22 @@ def skip[T](it: BufferedIterator[T]): BufferedIterator[T] =
   it
 
 def eat[T: ClassTag](head: Token, tail: Tokens): Either[Err, T] =
-  tail.headOption match {
+  tail.headOption match
     case Some(token: T) =>
       tail.next
       Right(token)
 
     case Some(unexpected) => Left(ast.UnexpectedTokenErr[T](unexpected))
     case None => Left(ast.UnexpectedEofErr(head))
-  }
 
 def eat(word: String, head: Token, tail: Tokens): Either[Err, Token] =
-  tail.headOption match {
+  tail.headOption match
     case Some(id: ast.Id) if Word.is(id, word) =>
       tail.next
       Right(id)
 
     case Some(unexpected) => Left(ast.UnexpectedTokenErr(unexpected))
     case None => Left(ast.UnexpectedEofErr(head))
-  }
 
 implicit class Eithers[L, R](val eithers: Iterator[Either[L, R]]) {
   /** Converts an [[Iterator[Either[L, R]]]] into an [[Either[L, List[R]]]].
