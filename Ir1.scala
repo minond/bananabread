@@ -8,11 +8,11 @@ package ir1
 sealed trait Ir1:
   self =>
     override def toString: String = self match
-      case Num(expr) => s"(num `${expr.toString}`)"
-      case Str(expr) => s"(str `${expr.toString}`)"
-      case Id(expr) => s"(id `${expr.toString}`)"
-      case App(lambda, args, _) => s"(app lambda: ${lambda}, args: ${args.mkString(", ")})"
-      case Lambda(params, body, _) => s"(lambda params: ${params.mkString(", ")}, body: $body)"
+      case Num(expr) => s"(num ${expr.toString})"
+      case Str(expr) => s"(str ${expr.toString})"
+      case Id(expr) => s"(id ${expr.toString})"
+      case App(lambda, args, _) => s"(app lambda: ${lambda} args: (${args.mkString(", ")}))"
+      case Lambda(params, body, _) => s"(lambda params: (${params.mkString(", ")}) body: $body)"
 
 case class Num(expr: ast.Expr) extends Ir1
 case class Str(expr: ast.Expr) extends Ir1
