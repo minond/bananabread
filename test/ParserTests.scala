@@ -7,29 +7,12 @@ import matchers._
 
 import parser.{parse, Syntax}
 
+
 class ParserTests extends AnyFlatSpec with should.Matchers:
-  val stdOps = Syntax().withPrefix(0, "-")
-                       .withPrefix(0, "∀")
-                       .withInfix(4, "^")
-                       .withInfix(3, "*")
-                       .withInfix(3, "/")
-                       .withInfix(2, "+")
-                       .withInfix(2, "-")
-                       .withInfix(1, ":")
-                       .withInfix(2, "∈")
-                       .withInfix(1, ">")
-                       .withPostfix(10, "!")
-
-  def exprsOf(code: String, syntax: Syntax = stdOps) =
-    parse("<test>", code, syntax).getOrElse(???).map(_.toString)
-
   it should "parse numbers, characters, words" in {
     exprsOf("1 2 3 a b c + - * testing123") shouldEqual
       List("1", "2", "3", "a", "b", "(+ c (- *))", "testing123")
   }
-
-  def astOf(code: String, syntax: Syntax = stdOps) =
-    exprsOf(code, syntax).head
 
   it should "parse prefix operators" in {
     astOf("-b") shouldEqual "(- b)"
