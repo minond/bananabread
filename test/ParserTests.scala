@@ -23,6 +23,11 @@ class ParserTests extends AnyFlatSpec with should.Matchers:
   def exprsOf(code: String, syntax: Syntax = stdOps) =
     parse("<test>", code, syntax).getOrElse(???).map(_.toString)
 
+  it should "parse numbers, characters, words" in {
+    exprsOf("1 2 3 a b c + - * testing123") shouldEqual
+      List("1", "2", "3", "a", "b", "(+ c (- *))", "testing123")
+  }
+
   def astOf(code: String, syntax: Syntax = stdOps) =
     exprsOf(code, syntax).head
 
@@ -40,4 +45,12 @@ class ParserTests extends AnyFlatSpec with should.Matchers:
 
   it should "parse complex expressions with binary operators of different precedence" in {
     astOf("∀ n ∈ N : n^2 > n") shouldEqual "(∀ (: (∈ n N) (> (^ n 2) n)))"
+  }
+
+  it should "parse lambdas" in {
+    astOf("func (a, b, c) = a + b + c") shouldEqual "{a, b, c = (+ a (+ b c))}"
+  }
+
+  it should "parse function application" in {
+    astOf("test(1, 2, 3 + 4)") shouldEqual "(test 1 2 (+ 3 4))"
   }
