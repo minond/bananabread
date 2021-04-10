@@ -26,7 +26,7 @@ def parseExpr(head: Token, tail: Tokens, sourceName: String, syntax: Syntax): Ei
   }, tail, sourceName, syntax)
 
 def parseUniop(op: ast.Id, tail: Tokens, sourceName: String, syntax: Syntax): Either[Err, ast.Uniop] =
-  for rhs <- parseExpr(tail.next, tail, sourceName, syntax)
+  for rhs <- parsePrimary(tail.next, tail, sourceName, syntax)
   yield ast.Uniop(op, rhs)
 
 def parsePrimary(head: Token, tail: Tokens, sourceName: String, syntax: Syntax): Either[Err, Expr] =

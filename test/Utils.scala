@@ -5,6 +5,7 @@ import parser.{parse, Syntax}
 
 val stdOps = Syntax().withPrefix(0, "-")
                      .withPrefix(0, "∀")
+                     .withPrefix(0, "*")
                      .withInfix(4, "^")
                      .withInfix(3, "*")
                      .withInfix(3, "/")
