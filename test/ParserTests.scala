@@ -54,3 +54,8 @@ class ParserTests extends AnyFlatSpec with should.Matchers:
   it should "parse function application" in {
     astOf("test(1, 2, 3 + 4)") shouldEqual "(test 1 2 (+ 3 4))"
   }
+
+  it should "parse a complex expression" in {
+    astOf("fn(1, func (a, b, c) = 3.14 * a + a * a)(1, 2, 3 + 4) + 5") shouldEqual
+      "(+ ((fn 1 {a, b, c = (+ (* 3.14 a) (* a a))}) 1 2 (+ 3 4)) 5)"
+  }
