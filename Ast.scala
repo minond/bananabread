@@ -35,6 +35,12 @@ case class Binop(op: Id, lhs: Expr, rhs: Expr) extends Expr with At(op.location)
 case class Uniop(op: Id, operand: Expr) extends Expr with At(op.location), Print(s"($op $operand)")
 case class App(lambda: Expr, args: List[Expr]) extends Expr with At(lambda.location), Print(s"(${(lambda +: args).mkString(" ")})")
 case class Lambda(params: List[Expr], body: Expr) extends Expr with At(body.location), Print(s"{${params.mkString(", ")} = $body}")
+case class Cond(start: Token, cond: Expr, pass: Expr, fail: Expr) extends Expr with At(start.location), Print(s"if $cond then $pass else $fail")
+case class Let(start: Token, bindings: List[Binding], body: Expr) extends Expr with At(start.location), Print(s"let ${bindings.mkString(", ")} in $body")
+
+
+// Aux expressions
+case class Binding(label: Id, value: Expr) extends At(label.location), Print(s"$label = $value")
 
 
 // Errors
