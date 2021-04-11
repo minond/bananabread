@@ -3,7 +3,7 @@ package ty
 
 
 sealed trait Type
-case object Num extends Type
+case object I32 extends Type
 case object Str extends Type
 case class Var(id: Int) extends Type
 case class Lambda(in: List[Type], out: List[Type]) extends Type
