@@ -8,6 +8,8 @@ expr = prefix-op primary
 
 primary = "(" expr ")"
         | lambda
+        | cond
+        | let
         | literal
         ;
 
@@ -16,6 +18,12 @@ lambda = "func" "(" lambda-args ")" "=" expr
 
 lambda-args = [ lambda-arg "," { lambda-args } ]
             ;
+
+cond = "if" expr "then" expr "else" expr
+     ;
+
+let = "let" { id1 "=" expr } "in" expr
+    ;
 
 literal = id1
         | id2

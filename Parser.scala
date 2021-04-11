@@ -31,18 +31,30 @@ def parseUniop(op: ast.Id, tail: Tokens, sourceName: String, syntax: Syntax): Ei
 
 def parsePrimary(head: Token, tail: Tokens, sourceName: String, syntax: Syntax): Either[Err, Expr] =
   head match
-    case func: ast.Id if Word.isFunc(func) => parseLambda(func, tail, sourceName, syntax)
+    case word: ast.Id if Word.isFunc(word) => parseLambda(word, tail, sourceName, syntax)
+    case word: ast.Id if Word.isIf(word) => parseCond(word, tail, sourceName, syntax)
+    // case word: ast.Id if Word.isLet(word) => parseLet(word, tail, sourceName, syntax)
     case paren: ast.OpenParen => parseGroup(paren, tail, sourceName, syntax)
     case lit: ast.Literal => Right(lit)
     case unexpected => Left(ast.UnexpectedTokenErr(unexpected))
 
-def parseLambda(func: Token, tail: Tokens, sourceName: String, syntax: Syntax): Either[Err, ast.Lambda] =
+def parseLambda(start: Token, tail: Tokens, sourceName: String, syntax: Syntax): Either[Err, ast.Lambda] =
   for
-    args <- parseNextExprsByUntil[ast.Comma, ast.CloseParen](func, skip(tail), sourceName, syntax)
-    eq <- eat(Word.EQ, func, tail)
+    args <- parseNextExprsByUntil[ast.Comma, ast.CloseParen](start, skip(tail), sourceName, syntax)
+    eq <- eat(Word.EQ, start, tail)
     body <- parseNextExpr(eq, tail, sourceName, syntax)
   yield
     ast.Lambda(args, body)
+
+def parseCond(start: Token, tail: Tokens, sourceName: String, syntax: Syntax): Either[Err, ast.Cond] =
+  for
+    cond <- parseExpr(tail.next, tail, sourceName, syntax)
+    _ <- eat(Word.THEN, start, tail)
+    pass <- parseExpr(tail.next, tail, sourceName, syntax)
+    _ <- eat(Word.ELSE, start, tail)
+    fail <- parseExpr(tail.next, tail, sourceName, syntax)
+  yield
+    ast.Cond(start, cond, pass, fail)
 
 def parseGroup(paren: Token, tail: Tokens, sourceName: String, syntax: Syntax): Either[Err, Expr] =
   for
@@ -176,10 +188,16 @@ object Tokens {
 object Word {
   val FUNC = "func"
   val EQ = "="
+  val IF = "if"
+  val THEN = "then"
+  val ELSE = "else"
+  val LET = "let"
 
   def is(id: ast.Id, word: String) = id.lexeme == word
   def isFunc(id: ast.Id) = is(id, FUNC)
   def isEq(id: ast.Id) = is(id, EQ)
+  def isIf(id: ast.Id) = is(id, IF)
+  def isLet(id: ast.Id) = is(id, LET)
 }
 
 case class Syntax(
