@@ -33,7 +33,7 @@ def parsePrimary(head: Token, tail: Tokens, sourceName: String, syntax: Syntax):
   head match
     case word: ast.Id if Word.isFunc(word) => parseLambda(word, tail, sourceName, syntax)
     case word: ast.Id if Word.isIf(word) => parseCond(word, tail, sourceName, syntax)
-    // case word: ast.Id if Word.isLet(word) => parseLet(word, tail, sourceName, syntax)
+    case word: ast.Id if Word.isLet(word) => parseLet(word, tail, sourceName, syntax)
     case paren: ast.OpenParen => parseGroup(paren, tail, sourceName, syntax)
     case lit: ast.Literal => Right(lit)
     case unexpected => Left(ast.UnexpectedTokenErr(unexpected))
@@ -55,6 +55,32 @@ def parseCond(start: Token, tail: Tokens, sourceName: String, syntax: Syntax): E
     fail <- parseExpr(tail.next, tail, sourceName, syntax)
   yield
     ast.Cond(start, cond, pass, fail)
+
+def parseLet(start: Token, tail: Tokens, sourceName: String, syntax: Syntax): Either[Err, ast.Let] =
+  for
+    bindings <- parseBindings(start, tail, sourceName, syntax)
+    _ <- eat(Word.IN, start, tail)
+    body <- parseExpr(tail.next, tail, sourceName, syntax)
+  yield
+    ast.Let(start, bindings, body)
+
+def parseBindings(start: Token, tail: Tokens, sourceName: String, syntax: Syntax): Either[Err, List[ast.Binding]] =
+  for
+    binding <- parseBinding(start, tail, sourceName, syntax)
+    next = lookahead(start, tail)
+    bindings <- if Word.isIn(next)
+                then Right(List.empty)
+                else parseBindings(start, tail, sourceName, syntax)
+  yield
+    binding +: bindings
+
+def parseBinding(start: Token, tail: Tokens, sourceName: String, syntax: Syntax): Either[Err, ast.Binding] =
+  for
+    label <- eat[ast.Id](start, tail)
+    eq <- eat(Word.EQ, label, tail)
+    value <- parseExpr(tail.next, tail, sourceName, syntax)
+  yield
+    ast.Binding(label, value)
 
 def parseGroup(paren: Token, tail: Tokens, sourceName: String, syntax: Syntax): Either[Err, Expr] =
   for
@@ -192,12 +218,17 @@ object Word {
   val THEN = "then"
   val ELSE = "else"
   val LET = "let"
+  val IN = "in"
 
-  def is(id: ast.Id, word: String) = id.lexeme == word
-  def isFunc(id: ast.Id) = is(id, FUNC)
-  def isEq(id: ast.Id) = is(id, EQ)
-  def isIf(id: ast.Id) = is(id, IF)
-  def isLet(id: ast.Id) = is(id, LET)
+  def is(token: ast.Token, word: String) = token match
+    case id: ast.Id => id.lexeme == word
+    case _ => false
+
+  def isFunc(token: ast.Token) = is(token, FUNC)
+  def isEq(token: ast.Token) = is(token, EQ)
+  def isIf(token: ast.Token) = is(token, IF)
+  def isLet(token: ast.Token) = is(token, LET)
+  def isIn(token: ast.Token) = is(token, IN)
 }
 
 case class Syntax(
@@ -304,6 +335,11 @@ def eat(word: String, head: Token, tail: Tokens): Either[Err, Token] =
 
     case Some(unexpected) => Left(ast.UnexpectedTokenErr(unexpected))
     case None => Left(ast.UnexpectedEofErr(head))
+
+def lookahead(head: Token, tail: Tokens): Token =
+  tail.headOption match
+    case None => ast.Eof(head.location)
+    case Some(token) => token
 
 implicit class Eithers[L, R](val eithers: Iterator[Either[L, R]]) {
   /** Converts an [[Iterator[Either[L, R]]]] into an [[Either[L, List[R]]]].

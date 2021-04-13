@@ -36,7 +36,7 @@ case class Uniop(op: Id, operand: Expr) extends Expr with At(op.location), Print
 case class App(lambda: Expr, args: List[Expr]) extends Expr with At(lambda.location), Print(s"(${(lambda +: args).mkString(" ")})")
 case class Lambda(params: List[Expr], body: Expr) extends Expr with At(body.location), Print(s"{${params.mkString(", ")} = $body}")
 case class Cond(start: Token, cond: Expr, pass: Expr, fail: Expr) extends Expr with At(start.location), Print(s"if $cond then $pass else $fail")
-case class Let(start: Token, bindings: List[Binding], body: Expr) extends Expr with At(start.location), Print(s"let ${bindings.mkString(", ")} in $body")
+case class Let(start: Token, bindings: List[Binding], body: Expr) extends Expr with At(start.location), Print(s"let ${bindings.mkString(" ")} in $body")
 
 
 // Aux expressions
@@ -63,6 +63,6 @@ trait At(loc: Location) { def location = loc }
 trait Print(inner: String = ""):
   self =>
     override def toString =
-      self match
-        case _: Expr => inner
-        case _ => getClass.getSimpleName.toUpperCase
+      if inner == ""
+      then getClass.getSimpleName.toUpperCase
+      else inner

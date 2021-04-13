@@ -18,6 +18,7 @@ def main(args: Array[String]) =
                      .withInfix(99, "^")
                      .withInfix(2, ":")
                      .withInfix(3, ">")
+                     .withInfix(3, "==")
                      .withPostfix(1, "!")
                      .withPostfix(1, "++")
 
@@ -44,5 +45,6 @@ def main(args: Array[String]) =
   // println(parse("<stdin>", "fn(1, func (a, b, c) = 3.14 * a + a * a)(1, 2, 3 + 4) + 5", syntax).map(ir.Typeless.lift))
   // println(parse("<stdin>", "∀ n ∈ N : n^2 > n", syntax).map(ir.Typeless.lift))
   // println(parse("<stdin>", "+(1, *(2, 3))", syntax).map(ir.Typeless.lift)) // TODO: Left(UnexpectedTokenErr(COMMA))
-  println(parse("<stdin>", "if a then b else c", syntax))
+  println(parse("<stdin>", "if a == b then b() else if a == c then c() else a()", syntax).map(ir.Typeless.lift))
+  println(parse("<stdin>", "let x = 1 y = x + 2 in x + y", syntax).map(ir.Typeless.lift))
   println(parse("<stdin>", "1", syntax).map(ir.Typeless.lift).map(node => typechecker.infer(node, Map.empty)))
