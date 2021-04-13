@@ -189,7 +189,7 @@ def nextToken(head: Char, tail: BufferedIterator[(Char, Int)], loc: ast.Location
 
 // Syntax definition and extensions
 
-object Tokens {
+object Tokens:
   val COMMA = ','
   val DOT = '.'
   val OPENPAREN = '('
@@ -209,9 +209,8 @@ object Tokens {
     OPENSQUAREBRAKET,
     CLOSESQUAREBRAKET,
   )
-}
 
-object Word {
+object Word:
   val FUNC = "func"
   val EQ = "="
   val IF = "if"
@@ -229,7 +228,6 @@ object Word {
   def isIf(token: ast.Token) = is(token, IF)
   def isLet(token: ast.Token) = is(token, LET)
   def isIn(token: ast.Token) = is(token, IN)
-}
 
 case class Syntax(
   prefix: Map[String, Int] = Map.empty,
@@ -341,7 +339,7 @@ def lookahead(head: Token, tail: Tokens): Token =
     case None => ast.Eof(head.location)
     case Some(token) => token
 
-implicit class Eithers[L, R](val eithers: Iterator[Either[L, R]]) {
+implicit class Eithers[L, R](val eithers: Iterator[Either[L, R]]):
   /** Converts an [[Iterator[Either[L, R]]]] into an [[Either[L, List[R]]]].
    */
   def squished: Either[L, List[R]] =
@@ -349,4 +347,3 @@ implicit class Eithers[L, R](val eithers: Iterator[Either[L, R]]) {
       (acc, x) =>
         acc.flatMap(xs => x.map(xs :+ _))
     }
-}

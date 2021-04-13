@@ -18,10 +18,9 @@ def infer(node: Typeless, scope: Scope): Type = node match
   case Typeless.Lambda(params, body, expr) => ???
 
 def lookup(label: String, scope: Scope): Type =
-  scope.get(label) match {
+  scope.get(label) match
     case None => fresh()
     case Some(ty) => ty
-  }
 
 val freshIds = LazyList.from(1).sliding(1)
 
