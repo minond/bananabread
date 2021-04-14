@@ -15,7 +15,7 @@ case class Cond(cond: Ir, pass: Ir, fail: Ir, expr: Expr, ty: Type) extends Ir(e
 case class Let(bindings: List[Binding], body: Ir, expr: Expr, ty: Type) extends Ir(expr, ty)
 
 case class Binding(label: ast.Id, value: Ir, expr: ast.Binding, ty: Type)
-case class TypelessBinding(label: ast.Id, value: Typeless, expr: ast.Binding)
+case class TypelessBinding(label: ast.Id, value: Typeless, expr: ast.Binding) extends ast.Print(s"binding: $label value: $value")
 
 /** Simplifies the source tree by removing all operators, leaving only
   * literals, functions, and function application.
@@ -36,7 +36,7 @@ enum Typeless:
     case Typeless.App(lambda, args, _) => s"(app lambda: ${lambda} args: (${args.mkString(" ")}))"
     case Typeless.Lambda(params, body, _) => s"(lambda params: (${params.mkString(" ")}) body: $body)"
     case Typeless.Cond(cond, pass, fail, _) => s"(if cond: $cond then: $pass else: $fail)"
-    case Typeless.Let(bindings, body, _) => s"(let bindings: ($bindings) body: $body)"
+    case Typeless.Let(bindings, body, _) => s"(let bindings: (${bindings.mkString(" ")}) body: $body)"
 
 object Typeless:
   def lift(exprs: List[Expr]): List[Typeless] =
