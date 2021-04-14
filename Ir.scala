@@ -3,6 +3,7 @@ package ir
 
 import ast.Expr
 import ty.Type
+import utils.Print
 
 
 sealed trait Ir(expr: Expr, ty: Type)
@@ -15,7 +16,7 @@ case class Cond(cond: Ir, pass: Ir, fail: Ir, expr: Expr, ty: Type) extends Ir(e
 case class Let(bindings: List[Binding], body: Ir, expr: Expr, ty: Type) extends Ir(expr, ty)
 
 case class Binding(label: ast.Id, value: Ir, expr: ast.Binding, ty: Type)
-case class TypelessBinding(label: ast.Id, value: Typeless, expr: ast.Binding) extends ast.Print(s"binding: $label value: $value")
+case class TypelessBinding(label: ast.Id, value: Typeless, expr: ast.Binding) extends Print(s"binding: $label value: $value")
 
 /** Simplifies the source tree by removing all operators, leaving only
   * literals, functions, and function application.

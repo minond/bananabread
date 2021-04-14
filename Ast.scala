@@ -1,6 +1,8 @@
 package sourdough
 package ast
 
+import utils.Print
+
 
 // Base AST
 
@@ -56,13 +58,3 @@ case class UnexpectedEofErr(prev: Located) extends SyntaxErr(prev.location)
 case class Location(source: String, offset: Int)
 trait Located { def location: Location }
 trait At(loc: Location) { def location = loc }
-
-
-// Debugging and printing
-
-trait Print(inner: String = ""):
-  self =>
-    override def toString =
-      if inner == ""
-      then getClass.getSimpleName.toUpperCase
-      else inner
