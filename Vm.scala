@@ -40,6 +40,8 @@ class Machine(instructions: Seq[Instruction]):
       stack.pop match
         case value.I32(0) => Goto(label)
         case _ => Cont
+    case (opcode.Jmp, value.Id(label) :: Nil) =>
+      Goto(label)
     case (opcode.PushI32, (v : value.I32) :: Nil) =>
       push(v)
       Cont

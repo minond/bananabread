@@ -73,9 +73,20 @@ def main(args: Array[String]) =
   //   parse("<stdin>", "1 + 2", syntax).map(ir.Typeless.lift).map(runtime.lift).getOrElse(???).toSeq :+ Instruction(opcode.Halt)
   // )
 
-  // rt.next
-  // rt.next
-  // rt.next
-  // rt.next
-  // rt.next
-  // println(rt.stack.pop)
+  rt.next
+  rt.next
+  rt.next
+  rt.next
+  rt.next
+  rt.next
+  rt.next
+  rt.next
+  rt.next
+  rt.next
+  rt.next
+  rt.next
+  rt.next
+  rt.next
+  rt.next
+  rt.next
+  println(rt.stack.pop)
