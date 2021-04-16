@@ -7,10 +7,10 @@ import ty.{Type, Var}
 
 type Scope = Map[String, Type]
 
-def infer(nodes: List[Typeless.Base], scope: Scope): List[Type] =
+def infer(nodes: List[Typeless.Ir], scope: Scope): List[Type] =
   nodes.map(node => infer(node, scope))
 
-def infer(node: Typeless.Base, scope: Scope): Type = node match
+def infer(node: Typeless.Ir, scope: Scope): Type = node match
   case Typeless.Num(num) => ty.I32
   case Typeless.Str(str) => ty.Str
   case Typeless.Id(id) => lookup(id.lexeme, scope)

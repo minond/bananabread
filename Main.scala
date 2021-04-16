@@ -54,7 +54,7 @@ def main(args: Array[String]) =
   // println(parse("<stdin>", "let x = 1 y = x + 2 in x + y", syntax).map(ir.Typeless.lift))
   // println(parse("<stdin>", "1", syntax).map(ir.Typeless.lift).map(node => typechecker.infer(node, Map.empty)))
   // println(parse("<stdin>", "let x = ref(0) in x := !x + 1", syntax).map(ir.Typeless.lift))
-  // println(parse("<stdin>", "1 + 2", syntax).map(ir.Typeless.lift))
+  println(parse("<stdin>", "1 + 2", syntax).map(ir.Typeless.lift))
   // println(parse("<stdin>", "1", syntax).map(ir.Typeless.lift).getOrElse(???).head)
 
   val rt = Machine(
