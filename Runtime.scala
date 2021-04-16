@@ -1,7 +1,7 @@
 package sourdough
 package runtime
 
-import ir.{Typeless => tl}
+import ir.Typeless => tl
 import ir.Typeless.Ir
 import opcode.Opcode
 import value.Value

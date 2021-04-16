@@ -1,6 +1,7 @@
 package sourdough
 
 import parser.{tokenize, parse, Syntax}
+import ir.Typeless => tl
 import opcode.Opcode
 import runtime.Instruction
 import vm.Machine
@@ -62,7 +63,7 @@ def main(args: Array[String]) =
     if 32
     then 123
     else 321
-    """, syntax).map(ir.Typeless.lift).map(runtime.lift).getOrElse(???).toSeq :+ Instruction(opcode.Halt)
+    """, syntax).map(tl.lift).map(runtime.lift).getOrElse(???).toSeq :+ Instruction(opcode.Halt)
 
   val rt = Machine(instructions)
 

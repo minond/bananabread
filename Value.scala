@@ -1,7 +1,7 @@
 package sourdough
 package value
 
-import ir.{Typeless => tl}
+import ir.Typeless => tl
 import ir.Typeless.Ir
 import utils.Print
 

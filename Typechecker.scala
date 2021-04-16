@@ -1,7 +1,7 @@
 package sourdough
 package typechecker
 
-import ir.{Typeless => tl}
+import ir.Typeless => tl
 import ir.Ir
 import ty.{Type, Var}
 
