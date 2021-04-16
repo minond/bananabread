@@ -28,14 +28,13 @@ class Machine(instructions: Seq[Instruction]):
       case Jump(label) =>
 
   def eval(instruction: Instruction): Pc = (instruction.opcode, instruction.args.toList) match
-    case (opcode.Halt, _) =>
-      Halt
-    case (opcode.PushI32, (v : value.I32) :: Nil) =>
-      stack.push(v)
-      Cont
-    case (opcode.Call, (v : value.Id) :: Nil) =>
-      call(v)
-      Cont
+    case (opcode.Halt, _) => Halt
+    case (opcode.Label, _) => Cont
+    case (opcode.PushI32, (v : value.I32) :: Nil) => push(v); Cont
+    case (opcode.Call, (v : value.Id) :: Nil) => call(v); Cont
+
+  def push(v: value.Value) =
+    stack.push(v)
 
   def call(v: value.Id) = v.label match
     case "+" =>
