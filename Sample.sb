@@ -1,0 +1,23 @@
+defmacro gen_add_num<ty : Type> =
+  def +(a : <ty>, b : <ty>) : <ty> =
+    bytecode begin
+      push <ty> #a ;
+      push <ty> #b ;
+      call <ty> \add ;
+      return ;
+    end
+
+gen_add_num<I32>
+gen_add_num<I64>
+gen_add_num<U32>
+gen_add_num<U64>
+gen_add_num<F32>
+gen_add_num<F64>
+
+def +(a : Str, b : Str) : Str =
+  bytecode begin
+    push <Str> #a ;
+    push <Str> #b
+    call \concat
+    return
+  end
