@@ -6,10 +6,17 @@ import ir.Typeless.Ir
 import opcode.Opcode
 import value.Value
 
+import scala.util.Random
+
+
+val rand = Random.alphanumeric
+
 
 case class Instruction(opcode: Opcode, args: Value*):
   def toList = List(this)
 
+def inst(opcode: Opcode, args: Value*) =
+  Instruction(opcode, args:_*).toList
 
 def lift(nodes: List[Ir]): List[Instruction] =
   nodes.flatMap(lift)
@@ -17,10 +24,26 @@ def lift(nodes: List[Ir]): List[Instruction] =
 def lift(node: Ir): List[Instruction] = node match
   case _: tl.Num => push(node, ty.I32)
   case tl.App(lambda, args, _) => call(lambda, args)
+  case tl.Cond(cnd, pas, fal, _) => cond(cnd, pas, fal)
 
 
 def push(node: Ir, typ: ty.Type) = typ match
-  case ty.I32 => Instruction(opcode.PushI32, value.lift(node)).toList
+  case ty.I32 => inst(opcode.PushI32, value.lift(node))
 
 def call(lambda: Ir, args: List[Ir]) =
-  args.flatMap(lift) :+ Instruction(opcode.Call, value.lift(lambda))
+  args.flatMap(lift) ++ inst(opcode.Call, value.lift(lambda))
+
+def label(name: String): value.Id =
+  value.Id(s"$name.${rand.take(16)}")
+
+def cond(cnd: Ir, pas: Ir, fal: Ir) =
+  val lelse = label("else")
+  val ldone = label("done")
+
+  lift(cnd) ++
+  inst(opcode.Jz, lelse) ++
+  lift(pas) ++
+  inst(opcode.Jmp, ldone) ++
+  inst(opcode.Label, lelse)
+  lift(fal) ++
+  inst(opcode.Label, ldone)
