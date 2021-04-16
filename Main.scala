@@ -1,7 +1,8 @@
 package sourdough
 
 import parser.{tokenize, parse, Syntax}
-import runtime.{Machine, Instruction, Opcode}
+import runtime.{Instruction, Opcode}
+import vm.Machine
 
 def main(args: Array[String]) =
   val syntax = Syntax.withPrefix(1, "-")
