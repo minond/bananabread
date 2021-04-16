@@ -5,6 +5,19 @@ import value.Value
 import scala.collection.mutable.Stack
 
 
+case class Instruction(opcode: Opcode, args: List[Value] = List.empty)
+
+enum Pc:
+  case Halt
+  case Cont
+  case Jump(label: String)
+
+enum Opcode:
+  case Halt
+  case PushI32
+  case Call
+
+
 class Machine(instructions: Seq[Instruction]):
   val stack = Stack[Value]()
   var pc = 0
@@ -39,16 +52,3 @@ class Machine(instructions: Seq[Instruction]):
 
   def cont : Pc = Pc.Cont
   def halt : Pc = Pc.Halt
-
-
-case class Instruction(opcode: Opcode, args: List[Value] = List.empty)
-
-enum Pc:
-  case Halt
-  case Cont
-  case Jump(label: String)
-
-enum Opcode:
-  case Halt
-  case PushI32
-  case Call
