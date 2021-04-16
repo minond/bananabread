@@ -11,7 +11,7 @@ import scala.collection.mutable.Stack
 sealed trait Pc
 case object Halt extends Pc
 case object Cont extends Pc
-case class Jump(label: String) extends Pc
+case class Goto(label: String) extends Pc
 
 
 class Machine(instructions: Seq[Instruction]):
@@ -19,19 +19,33 @@ class Machine(instructions: Seq[Instruction]):
   var pc = 0
   var running = true
 
+  val labels = instructions.zipWithIndex.collect {
+    case (Instruction(opcode.Label, value.Id(label)), index) => (label, index)
+  }.toMap
+
   def next: Unit =
     if !running then return
 
     eval(instructions(pc)) match
       case Halt => running = false
       case Cont => pc = pc + 1
-      case Jump(label) =>
+      case Goto(label) => pc = labels(label)
 
   def eval(instruction: Instruction): Pc = (instruction.op, instruction.args.toList) match
-    case (opcode.Halt, _) => Halt
-    case (opcode.Label, _) => Cont
-    case (opcode.PushI32, (v : value.I32) :: Nil) => push(v); Cont
-    case (opcode.Call, (v : value.Id) :: Nil) => call(v); Cont
+    case (opcode.Halt, _) =>
+      Halt
+    case (opcode.Label, _) =>
+      Cont
+    case (opcode.Jz, value.Id(label) :: Nil) =>
+      stack.pop match
+        case value.I32(0) => Goto(label)
+        case _ => Cont
+    case (opcode.PushI32, (v : value.I32) :: Nil) =>
+      push(v)
+      Cont
+    case (opcode.Call, (v : value.Id) :: Nil) =>
+      call(v)
+      Cont
 
   def push(v: value.Value) =
     stack.push(v)
