@@ -59,10 +59,10 @@ def main(args: Array[String]) =
 
   val rt = Machine(
     Seq(
-      Instruction(opcode.PushI32, List(parse("<stdin>", "1", syntax).map(ir.Typeless.lift).map(value.lift).getOrElse(???).head)),
-      Instruction(opcode.PushI32, List(parse("<stdin>", "2", syntax).map(ir.Typeless.lift).map(value.lift).getOrElse(???).head)),
-      Instruction(opcode.PushI32, List(parse("<stdin>", "3", syntax).map(ir.Typeless.lift).map(value.lift).getOrElse(???).head)),
-      Instruction(opcode.Call, List(parse("<stdin>", "+", syntax).map(ir.Typeless.lift).map(value.lift).getOrElse(???).head)),
+      Instruction(opcode.PushI32, parse("<stdin>", "1", syntax).map(ir.Typeless.lift).map(value.lift).getOrElse(???).head),
+      Instruction(opcode.PushI32, parse("<stdin>", "2", syntax).map(ir.Typeless.lift).map(value.lift).getOrElse(???).head),
+      Instruction(opcode.PushI32, parse("<stdin>", "3", syntax).map(ir.Typeless.lift).map(value.lift).getOrElse(???).head),
+      Instruction(opcode.Call, parse("<stdin>", "+", syntax).map(ir.Typeless.lift).map(value.lift).getOrElse(???).head),
       Instruction(opcode.Halt),
     )
   )
