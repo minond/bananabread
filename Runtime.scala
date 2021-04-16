@@ -12,11 +12,15 @@ import scala.util.Random
 val rand = Random.alphanumeric
 
 
-case class Instruction(opcode: Opcode, args: Value*):
+case class Instruction(op: Opcode, args: Value*):
   def toList = List(this)
 
-def inst(opcode: Opcode, args: Value*) =
-  Instruction(opcode, args:_*).toList
+  override def toString = op match
+    case opcode.Label => s"${args(0)}:"
+    case _ => s"  $op ${args.mkString(", ")}"
+
+def inst(op: Opcode, args: Value*) =
+  Instruction(op, args:_*).toList
 
 def lift(nodes: List[Ir]): List[Instruction] =
   nodes.flatMap(lift)
@@ -34,7 +38,7 @@ def call(lambda: Ir, args: List[Ir]) =
   args.flatMap(lift) ++ inst(opcode.Call, value.lift(lambda))
 
 def label(name: String): value.Id =
-  value.Id(s"$name.${rand.take(16)}")
+  value.Id(s"$name.${rand.take(16).mkString}")
 
 def cond(cnd: Ir, pas: Ir, fal: Ir) =
   val lelse = label("else")
@@ -44,6 +48,6 @@ def cond(cnd: Ir, pas: Ir, fal: Ir) =
   inst(opcode.Jz, lelse) ++
   lift(pas) ++
   inst(opcode.Jmp, ldone) ++
-  inst(opcode.Label, lelse)
+  inst(opcode.Label, lelse) ++
   lift(fal) ++
   inst(opcode.Label, ldone)

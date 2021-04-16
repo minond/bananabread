@@ -27,7 +27,7 @@ class Machine(instructions: Seq[Instruction]):
       case Cont => pc = pc + 1
       case Jump(label) =>
 
-  def eval(instruction: Instruction): Pc = (instruction.opcode, instruction.args.toList) match
+  def eval(instruction: Instruction): Pc = (instruction.op, instruction.args.toList) match
     case (opcode.Halt, _) => Halt
     case (opcode.Label, _) => Cont
     case (opcode.PushI32, (v : value.I32) :: Nil) => push(v); Cont
