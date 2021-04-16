@@ -54,22 +54,16 @@ def main(args: Array[String]) =
   // println(parse("<stdin>", "let x = 1 y = x + 2 in x + y", syntax).map(ir.Typeless.lift))
   // println(parse("<stdin>", "1", syntax).map(ir.Typeless.lift).map(node => typechecker.infer(node, Map.empty)))
   // println(parse("<stdin>", "let x = ref(0) in x := !x + 1", syntax).map(ir.Typeless.lift))
-  println(parse("<stdin>", "1 + 2", syntax).map(ir.Typeless.lift))
+  println(parse("<stdin>", "1 + 2", syntax).map(ir.Typeless.lift).map(runtime.lift).getOrElse(???).toSeq :+ Instruction(opcode.Halt))
   // println(parse("<stdin>", "1", syntax).map(ir.Typeless.lift).getOrElse(???).head)
 
   val rt = Machine(
-    Seq(
-      Instruction(opcode.PushI32, parse("<stdin>", "1", syntax).map(ir.Typeless.lift).map(value.lift).getOrElse(???).head),
-      Instruction(opcode.PushI32, parse("<stdin>", "2", syntax).map(ir.Typeless.lift).map(value.lift).getOrElse(???).head),
-      Instruction(opcode.PushI32, parse("<stdin>", "3", syntax).map(ir.Typeless.lift).map(value.lift).getOrElse(???).head),
-      Instruction(opcode.Call, parse("<stdin>", "+", syntax).map(ir.Typeless.lift).map(value.lift).getOrElse(???).head),
-      Instruction(opcode.Halt),
-    )
+    parse("<stdin>", "1 + 2", syntax).map(ir.Typeless.lift).map(runtime.lift).getOrElse(???).toSeq :+ Instruction(opcode.Halt)
   )
 
   rt.next
   rt.next
   rt.next
   rt.next
-  println(rt.stack.pop)
+  rt.next
   println(rt.stack.pop)
