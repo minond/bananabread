@@ -1,7 +1,8 @@
 package sourdough
 
 import parser.{tokenize, parse, Syntax}
-import runtime.{Instruction, Opcode}
+import opcode.Opcode
+import runtime.Instruction
 import vm.Machine
 
 def main(args: Array[String]) =
@@ -58,11 +59,11 @@ def main(args: Array[String]) =
 
   val rt = Machine(
     Seq(
-      Instruction(Opcode.PushI32, List(parse("<stdin>", "1", syntax).map(ir.Typeless.lift).map(value.lift).getOrElse(???).head)),
-      Instruction(Opcode.PushI32, List(parse("<stdin>", "2", syntax).map(ir.Typeless.lift).map(value.lift).getOrElse(???).head)),
-      Instruction(Opcode.PushI32, List(parse("<stdin>", "3", syntax).map(ir.Typeless.lift).map(value.lift).getOrElse(???).head)),
-      Instruction(Opcode.Call, List(parse("<stdin>", "+", syntax).map(ir.Typeless.lift).map(value.lift).getOrElse(???).head)),
-      Instruction(Opcode.Halt),
+      Instruction(opcode.PushI32, List(parse("<stdin>", "1", syntax).map(ir.Typeless.lift).map(value.lift).getOrElse(???).head)),
+      Instruction(opcode.PushI32, List(parse("<stdin>", "2", syntax).map(ir.Typeless.lift).map(value.lift).getOrElse(???).head)),
+      Instruction(opcode.PushI32, List(parse("<stdin>", "3", syntax).map(ir.Typeless.lift).map(value.lift).getOrElse(???).head)),
+      Instruction(opcode.Call, List(parse("<stdin>", "+", syntax).map(ir.Typeless.lift).map(value.lift).getOrElse(???).head)),
+      Instruction(opcode.Halt),
     )
   )
 
@@ -70,5 +71,5 @@ def main(args: Array[String]) =
   rt.next
   rt.next
   rt.next
-  println(rt.pop)
-  println(rt.pop)
+  println(rt.stack.pop)
+  println(rt.stack.pop)

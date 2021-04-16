@@ -1,7 +1,8 @@
 package sourdough
 package vm
 
-import runtime.{Opcode, Instruction}
+import opcode.Opcode
+import runtime.Instruction
 import value.Value
 
 import scala.collection.mutable.Stack
@@ -27,12 +28,12 @@ class Machine(instructions: Seq[Instruction]):
       case Jump(label) =>
 
   def eval(instruction: Instruction): Pc = (instruction.opcode, instruction.args) match
-    case (Opcode.Halt, _) =>
+    case (opcode.Halt, _) =>
       Halt
-    case (Opcode.PushI32, (v : value.I32) :: Nil) =>
+    case (opcode.PushI32, (v : value.I32) :: Nil) =>
       stack.push(v)
       Cont
-    case (Opcode.Call, (v : value.Id) :: Nil) =>
+    case (opcode.Call, (v : value.Id) :: Nil) =>
       call(v)
       Cont
 
