@@ -7,6 +7,7 @@ import opcode.Opcode
 import value.Value
 
 import scala.util.Random
+import scala.collection.mutable.Stack
 
 
 val rand = Random.alphanumeric
@@ -19,8 +20,10 @@ case class Instruction(op: Opcode, args: Value*):
     case opcode.Label => s"${args(0)}:"
     case _ => s"  $op ${args.mkString(", ")}"
 
+
 def inst(op: Opcode, args: Value*) =
   Instruction(op, args:_*).toList
+
 
 def lift(nodes: List[Ir]): List[Instruction] =
   nodes.flatMap(lift)
@@ -48,15 +51,18 @@ def unique(name: String): value.Id =
   value.Id(s"$name.${rand.take(16).mkString}")
 
 def call(lambda: Ir, args: List[Ir]) = lambda match
+  case tl.Id(ast.Id(label, _)) if label == "+" =>
+    args.flatMap(lift) ++
+    inst(opcode.Run, name(label))
   case _: tl.Id =>
     args.flatMap(lift) ++
     inst(opcode.Call, value.lift(lambda))
   case lambda: tl.Lambda =>
-    inst(opcode.Label, name(lambda.ptr)) ++
-    lift(lambda) ++
-    store(lambda.ptr) ++
+    inst(opcode.PushReg, vm.Reg.Pc) ++
     args.flatMap(lift) ++
-    inst(opcode.Call, name(lambda.ptr))
+    inst(opcode.Call, name(lambda.ptr)) ++
+    inst(opcode.Label, name(lambda.ptr)) ++
+    lift(lambda)
   case _ =>
     /* bad call */
     ???
@@ -88,4 +94,6 @@ def let(bindings: List[tl.Binding], body: Ir) =
 def lambda(params: List[tl.Id], body: Ir) =
   params.flatMap { case tl.Id(ast.Id(label, _)) =>
     store(label)
-  } ++ lift(body)
+  } ++
+  lift(body) ++
+  inst(opcode.Ret)

@@ -68,7 +68,7 @@ def main(args: Array[String]) =
 
   val instructions = parse("<stdin>",
     """
-    (func (a, b) = a + b)(1, 2)
+    (func (a, b) = a + b + a)(1, 2)
     """, syntax).map(tl.lift).map(runtime.lift).getOrElse(???).toSeq :+ Instruction(opcode.Halt)
 
   val rt = Machine(instructions)

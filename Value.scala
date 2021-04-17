@@ -9,7 +9,7 @@ import utils.Print
 sealed trait Value
 case class I32(value: Integer) extends Value with Print(s"#$value")
 case class Str(value: String) extends Value with Print(s""""$value"""")
-case class Id(label: String) extends Value with Print(s"$$$label")
+case class Id(label: String) extends Value with Print(label)
 
 
 def lift(nodes: List[Ir]): List[Value] =

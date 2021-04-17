@@ -17,6 +17,10 @@ case object Cont extends Pc
 case class Goto(label: String) extends Pc
 
 
+object Reg:
+  val Pc = value.Id("%pc")
+
+
 class Machine(instructions: Seq[Instruction]):
   val stack = Stack[Value]()
   val frame = Stack[Frame](Map.empty)
@@ -58,10 +62,31 @@ class Machine(instructions: Seq[Instruction]):
     case (opcode.PushI32, _) =>
       /* missing impl */
       ???
-    case (opcode.Call, (v : value.Id) :: Nil) =>
-      call(v)
+    case (opcode.PushReg, reg :: Nil) =>
+      reg match
+        case Reg.Pc =>
+          stack.push(value.I32(pc))
+          Cont
+        case _ =>
+          /* bad reg */
+          ???
+    case (opcode.PushReg, _) =>
+      /* bad call */
+      ???
+    case (opcode.Run, (v : value.Id) :: Nil) =>
+      run(v)
       Cont
+    case (opcode.Run, _) =>
+      /* missing impl */
+      ???
+    case (opcode.Call, (v : value.Id) :: Nil) =>
+      ???
     case (opcode.Call, _) =>
+      /* missing impl */
+      ???
+    case (opcode.Ret, Nil) =>
+      ???
+    case (opcode.Ret, _) =>
       /* missing impl */
       ???
     case (opcode.StoreI32, value.Id(label) :: Nil) =>
@@ -82,7 +107,7 @@ class Machine(instructions: Seq[Instruction]):
       /* bad call */
       ???
 
-  def call(v: value.Id) = v.label match
+  def run(v: value.Id) = v.label match
     case "+" =>
       (stack.pop, stack.pop) match
         case (value.I32(lhs), value.I32(rhs)) =>
