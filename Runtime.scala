@@ -28,7 +28,7 @@ def lift(nodes: List[Ir]): List[Instruction] =
 def lift(node: Ir): List[Instruction] = node match
   case _: tl.Num => push(node, ty.I32)
   case _: tl.Str => ???
-  case _: tl.Lambda => ???
+  case tl.Lambda(params, body, _) => lambda(params, body)
   case tl.Id(ast.Id(label, _)) => load(label)
   case tl.App(lambda, args, _) => call(lambda, args)
   case tl.Cond(cnd, pas, fal, _) => cond(cnd, pas, fal)
@@ -53,8 +53,7 @@ def call(lambda: Ir, args: List[Ir]) =
 def load(label: String) =
   inst(opcode.LoadI32, name(label))
 
-def store(label: String, value: Ir) =
-  lift(value) ++
+def store(label: String) =
   inst(opcode.StoreI32, name(label))
 
 def cond(cnd: Ir, pas: Ir, fal: Ir) =
@@ -71,5 +70,11 @@ def cond(cnd: Ir, pas: Ir, fal: Ir) =
 
 def let(bindings: List[tl.Binding], body: Ir) =
   bindings.flatMap { case tl.Binding(ast.Id(label, _), value, _) =>
-    store(label, value)
+    lift(value) ++
+    store(label)
+  } ++ lift(body)
+
+def lambda(params: List[tl.Id], body: Ir) =
+  params.flatMap { case tl.Id(ast.Id(label, _)) =>
+    store(label)
   } ++ lift(body)
