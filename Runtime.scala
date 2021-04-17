@@ -10,7 +10,26 @@ import scala.util.Random
 import scala.collection.mutable.Stack
 
 
+type Instructions = Stack[Instruction]
 val rand = Random.alphanumeric
+
+
+sealed trait Section
+case object Main extends Section
+case object Decl extends Section
+
+class Emitter(section: Section = Main, main: Instructions = Stack.empty, decl: Instructions = Stack.empty):
+  def to(section: Section) = section match
+    case Main => Emitter(section, main = main)
+    case Decl => Emitter(section, decl = decl)
+
+  def emit(i: Instruction) = section match
+    case Main => main.push(i)
+    case Decl => decl.push(i)
+
+  def emit(is: List[Instruction]) = section match
+    case Main => is.foreach(i => main.push(i))
+    case Decl => is.foreach(i => decl.push(i))
 
 
 case class Instruction(op: Opcode, args: Value*):
