@@ -58,32 +58,37 @@ def main(args: Array[String]) =
   // println(parse("<stdin>", "1 + 2", syntax).map(ir.Typeless.lift).map(runtime.lift).getOrElse(???).toSeq :+ Instruction(opcode.Halt))
   // println(parse("<stdin>", "1", syntax).map(ir.Typeless.lift).getOrElse(???).head)
 
+  // val instructions = parse("<stdin>",
+  //   """
+  //   let cond = func (a, b) = a + b in
+  //     if cond
+  //     then 123
+  //     else 321
+  //   """, syntax).map(tl.lift).map(runtime.lift).getOrElse(???).toSeq :+ Instruction(opcode.Halt)
+
   val instructions = parse("<stdin>",
     """
-    let cond = 777 in
-      if cond
-      then 123
-      else 321
+    (func (a, b) = a + b)(1, 2)
     """, syntax).map(tl.lift).map(runtime.lift).getOrElse(???).toSeq :+ Instruction(opcode.Halt)
 
   val rt = Machine(instructions)
 
   println(instructions.mkString("\n"))
 
-  rt.next
-  rt.next
-  rt.next
-  rt.next
-  rt.next
-  rt.next
-  rt.next
-  rt.next
-  rt.next
-  rt.next
-  rt.next
-  rt.next
-  rt.next
-  rt.next
-  rt.next
-  rt.next
-  println(rt.stack.pop)
+  // rt.next
+  // rt.next
+  // rt.next
+  // rt.next
+  // rt.next
+  // rt.next
+  // rt.next
+  // rt.next
+  // rt.next
+  // rt.next
+  // rt.next
+  // rt.next
+  // rt.next
+  // rt.next
+  // rt.next
+  // rt.next
+  // println(rt.stack.pop)

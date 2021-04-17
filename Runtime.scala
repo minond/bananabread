@@ -47,8 +47,19 @@ def name(name: String): value.Id =
 def unique(name: String): value.Id =
   value.Id(s"$name.${rand.take(16).mkString}")
 
-def call(lambda: Ir, args: List[Ir]) =
-  args.flatMap(lift) ++ inst(opcode.Call, value.lift(lambda))
+def call(lambda: Ir, args: List[Ir]) = lambda match
+  case _: tl.Id =>
+    args.flatMap(lift) ++
+    inst(opcode.Call, value.lift(lambda))
+  case lambda: tl.Lambda =>
+    inst(opcode.Label, name(lambda.ptr)) ++
+    lift(lambda) ++
+    store(lambda.ptr) ++
+    args.flatMap(lift) ++
+    inst(opcode.Call, name(lambda.ptr))
+  case _ =>
+    /* bad call */
+    ???
 
 def load(label: String) =
   inst(opcode.LoadI32, name(label))
