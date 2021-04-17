@@ -44,27 +44,49 @@ class Machine(instructions: Seq[Instruction]):
       stack.pop match
         case value.I32(0) => Goto(label)
         case _ => Cont
+    case (opcode.Jz, _) =>
+      /* bad call */
+      ???
     case (opcode.Jmp, value.Id(label) :: Nil) =>
       Goto(label)
+    case (opcode.Jmp, _) =>
+      /* bad call */
+      ???
     case (opcode.PushI32, (v : value.I32) :: Nil) =>
       stack.push(v)
       Cont
+    case (opcode.PushI32, _) =>
+      /* missing impl */
+      ???
     case (opcode.Call, (v : value.Id) :: Nil) =>
       call(v)
       Cont
+    case (opcode.Call, _) =>
+      /* missing impl */
+      ???
     case (opcode.StoreI32, value.Id(label) :: Nil) =>
       frame.last.put(label, stack.pop)
       Cont
+    case (opcode.StoreI32, _) =>
+      /* bad call */
+      ???
     case (opcode.LoadI32, value.Id(label) :: Nil) =>
       frame.last.get(label) match
         case None =>
+          /* undeclared var */
           ???
         case Some(v) =>
           stack.push(v)
           Cont
+    case (opcode.LoadI32, _) =>
+      /* bad call */
+      ???
 
   def call(v: value.Id) = v.label match
     case "+" =>
       (stack.pop, stack.pop) match
         case (value.I32(lhs), value.I32(rhs)) =>
           stack.push(value.I32(lhs + rhs))
+        case _ =>
+          /* bad call */
+          ???

@@ -2,7 +2,7 @@ package sourdough
 package typechecker
 
 import ir.Typeless => tl
-import ir.Ir
+import ir.Typeless.Ir
 import ty.{Type, Var}
 
 
@@ -17,6 +17,8 @@ def infer(node: Ir, scope: Scope): Type = node match
   case tl.Id(id) => lookup(id.lexeme, scope)
   case tl.App(lambda, args, expr) => ???
   case tl.Lambda(params, body, expr) => ???
+  case _: tl.Cond => ???
+  case _: tl.Let => ???
 
 def lookup(label: String, scope: Scope): Type =
   scope.get(label) match

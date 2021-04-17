@@ -19,3 +19,7 @@ def lift(node: Ir): Value = node match
   case tl.Num(ast.Num(value, _)) => I32(value.toInt)
   case tl.Str(ast.Str(value, _)) => Str(value)
   case tl.Id(ast.Id(label, _)) => Id(label)
+  case _: tl.App => ???
+  case _: tl.Lambda => ???
+  case _: tl.Cond => ???
+  case _: tl.Let => ???

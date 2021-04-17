@@ -27,6 +27,8 @@ def lift(nodes: List[Ir]): List[Instruction] =
 
 def lift(node: Ir): List[Instruction] = node match
   case _: tl.Num => push(node, ty.I32)
+  case _: tl.Str => ???
+  case _: tl.Lambda => ???
   case tl.Id(ast.Id(label, _)) => load(label)
   case tl.App(lambda, args, _) => call(lambda, args)
   case tl.Cond(cnd, pas, fal, _) => cond(cnd, pas, fal)
@@ -35,6 +37,9 @@ def lift(node: Ir): List[Instruction] = node match
 
 def push(node: Ir, typ: ty.Type) = typ match
   case ty.I32 => inst(opcode.PushI32, value.lift(node))
+  case ty.Str => ???
+  case _: ty.Var => ???
+  case _: ty.Lambda => ???
 
 def name(name: String): value.Id =
   value.Id(name)
