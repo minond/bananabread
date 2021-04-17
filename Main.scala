@@ -60,18 +60,15 @@ def main(args: Array[String]) =
 
   val instructions = parse("<stdin>",
     """
-    if 32
-    then 123
-    else 321
+    let cond = 777 in
+      if cond
+      then 123
+      else 321
     """, syntax).map(tl.lift).map(runtime.lift).getOrElse(???).toSeq :+ Instruction(opcode.Halt)
 
   val rt = Machine(instructions)
 
   println(instructions.mkString("\n"))
-
-  // val rt = Machine(
-  //   parse("<stdin>", "1 + 2", syntax).map(ir.Typeless.lift).map(runtime.lift).getOrElse(???).toSeq :+ Instruction(opcode.Halt)
-  // )
 
   rt.next
   rt.next

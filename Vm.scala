@@ -5,7 +5,10 @@ import opcode.Opcode
 import runtime.Instruction
 import value.Value
 
-import scala.collection.mutable.Stack
+import scala.collection.mutable.{Stack, Map}
+
+
+type Frame = Map[String, Value]
 
 
 sealed trait Pc
@@ -16,6 +19,7 @@ case class Goto(label: String) extends Pc
 
 class Machine(instructions: Seq[Instruction]):
   val stack = Stack[Value]()
+  val frame = Stack[Frame](Map.empty)
   var pc = 0
   var running = true
 
@@ -43,14 +47,21 @@ class Machine(instructions: Seq[Instruction]):
     case (opcode.Jmp, value.Id(label) :: Nil) =>
       Goto(label)
     case (opcode.PushI32, (v : value.I32) :: Nil) =>
-      push(v)
+      stack.push(v)
       Cont
     case (opcode.Call, (v : value.Id) :: Nil) =>
       call(v)
       Cont
-
-  def push(v: value.Value) =
-    stack.push(v)
+    case (opcode.StoreI32, value.Id(label) :: Nil) =>
+      frame.last.put(label, stack.pop)
+      Cont
+    case (opcode.LoadI32, value.Id(label) :: Nil) =>
+      frame.last.get(label) match
+        case None =>
+          ???
+        case Some(v) =>
+          stack.push(v)
+          Cont
 
   def call(v: value.Id) = v.label match
     case "+" =>
