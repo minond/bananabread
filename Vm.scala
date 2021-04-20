@@ -78,12 +78,24 @@ class Machine(instructions: Seq[Instruction]):
     case (opcode.PushReg, reg :: Nil) =>
       reg match
         case Reg.Pc =>
-          stack.push(value.I32(pc))
+          stack.push(pc)
+          Cont
+        case Reg.Rpc =>
+          stack.push(registers.get(Reg.Rpc).get)
+          Cont
+        case Reg.Jmp =>
+          stack.push(registers.get(Reg.Jmp).get)
           Cont
         case _ =>
           /* bad reg */
           ???
     case (opcode.PushReg, _) =>
+      /* bad call */
+      ???
+    case (opcode.PushPtr, ptr :: Nil) =>
+      stack.push(ptr)
+      Cont
+    case (opcode.PushPtr, _) =>
       /* bad call */
       ???
     case (opcode.Run, (v : value.Id) :: Nil) =>
@@ -92,24 +104,52 @@ class Machine(instructions: Seq[Instruction]):
     case (opcode.Run, _) =>
       /* missing impl */
       ???
-    case (opcode.Call, (v : value.Id) :: Nil) =>
-      ???
+    case (opcode.Call, value.Id(label) :: Nil) =>
+      frame.head.get(label) match
+        case None =>
+          frame.push(Map.empty)
+          Goto(label)
+        case Some(ptr: value.Id) =>
+          frame.push(Map.empty)
+          Goto(ptr.label)
+        case Some(_) =>
+          /* bad call */
+          ???
+    case (opcode.Call, Nil) =>
+      frame.push(Map.empty)
+      Jump(jmp.value)
     case (opcode.Call, _) =>
-      /* missing impl */
+      /* bad call */
       ???
     case (opcode.Ret, Nil) =>
-      ???
+      frame.pop
+      Jump(rpc.value + 2)
     case (opcode.Ret, _) =>
       /* missing impl */
       ???
+    case (opcode.Mov, (dest: value.Id) :: (source: value.Id) :: Nil) =>
+      movregreg(dest, source)
+      Cont
+    case (opcode.Mov, (dest: value.Id) :: Nil) =>
+      movstackreg(dest)
+      Cont
+    case (opcode.Mov, _) =>
+      /* missing impl */
+      ???
     case (opcode.StoreI32, value.Id(label) :: Nil) =>
-      frame.last.put(label, stack.pop)
+      frame.head.put(label, stack.pop)
       Cont
     case (opcode.StoreI32, _) =>
       /* bad call */
       ???
+    case (opcode.StorePtr, value.Id(label) :: Nil) =>
+      frame.head.put(label, stack.pop)
+      Cont
+    case (opcode.StorePtr, _) =>
+      /* bad call */
+      ???
     case (opcode.LoadI32, value.Id(label) :: Nil) =>
-      frame.last.get(label) match
+      frame.head.get(label) match
         case None =>
           /* undeclared var */
           ???
@@ -118,6 +158,22 @@ class Machine(instructions: Seq[Instruction]):
           Cont
     case (opcode.LoadI32, _) =>
       /* bad call */
+      ???
+
+  def movregreg(dest: value.Id, source: value.Id) = (dest, source, registers.get(source)) match
+    case (Reg.Rpc, Reg.Pc, Some(value)) =>
+      registers.update(Reg.Rpc, value)
+    case _ =>
+      /* not implemented  */
+      ???
+
+  def movstackreg(dest: value.Id) = stack.pop match
+    case addr: value.I32 =>
+      registers.update(dest, addr)
+    case value.Id(label) =>
+      registers.update(dest, value.I32(labels(label)))
+    case _ =>
+      /* not implemented  */
       ???
 
   def run(v: value.Id) = v.label match
