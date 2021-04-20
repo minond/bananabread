@@ -1,4 +1,4 @@
-package sourdough
+package bananabread
 package test
 
 import parser.{parse, Syntax}

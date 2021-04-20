@@ -1,4 +1,4 @@
-package sourdough
+package bananabread
 package utils
 
 import scala.reflect.ClassTag

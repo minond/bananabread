@@ -1,4 +1,4 @@
-package sourdough
+package bananabread
 
 import parser.{tokenize, parse, Syntax}
 import ir.Typeless => tl

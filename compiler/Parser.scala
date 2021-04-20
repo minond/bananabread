@@ -1,4 +1,4 @@
-package sourdough
+package bananabread
 package parser
 
 import ast.{Token, Expr, SyntaxErr => Err}

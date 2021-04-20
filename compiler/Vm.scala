@@ -1,4 +1,4 @@
-package sourdough
+package bananabread
 package vm
 
 import opcode.Opcode
