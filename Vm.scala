@@ -62,7 +62,9 @@ class Machine(instructions: Seq[Instruction]):
     case (opcode.Jz, value.Id(label) :: Nil) =>
       stack.pop match
         case value.I32(0) => Goto(label)
-        case _ => Cont
+        case _ =>
+          /* bad call */
+          ???
     case (opcode.Jz, _) =>
       /* bad call */
       ???
