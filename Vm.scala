@@ -15,29 +15,42 @@ sealed trait Pc
 case object Halt extends Pc
 case object Cont extends Pc
 case class Goto(label: String) extends Pc
+case class Jump(pc: Int) extends Pc
 
 
 object Reg:
   val Pc = value.Id("%pc")
+  val Rpc = value.Id("%rpc")
+  val Jmp = value.Id("%jmp")
 
 
 class Machine(instructions: Seq[Instruction]):
   val stack = Stack[Value]()
   val frame = Stack[Frame](Map.empty)
-  var pc = 0
   var running = true
+
+  val registers = Map[value.Id, value.I32](
+    Reg.Pc -> value.I32(0),
+    Reg.Rpc -> value.I32(0),
+    Reg.Jmp -> value.I32(0),
+  )
 
   val labels = instructions.zipWithIndex.collect {
     case (Instruction(opcode.Label, value.Id(label)), index) => (label, index)
   }.toMap
 
+  def pc = registers.get(Reg.Pc).get
+  def rpc = registers.get(Reg.Rpc).get
+  def jmp = registers.get(Reg.Jmp).get
+
   def next: Unit =
     if !running then return
 
-    eval(instructions(pc)) match
+    eval(instructions(pc.value)) match
       case Halt => running = false
-      case Cont => pc = pc + 1
-      case Goto(label) => pc = labels(label)
+      case Cont => registers.update(Reg.Pc, value.I32(pc.value + 1))
+      case Goto(label) => registers.update(Reg.Pc, value.I32(labels(label)))
+      case Jump(next) => registers.update(Reg.Pc, value.I32(next))
 
   def eval(instruction: Instruction): Pc = (instruction.op, instruction.args.toList) match
     case (opcode.Halt, _) =>
