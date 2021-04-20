@@ -108,31 +108,30 @@ def call(lambda: Ir, args: List[Ir], e: Emitter, s: Scope): Unit = lambda match
   case tl.Id(ast.Id(label, _)) if s.contains(label) =>
     s.lookup(label) match
       case lambda: tl.Lambda =>
-        e.emit(inst(opcode.PushReg, vm.Reg.Pc, value.I32(args.size + 2)))
-        args.foreach(lift(_, e, s))
+        loadArgsAndRet(args, e, s)
         e.emit(inst(opcode.Call, name(lambda.ptr)))
       case _ =>
-        e.emit(inst(opcode.PushReg, vm.Reg.Pc, value.I32(args.size + 2)))
-        args.foreach(lift(_, e, s))
+        loadArgsAndRet(args, e, s)
         e.emit(inst(opcode.Call, value.lift(lambda)))
   case tl.Id(ast.Id(label, _)) =>
-    e.emit(inst(opcode.PushReg, vm.Reg.Pc, value.I32(args.size + 2)))
-    args.foreach(lift(_, e, s))
+    loadArgsAndRet(args, e, s)
     e.emit(inst(opcode.Call, value.lift(lambda)))
   case lambda: tl.Lambda =>
-    e.emit(inst(opcode.PushReg, vm.Reg.Pc, value.I32(args.size + 2)))
-    args.foreach(lift(_, e, s))
+    loadArgsAndRet(args, e, s)
     e.emit(inst(opcode.Call, name(lambda.ptr)))
     lift(lambda, e.to(lambda.ptr), s)
   case app: tl.App =>
     call(app.lambda, app.args, e, s)
     e.emit(inst(opcode.Mov, vm.Reg.Jmp))
-    e.emit(inst(opcode.PushReg, vm.Reg.Pc, value.I32(args.size + 2)))
-    args.foreach(lift(_, e, s))
+    loadArgsAndRet(args, e, s)
     e.emit(inst(opcode.Call))
   case _ =>
     /* bad call */
     ???
+
+def loadArgsAndRet(args: List[Ir], e: Emitter, s: Scope) =
+  e.emit(inst(opcode.PushReg, vm.Reg.Pc, value.I32(args.size + 2)))
+  args.foreach(lift(_, e, s))
 
 def load(label: String, e: Emitter, s: Scope) =
   e.emit(inst(opcode.LoadI32, name(label)))
