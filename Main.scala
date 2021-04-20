@@ -68,27 +68,35 @@ def main(args: Array[String]) =
 
   val instructions = parse("<stdin>",
     """
-    (func (a, b) = a + b + a)(1, 2)
-    """, syntax).map(tl.lift).map(runtime.lift).getOrElse(???).toSeq :+ Instruction(opcode.Halt)
+    let
+      a = 1+3
+      b = func (x) = x
+      c = func (x) = x+x
+      d = if 0
+          then 123
+          else a
+      e = func (x) =
+            if x
+            then x
+            else x + 1
+      f = func () =
+            func () =
+              func () =
+                func () =
+                  func (x) = x + x
+    in f()()()()(4)
+    """, syntax).map(tl.lift).map(runtime.lift).getOrElse(???).dump
+    // in b(b(b(c(e(d)))))
+
+  // val instructions = parse("<stdin>",
+  //   """
+  //       (func (a) = func (b) = a + b)
+  //   """, syntax).map(tl.lift).map(runtime.lift).getOrElse(???).dump
 
   val rt = Machine(instructions)
 
   println(instructions.mkString("\n"))
 
-  // rt.next
-  // rt.next
-  // rt.next
-  // rt.next
-  // rt.next
-  // rt.next
-  // rt.next
-  // rt.next
-  // rt.next
-  // rt.next
-  // rt.next
-  // rt.next
-  // rt.next
-  // rt.next
-  // rt.next
-  // rt.next
-  // println(rt.stack.pop)
+  while rt.running do rt.next
+  println(rt.stack)
+  println(rt.registers)
