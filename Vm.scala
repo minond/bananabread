@@ -179,10 +179,12 @@ class Machine(instructions: Seq[Instruction]):
       ???
 
   def run(v: value.Id) = v.label match
-    case "+" =>
-      (stack.pop, stack.pop) match
-        case (value.I32(lhs), value.I32(rhs)) =>
-          stack.push(value.I32(lhs + rhs))
-        case _ =>
-          /* bad call */
-          ???
+    case "+" => bini32op(_ + _)
+
+  def bini32op(f: (Integer, Integer) => Integer) =
+    (stack.pop, stack.pop) match
+      case (value.I32(lhs), value.I32(rhs)) =>
+        stack.push(value.I32(f(lhs, rhs)))
+      case _ =>
+        /* bad call */
+        ???
