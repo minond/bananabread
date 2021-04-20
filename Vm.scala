@@ -9,6 +9,7 @@ import scala.collection.mutable.{Stack, Map}
 
 
 type Frame = Map[String, Value]
+type Registers = Map[value.Id, value.I32]
 
 
 sealed trait Pc
@@ -28,7 +29,7 @@ class Machine(instructions: Seq[Instruction]):
   val stack = Stack[Value]()
   val frame = Stack[Frame](Map.empty)
 
-  val registers = Map[value.Id, value.I32](
+  val registers: Registers = Map(
     Reg.Pc -> value.I32(0),
     Reg.Rpc -> value.I32(0),
     Reg.Jmp -> value.I32(0),
