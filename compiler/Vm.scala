@@ -21,7 +21,6 @@ case class Jump(pc: Int) extends Pc
 
 object Reg:
   val Pc = value.Id("%pc")
-  val Rpc = value.Id("%rpc")
   val Jmp = value.Id("%jmp")
 
 
@@ -31,7 +30,6 @@ class Machine(instructions: Seq[Instruction], info: Boolean = false):
 
   val registers: Registers = Map(
     Reg.Pc -> value.I32(0),
-    Reg.Rpc -> value.I32(0),
     Reg.Jmp -> value.I32(0),
   )
 
@@ -40,7 +38,6 @@ class Machine(instructions: Seq[Instruction], info: Boolean = false):
   }.toMap
 
   def pc = registers.get(Reg.Pc).get
-  def rpc = registers.get(Reg.Rpc).get
   def jmp = registers.get(Reg.Jmp).get
 
   def running = pc.value != -1
@@ -99,9 +96,6 @@ class Machine(instructions: Seq[Instruction], info: Boolean = false):
         case Reg.Pc =>
           stack.push(value.I32(pc.value + offset))
           Cont
-        case Reg.Rpc =>
-          stack.push(value.I32(rpc.value + offset))
-          Cont
         case Reg.Jmp =>
           stack.push(value.I32(jmp.value + offset))
           Cont
@@ -112,9 +106,6 @@ class Machine(instructions: Seq[Instruction], info: Boolean = false):
       reg match
         case Reg.Pc =>
           stack.push(pc)
-          Cont
-        case Reg.Rpc =>
-          stack.push(rpc)
           Cont
         case Reg.Jmp =>
           stack.push(jmp)
@@ -174,9 +165,6 @@ class Machine(instructions: Seq[Instruction], info: Boolean = false):
     case (opcode.Ret, _) =>
       /* missing impl */
       ???
-    case (opcode.Mov, (dest: value.Id) :: (source: value.Id) :: Nil) =>
-      movregreg(dest, source)
-      Cont
     case (opcode.Mov, (dest: value.Id) :: Nil) =>
       movstackreg(dest)
       Cont
@@ -205,13 +193,6 @@ class Machine(instructions: Seq[Instruction], info: Boolean = false):
           Cont
     case (opcode.LoadI32, _) =>
       /* bad call */
-      ???
-
-  def movregreg(dest: value.Id, source: value.Id) = (dest, source, registers.get(source)) match
-    case (Reg.Rpc, Reg.Pc, Some(value)) =>
-      registers.update(Reg.Rpc, value)
-    case _ =>
-      /* not implemented  */
       ???
 
   def movstackreg(dest: value.Id) = stack.pop match

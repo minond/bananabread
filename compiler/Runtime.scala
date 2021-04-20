@@ -110,22 +110,18 @@ def call(lambda: Ir, args: List[Ir], e: Emitter, s: Scope): Unit = lambda match
       case lambda: tl.Lambda =>
         e.emit(inst(opcode.PushReg, vm.Reg.Pc, value.I32(args.size + 2)))
         args.foreach(lift(_, e, s))
-        // XXX e.emit(inst(opcode.Mov, vm.Reg.Rpc, vm.Reg.Pc))
         e.emit(inst(opcode.Call, name(lambda.ptr)))
       case _ =>
         e.emit(inst(opcode.PushReg, vm.Reg.Pc, value.I32(args.size + 2)))
         args.foreach(lift(_, e, s))
-        // XXX e.emit(inst(opcode.Mov, vm.Reg.Rpc, vm.Reg.Pc))
         e.emit(inst(opcode.Call, value.lift(lambda)))
   case tl.Id(ast.Id(label, _)) =>
     e.emit(inst(opcode.PushReg, vm.Reg.Pc, value.I32(args.size + 2)))
     args.foreach(lift(_, e, s))
-    // XXX e.emit(inst(opcode.Mov, vm.Reg.Rpc, vm.Reg.Pc))
     e.emit(inst(opcode.Call, value.lift(lambda)))
   case lambda: tl.Lambda =>
     e.emit(inst(opcode.PushReg, vm.Reg.Pc, value.I32(args.size + 2)))
     args.foreach(lift(_, e, s))
-    // XXX e.emit(inst(opcode.Mov, vm.Reg.Rpc, vm.Reg.Pc))
     e.emit(inst(opcode.Call, name(lambda.ptr)))
     lift(lambda, e.to(lambda.ptr), s)
   case app: tl.App =>
@@ -133,7 +129,6 @@ def call(lambda: Ir, args: List[Ir], e: Emitter, s: Scope): Unit = lambda match
     e.emit(inst(opcode.Mov, vm.Reg.Jmp))
     e.emit(inst(opcode.PushReg, vm.Reg.Pc, value.I32(args.size + 2)))
     args.foreach(lift(_, e, s))
-    // XXX e.emit(inst(opcode.Mov, vm.Reg.Rpc, vm.Reg.Pc))
     e.emit(inst(opcode.Call))
   case _ =>
     /* bad call */
