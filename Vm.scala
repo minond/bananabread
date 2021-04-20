@@ -27,7 +27,6 @@ object Reg:
 class Machine(instructions: Seq[Instruction]):
   val stack = Stack[Value]()
   val frame = Stack[Frame](Map.empty)
-  var running = true
 
   val registers = Map[value.Id, value.I32](
     Reg.Pc -> value.I32(0),
@@ -43,11 +42,13 @@ class Machine(instructions: Seq[Instruction]):
   def rpc = registers.get(Reg.Rpc).get
   def jmp = registers.get(Reg.Jmp).get
 
+  def running = pc.value != -1
+
   def next: Unit =
     if !running then return
 
     eval(instructions(pc.value)) match
-      case Halt => running = false
+      case Halt => registers.update(Reg.Pc, value.I32(-1))
       case Cont => registers.update(Reg.Pc, value.I32(pc.value + 1))
       case Goto(label) => registers.update(Reg.Pc, value.I32(labels(label)))
       case Jump(next) => registers.update(Reg.Pc, value.I32(next))
