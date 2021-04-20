@@ -2,8 +2,7 @@ package bananabread
 
 import parser.{tokenize, parse, Syntax}
 import ir.Typeless => tl
-import opcode.Opcode
-import runtime.Instruction
+import opcode.{Opcode, Instruction}
 import vm.Machine
 
 def main(args: Array[String]) =
@@ -55,7 +54,7 @@ def main(args: Array[String]) =
   // println(parse("<stdin>", "let x = 1 y = x + 2 in x + y", syntax).map(ir.Typeless.lift))
   // println(parse("<stdin>", "1", syntax).map(ir.Typeless.lift).map(node => typechecker.infer(node, Map.empty)))
   // println(parse("<stdin>", "let x = ref(0) in x := !x + 1", syntax).map(ir.Typeless.lift))
-  // println(parse("<stdin>", "1 + 2", syntax).map(ir.Typeless.lift).map(runtime.lift).getOrElse(???).toSeq :+ Instruction(opcode.Halt))
+  // println(parse("<stdin>", "1 + 2", syntax).map(ir.Typeless.lift).map(opcode.lift).getOrElse(???).toSeq :+ Instruction(opcode.Halt))
   // println(parse("<stdin>", "1", syntax).map(ir.Typeless.lift).getOrElse(???).head)
 
   val instructions = parse("<stdin>",
@@ -67,7 +66,7 @@ def main(args: Array[String]) =
       if cond(0, 1)
       then 123
       else 1
-    """, syntax).map(tl.lift).map(runtime.lift).getOrElse(???).dump
+    """, syntax).map(tl.lift).map(opcode.compile).getOrElse(???).dump
 
   // val instructions = parse("<stdin>",
   //   """
@@ -88,12 +87,12 @@ def main(args: Array[String]) =
   //               func () =
   //                 func (x) = x + x
   //   in f()()()()(4)
-  //   """, syntax).map(tl.lift).map(runtime.lift).getOrElse(???).dump
+  //   """, syntax).map(tl.lift).map(opcode.compile).getOrElse(???).dump
 
   // val instructions = parse("<stdin>",
   //   """
   //       (func () = func () = func (a, b) = a + b)()()(4, 3)
-  //   """, syntax).map(tl.lift).map(runtime.lift).getOrElse(???).dump
+  //   """, syntax).map(tl.lift).map(opcode.compile).getOrElse(???).dump
   //       // (func (a) = func (b) = a + b)(4)(3)
 
   val rt = Machine(instructions)
