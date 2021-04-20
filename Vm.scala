@@ -25,7 +25,7 @@ object Reg:
   val Jmp = value.Id("%jmp")
 
 
-class Machine(instructions: Seq[Instruction]):
+class Machine(instructions: Seq[Instruction], info: Boolean = false):
   val stack = Stack[Value]()
   val frame = Stack[Frame](Map.empty)
 
@@ -48,11 +48,28 @@ class Machine(instructions: Seq[Instruction]):
   def next: Unit =
     if !running then return
 
+    if info then
+      println(s"====================================")
+      println(s"INS: ${instructions(pc.value)}")
+
     eval(instructions(pc.value)) match
       case Halt => registers.update(Reg.Pc, value.I32(-1))
       case Cont => registers.update(Reg.Pc, value.I32(pc.value + 1))
       case Goto(label) => registers.update(Reg.Pc, value.I32(labels(label)))
       case Jump(next) => registers.update(Reg.Pc, value.I32(next))
+
+    if info then
+      printInfo
+      println(s"====================================")
+
+  def printInstructions =
+    instructions.zipWithIndex
+      .foreach { (ins, i) => println(s"$i\t$ins") }
+
+  def printInfo =
+    println(s"STK: $stack")
+    println(s"REG: $registers")
+    println(s"FRM: $frame")
 
   def eval(instruction: Instruction): Pc = (instruction.op, instruction.args.toList) match
     case (opcode.Halt, _) =>
@@ -77,16 +94,30 @@ class Machine(instructions: Seq[Instruction]):
     case (opcode.PushI32, _) =>
       /* missing impl */
       ???
+    case (opcode.PushReg, reg :: value.I32(offset) :: Nil) =>
+      reg match
+        case Reg.Pc =>
+          stack.push(value.I32(pc.value + offset))
+          Cont
+        case Reg.Rpc =>
+          stack.push(value.I32(rpc.value + offset))
+          Cont
+        case Reg.Jmp =>
+          stack.push(value.I32(jmp.value + offset))
+          Cont
+        case _ =>
+          /* bad reg */
+          ???
     case (opcode.PushReg, reg :: Nil) =>
       reg match
         case Reg.Pc =>
           stack.push(pc)
           Cont
         case Reg.Rpc =>
-          stack.push(registers.get(Reg.Rpc).get)
+          stack.push(rpc)
           Cont
         case Reg.Jmp =>
-          stack.push(registers.get(Reg.Jmp).get)
+          stack.push(jmp)
           Cont
         case _ =>
           /* bad reg */
@@ -123,9 +154,23 @@ class Machine(instructions: Seq[Instruction]):
     case (opcode.Call, _) =>
       /* bad call */
       ???
+    case (opcode.Swap, Nil) =>
+      val a = stack.pop
+      val b = stack.pop
+      stack.push(a)
+      stack.push(b)
+      Cont
+    case (opcode.Swap, _) =>
+      /* bad call */
+      ???
     case (opcode.Ret, Nil) =>
-      frame.pop
-      Jump(rpc.value + 2)
+      stack.pop match
+        case value.I32(addr) =>
+          frame.pop
+          Jump(addr)
+        case _ =>
+          /* bad ret addr */
+          ???
     case (opcode.Ret, _) =>
       /* missing impl */
       ???

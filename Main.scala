@@ -62,10 +62,11 @@ def main(args: Array[String]) =
     """
     let
       ++ = func (a, b) = a + b
-      cond = func (a, b) = a + b in
+      cond = func (a, b) = a ++ b
+    in
       if cond(0, 1)
       then 123
-      else 321
+      else 1
     """, syntax).map(tl.lift).map(runtime.lift).getOrElse(???).dump
 
   // val instructions = parse("<stdin>",
@@ -91,13 +92,13 @@ def main(args: Array[String]) =
 
   // val instructions = parse("<stdin>",
   //   """
-  //       (func (a) = func (b) = a + b)
+  //       (func () = func () = func (a, b) = a + b)()()(4, 3)
   //   """, syntax).map(tl.lift).map(runtime.lift).getOrElse(???).dump
+  //       // (func (a) = func (b) = a + b)(4)(3)
 
   val rt = Machine(instructions)
 
-  println(instructions.mkString("\n"))
+  rt.printInstructions
 
   while rt.running do rt.next
-  println(rt.stack)
-  println(rt.registers)
+  rt.printInfo
