@@ -25,8 +25,8 @@ def main(args: Array[String]) =
                      .withInfix(3, ">")
                      .withInfix(3, "==")
                      .withInfix(0, ":=")
+                     .withInfix(0, "++")
                      .withPostfix(1, "!")
-                     .withPostfix(1, "++")
 
   // println(parse("<stdin>", "  4.3 + 54.764", syntax))
   // println(parse("<stdin>", "b + c * 3", syntax))
@@ -58,35 +58,36 @@ def main(args: Array[String]) =
   // println(parse("<stdin>", "1 + 2", syntax).map(ir.Typeless.lift).map(runtime.lift).getOrElse(???).toSeq :+ Instruction(opcode.Halt))
   // println(parse("<stdin>", "1", syntax).map(ir.Typeless.lift).getOrElse(???).head)
 
-  // val instructions = parse("<stdin>",
-  //   """
-  //   let cond = func (a, b) = a + b in
-  //     if cond
-  //     then 123
-  //     else 321
-  //   """, syntax).map(tl.lift).map(runtime.lift).getOrElse(???).toSeq :+ Instruction(opcode.Halt)
-
   val instructions = parse("<stdin>",
     """
     let
-      a = 1+3
-      b = func (x) = x
-      c = func (x) = x+x
-      d = if 0
-          then 123
-          else a
-      e = func (x) =
-            if x
-            then x
-            else x + 1
-      f = func () =
-            func () =
-              func () =
-                func () =
-                  func (x) = x + x
-    in f()()()()(4)
+      ++ = func (a, b) = a + b
+      cond = func (a, b) = a + b in
+      if cond(0, 1)
+      then 123
+      else 321
     """, syntax).map(tl.lift).map(runtime.lift).getOrElse(???).dump
-    // in b(b(b(c(e(d)))))
+
+  // val instructions = parse("<stdin>",
+  //   """
+  //   let
+  //     a = 1+3
+  //     b = func (x) = x
+  //     c = func (x) = x+x
+  //     d = if 0
+  //         then 123
+  //         else a
+  //     e = func (x) =
+  //           if x
+  //           then x
+  //           else x + 1
+  //     f = func () =
+  //           func () =
+  //             func () =
+  //               func () =
+  //                 func (x) = x + x
+  //   in f()()()()(4)
+  //   """, syntax).map(tl.lift).map(runtime.lift).getOrElse(???).dump
 
   // val instructions = parse("<stdin>",
   //   """
