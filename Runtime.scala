@@ -91,8 +91,6 @@ def call(lambda: Ir, args: List[Ir], e: Emitter): Unit = lambda match
     e.emit(inst(opcode.Mov, vm.Reg.Rpc, vm.Reg.Pc))
     e.emit(inst(opcode.Call, value.lift(lambda)))
   case lambda: tl.Lambda =>
-    // e.emit(inst(opcode.PushReg, vm.Reg.Rpc))
-    // e.emit(inst(opcode.PushReg, vm.Reg.Rst))
     args.foreach(lift(_, e))
     e.emit(inst(opcode.Mov, vm.Reg.Rpc, vm.Reg.Pc))
     e.emit(inst(opcode.Call, name(lambda.ptr)))
@@ -103,11 +101,6 @@ def call(lambda: Ir, args: List[Ir], e: Emitter): Unit = lambda match
     args.foreach(lift(_, e))
     e.emit(inst(opcode.Mov, vm.Reg.Rpc, vm.Reg.Pc))
     e.emit(inst(opcode.Call))
-    // println(app.lambda)
-    // println(app.args)
-    // e.emit(inst(opcode.Halt))
-    // lift(app.lambda, e)
-    // e.emit(inst(opcode.Halt))
   case _ =>
     /* bad call */
     ???
