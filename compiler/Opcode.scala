@@ -120,7 +120,7 @@ def unique(name: String): value.Id =
   value.Id(s"$name-${Random.alphanumeric.take(16).mkString}")
 
 def call(lambda: Ir, args: List[Ir], e: Emitter, s: Scope): Unit = lambda match
-  case tl.Id(ast.Id(label, _)) if label == "+" =>
+  case tl.Id(ast.Id(label, _)) if Seq("+", "-").contains(label) =>
     args.foreach(compile(_, e, s))
     e.emit(inst(opcode.Run, name(label)))
   case tl.Id(ast.Id(label, _)) if s.contains(label) =>
@@ -196,9 +196,9 @@ def cond(cnd: Ir, pas: Ir, fal: Ir, e: Emitter, s: Scope) =
 
 def let(bindings: List[tl.Binding], body: Ir, e: Emitter, s: Scope) =
   bindings.foreach { case tl.Binding(ast.Id(label, _), v, _) =>
+    s.define(label, v)
     compile(v, e, s)
     storev(label, v, e, s)
-    s.define(label, v)
   }
   compile(body, e, s)
 

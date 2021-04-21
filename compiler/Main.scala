@@ -57,15 +57,26 @@ def main(args: Array[String]) =
   // println(parse("<stdin>", "1 + 2", syntax).map(ir.Typeless.lift).map(opcode.lift).getOrElse(???).toSeq :+ Instruction(opcode.Halt))
   // println(parse("<stdin>", "1", syntax).map(ir.Typeless.lift).getOrElse(???).head)
 
+  // val instructions = parse("<stdin>",
+  //   """
+  //   let
+  //     ++ = func (a, b) = a + b
+  //     cond = func (a, b) = a ++ b
+  //   in
+  //     if cond(0, 1)
+  //     then 123
+  //     else 1
+  //   """, syntax).map(tl.lift).map(opcode.compile).getOrElse(???).dump
+
   val instructions = parse("<stdin>",
     """
     let
-      ++ = func (a, b) = a + b
-      cond = func (a, b) = a ++ b
+      count_down = func (x) =
+        if x
+        then count_down(x - 1)
+        else x
     in
-      if cond(0, 1)
-      then 123
-      else 1
+      count_down(10)
     """, syntax).map(tl.lift).map(opcode.compile).getOrElse(???).dump
 
   // val instructions = parse("<stdin>",
@@ -95,7 +106,7 @@ def main(args: Array[String]) =
   //   """, syntax).map(tl.lift).map(opcode.compile).getOrElse(???).dump
   //       // (func (a) = func (b) = a + b)(4)(3)
 
-  val rt = Machine(instructions)
+  val rt = Machine(instructions, info = true, prompt = true)
 
   rt.printInstructions
 

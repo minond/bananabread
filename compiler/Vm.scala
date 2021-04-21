@@ -23,7 +23,7 @@ object Reg:
   val Jmp = value.Id("%jmp")
 
 
-class Machine(instructions: Seq[Instruction], info: Boolean = false):
+class Machine(instructions: Seq[Instruction], info: Boolean = false, prompt: Boolean = false):
   val stack = Stack[Value]()
   val frame = Stack[Frame](Map.empty)
 
@@ -46,12 +46,18 @@ class Machine(instructions: Seq[Instruction], info: Boolean = false):
 
     if info then
       println(s"====================================")
+      printInfo
       println(s"INS: ${instructions(pc.value)}")
+
+    if prompt then
+      scala.io.StdIn.readLine()
 
     eval(instructions(pc.value)) match
       case Halt => registers.update(Reg.Pc, value.I32(-1))
       case Cont => registers.update(Reg.Pc, value.I32(pc.value + 1))
-      case Goto(label) => registers.update(Reg.Pc, value.I32(labels(label)))
+      case Goto(label) =>
+        println(s"============== $label $labels")
+        registers.update(Reg.Pc, value.I32(labels(label)))
       case Jump(next) => registers.update(Reg.Pc, value.I32(next))
 
     if info then
@@ -205,10 +211,11 @@ class Machine(instructions: Seq[Instruction], info: Boolean = false):
 
   def run(v: value.Id) = v.label match
     case "+" => bini32op(_ + _)
+    case "-" => bini32op(_ - _)
 
   def bini32op(f: (Integer, Integer) => Integer) =
     (stack.pop, stack.pop) match
-      case (value.I32(lhs), value.I32(rhs)) =>
+      case (value.I32(rhs), value.I32(lhs)) =>
         stack.push(value.I32(f(lhs, rhs)))
       case _ =>
         /* bad call */
