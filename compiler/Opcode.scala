@@ -148,8 +148,8 @@ def call(lambda: Ir, args: List[Ir], e: Emitter, s: Scope): Unit = lambda match
     ???
 
 def loadArgsAndRet(args: List[Ir], e: Emitter, s: Scope) =
-  e.emit(inst(opcode.PushReg, vm.Reg.Pc, value.I32(args.size + 2)))
   args.foreach(compile(_, e, s))
+  e.emit(inst(opcode.PushReg, vm.Reg.Pc, value.I32(2)))
 
 def load(label: String, e: Emitter, s: Scope) =
   e.emit(inst(opcode.LoadI32, name(label)))
@@ -204,6 +204,7 @@ def let(bindings: List[tl.Binding], body: Ir, e: Emitter, s: Scope) =
 
 def lambda(params: List[tl.Id], body: Ir, e: Emitter, s: Scope) =
   params.reverse.foreach { case tl.Id(ast.Id(label, _)) =>
+    e.emit(inst(opcode.Swap))
     store(label, e, s)
   }
   compile(body, e, s)

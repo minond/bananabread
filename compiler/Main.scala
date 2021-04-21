@@ -76,7 +76,7 @@ def main(args: Array[String]) =
         then count_down(x - 1)
         else x
     in
-      count_down(10)
+      count_down(1000)
     """, syntax).map(tl.lift).map(opcode.compile).getOrElse(???).dump
 
   // val instructions = parse("<stdin>",
@@ -106,7 +106,7 @@ def main(args: Array[String]) =
   //   """, syntax).map(tl.lift).map(opcode.compile).getOrElse(???).dump
   //       // (func (a) = func (b) = a + b)(4)(3)
 
-  val rt = Machine(instructions, info = true, prompt = true)
+  val rt = Machine(instructions, info = false, prompt = false)
 
   rt.printInstructions
 

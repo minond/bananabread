@@ -55,9 +55,7 @@ class Machine(instructions: Seq[Instruction], info: Boolean = false, prompt: Boo
     eval(instructions(pc.value)) match
       case Halt => registers.update(Reg.Pc, value.I32(-1))
       case Cont => registers.update(Reg.Pc, value.I32(pc.value + 1))
-      case Goto(label) =>
-        println(s"============== $label $labels")
-        registers.update(Reg.Pc, value.I32(labels(label)))
+      case Goto(label) => registers.update(Reg.Pc, value.I32(labels(label)))
       case Jump(next) => registers.update(Reg.Pc, value.I32(next))
 
     if info then
