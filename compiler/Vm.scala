@@ -1,7 +1,7 @@
 package bananabread
 package vm
 
-import opcode.{Opcode, Instruction}
+import opcode.{Opcode, Instruction, Exposed}
 import value.Value
 
 import scala.collection.mutable.{Stack, Map}
@@ -207,9 +207,8 @@ class Machine(instructions: Seq[Instruction], info: Boolean = false, prompt: Boo
       /* not implemented  */
       ???
 
-  def run(v: value.Id) = v.label match
-    case "+" => bini32op(_ + _)
-    case "-" => bini32op(_ - _)
+  def run(v: value.Id) =
+    Exposed.lookup(v.label).handler(this)
 
   def bini32op(f: (Integer, Integer) => Integer) =
     (stack.pop, stack.pop) match

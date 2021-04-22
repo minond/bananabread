@@ -28,7 +28,26 @@ case object Swap extends Opcode with Print("swap")
 case object Mov extends Opcode with Print("mov")
 case object LoadI32 extends Opcode with Print("load_i32") // local to stack
 case object StoreI32 extends Opcode with Print("store_i32") // stack to local
-case object StorePtr extends Opcode with Print("store_ptr") // stack to local
+case object StorePtr extends Opcode with Print("store_ptr")
+
+sealed trait Run(val handler: vm.Machine => Unit)
+case object Println extends Opcode with Print("println"), Run(vm => println(vm.stack.head)), Exposed("println")
+case object AddI32 extends Opcode with Print("add_i32"), Run(vm => vm.bini32op(_ + _)), Exposed("+")
+case object SubI32 extends Opcode with Print("sub_i32"), Run(vm => vm.bini32op(_ - _)), Exposed("-")
+
+trait Exposed(val label: String)
+object Exposed:
+  val registry = Map(
+    Println.label -> Println,
+    AddI32.label -> AddI32,
+    SubI32.label -> SubI32,
+  )
+
+  def contains(label: String) =
+    registry.keys.toSeq.contains(label)
+
+  def lookup(label: String) =
+    registry(label)
 
 
 case class Scope(env: Map[String, Ir] = Map.empty, parent: Option[Scope] = None):
@@ -120,7 +139,7 @@ def unique(name: String): value.Id =
   value.Id(s"$name-${Random.alphanumeric.take(16).mkString}")
 
 def call(lambda: Ir, args: List[Ir], e: Emitter, s: Scope): Unit = lambda match
-  case tl.Id(ast.Id(label, _)) if Seq("+", "-").contains(label) =>
+  case tl.Id(ast.Id(label, _)) if Exposed.contains(label) =>
     args.foreach(compile(_, e, s))
     e.emit(inst(opcode.Run, name(label)))
   case tl.Id(ast.Id(label, _)) if s.contains(label) =>

@@ -75,6 +75,7 @@ def main(args: Array[String]) =
         if x
         then count_down(x - 1)
         else x
+      something = (func (a) = println(a + a))(232)
     in
       count_down(1000)
     """, syntax).map(tl.lift).map(opcode.compile).getOrElse(???).dump
