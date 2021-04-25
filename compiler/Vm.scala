@@ -20,6 +20,7 @@ case class Jump(pc: Int) extends Pc
 
 object Reg:
   val Pc = value.Id("%pc")
+  val Lr = value.Id("%lr")
   val Jmp = value.Id("%jmp")
 
 
@@ -29,6 +30,7 @@ class Machine(instructions: Seq[Instruction], info: Boolean = false, prompt: Boo
 
   val registers: Registers = Map(
     Reg.Pc -> value.I32(0),
+    Reg.Lr -> value.I32(0),
     Reg.Jmp -> value.I32(0),
   )
 
@@ -37,6 +39,7 @@ class Machine(instructions: Seq[Instruction], info: Boolean = false, prompt: Boo
   }.toMap
 
   def pc = registers.get(Reg.Pc).get
+  def lr = registers.get(Reg.Lr).get
   def jmp = registers.get(Reg.Jmp).get
 
   def running = pc.value != -1
@@ -99,6 +102,9 @@ class Machine(instructions: Seq[Instruction], info: Boolean = false, prompt: Boo
         case Reg.Pc =>
           stack.push(value.I32(pc.value + offset))
           Cont
+        case Reg.Lr =>
+          stack.push(value.I32(lr.value + offset))
+          Cont
         case Reg.Jmp =>
           stack.push(value.I32(jmp.value + offset))
           Cont
@@ -109,6 +115,9 @@ class Machine(instructions: Seq[Instruction], info: Boolean = false, prompt: Boo
       reg match
         case Reg.Pc =>
           stack.push(pc)
+          Cont
+        case Reg.Lr =>
+          stack.push(lr)
           Cont
         case Reg.Jmp =>
           stack.push(jmp)
