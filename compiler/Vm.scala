@@ -134,11 +134,11 @@ class Machine(instructions: Seq[Instruction], info: Boolean = false, prompt: Boo
     case (opcode.PushPtr, _) =>
       /* bad call */
       ???
-    case (opcode.Run, (v : value.Id) :: Nil) =>
-      run(v)
+    case (handled: opcode.Run, Nil) =>
+      handled.handler(this)
       Cont
-    case (opcode.Run, _) =>
-      /* missing impl */
+    case (handled: opcode.Run, _) =>
+      /* bad call */
       ???
     case (opcode.Call, value.Id(label) :: Nil) =>
       frame.head.get(label) match

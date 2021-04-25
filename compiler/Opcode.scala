@@ -22,7 +22,6 @@ case object PushI32 extends Opcode with Print("push_i32")
 case object PushPtr extends Opcode with Print("push_ptr")
 case object PushReg extends Opcode with Print("push_reg")
 case object Call extends Opcode with Print("call")
-case object Run extends Opcode with Print("run")
 case object Ret extends Opcode with Print("ret")
 case object Swap extends Opcode with Print("swap")
 case object Mov extends Opcode with Print("mov")
@@ -141,7 +140,7 @@ def unique(name: String): value.Id =
 def call(lambda: Ir, args: List[Ir], e: Emitter, s: Scope): Unit = lambda match
   case tl.Id(ast.Id(label, _)) if Exposed.contains(label) =>
     args.foreach(compile(_, e, s))
-    e.emit(inst(opcode.Run, name(label)))
+    e.emit(inst(Exposed.lookup(label)))
   case tl.Id(ast.Id(label, _)) if s.contains(label) =>
     s.lookup(label) match
       case lambda: tl.Lambda =>
