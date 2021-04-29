@@ -10,6 +10,7 @@ primary = "(" expr ")"
         | lambda
         | cond
         | let
+        | begin
         | literal
         ;
 
@@ -24,6 +25,9 @@ cond = "if" expr "then" expr "else" expr
 
 let = "let" { id1 "=" expr } "in" expr
     ;
+
+begin = "begin" { expr } "end"
+      ;
 
 literal = id1
         | id2

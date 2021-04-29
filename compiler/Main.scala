@@ -76,6 +76,19 @@ def main(args: Array[String]) =
         then count_down(x - 1)
         else x
       something = (func (a) = println(a + a))(232)
+      something_else =
+        begin
+          123
+          321
+          begin
+            111
+            111
+          end
+          begin
+            111
+            27
+          end
+        end
     in begin
       count_down(1000)
       count_down(1000)
@@ -84,6 +97,7 @@ def main(args: Array[String]) =
       println(321)
       1 + 3
       println(22 + 20)
+      println(something_else)
     end
     """, syntax).map(tl.lift).map(opcode.compile).getOrElse(???).dump
 
