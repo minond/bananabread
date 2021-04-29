@@ -84,18 +84,18 @@ class Emitter(section: String = "main", sections: Map[String, Instructions] = Ma
     this
 
   def dump =
-    inst(opcode.Label, value.Id("main")) ++
+    inst(Label, value.Id("main")) ++
     sections.get("main").get ++
-    inst(opcode.Halt) ++
+    inst(Halt) ++
     (for (sec, instructions) <- sections if sec != "main"
-     yield inst(opcode.Label, value.Id(sec)) ++ instructions).flatten
+     yield inst(Label, value.Id(sec)) ++ instructions).flatten
 
 
 case class Instruction(op: Opcode, args: Value*):
   def toList = List(this)
 
   override def toString = op match
-    case opcode.Label => args(0).toString
+    case Label => args(0).toString
       // if args(0).toString.startsWith("lambda")
       // then s"\n${args(0)}:"
       // else s"${args(0)}:"
@@ -119,7 +119,7 @@ def compile(node: Ir, e: Emitter, s: Scope): Emitter =
     case v: tl.Lambda =>
       // XXX 1
       lambda(v.params, v.body, e.to(v.ptr), s)
-      e.emit(inst(opcode.Push(Ptr), name(v.ptr)))
+      e.emit(inst(Push(Ptr), name(v.ptr)))
     case tl.Id(ast.Id(label, _)) => load(label, e, s)
     case tl.App(lambda, args, _) => call(lambda, args, e, s)
     case tl.Cond(cnd, pas, fal, _) => cond(cnd, pas, fal, e, s)
@@ -128,7 +128,7 @@ def compile(node: Ir, e: Emitter, s: Scope): Emitter =
 
 
 def push(node: Ir, typ: ty.Type, e: Emitter, s: Scope) = typ match
-  case ty.I32 => e.emit(inst(opcode.Push(I32), value.lift(node)))
+  case ty.I32 => e.emit(inst(Push(I32), value.lift(node)))
   case ty.Str => ???
   case _: ty.Var => ???
   case _: ty.Lambda => ???
@@ -147,56 +147,56 @@ def call(lambda: Ir, args: List[Ir], e: Emitter, s: Scope): Unit = lambda match
     s.lookup(label) match
       case lambda: tl.Lambda =>
         loadArgsAndRet(args, e, s)
-        e.emit(inst(opcode.Call, name(lambda.ptr)))
+        e.emit(inst(Call, name(lambda.ptr)))
       case _ =>
         loadArgsAndRet(args, e, s)
-        e.emit(inst(opcode.Call, value.lift(lambda)))
+        e.emit(inst(Call, value.lift(lambda)))
   case tl.Id(ast.Id(label, _)) =>
     loadArgsAndRet(args, e, s)
-    e.emit(inst(opcode.Call, value.lift(lambda)))
+    e.emit(inst(Call, value.lift(lambda)))
   case lambda: tl.Lambda =>
     loadArgsAndRet(args, e, s)
-    e.emit(inst(opcode.Call, name(lambda.ptr)))
+    e.emit(inst(Call, name(lambda.ptr)))
     compile(lambda, e.to(lambda.ptr), s)
   case app: tl.App =>
     call(app.lambda, app.args, e, s)
-    e.emit(inst(opcode.Mov, vm.Reg.Jmp))
+    e.emit(inst(Mov, vm.Reg.Jmp))
     loadArgsAndRet(args, e, s)
-    e.emit(inst(opcode.Call))
+    e.emit(inst(Call))
   case _ =>
     /* bad call */
     ???
 
 def loadArgsAndRet(args: List[Ir], e: Emitter, s: Scope) =
   args.foreach(compile(_, e, s))
-  e.emit(inst(opcode.Push(Reg), vm.Reg.Pc, value.I32(2)))
+  e.emit(inst(Push(Reg), vm.Reg.Pc, value.I32(2)))
 
 def load(label: String, e: Emitter, s: Scope) =
-  e.emit(inst(opcode.Load(I32), name(label)))
+  e.emit(inst(Load(I32), name(label)))
 
 def store(label: String, e: Emitter, s: Scope) =
-  e.emit(inst(opcode.Store(I32), name(label)))
+  e.emit(inst(Store(I32), name(label)))
 
 def storev(label: String, v: Ir, e: Emitter, s: Scope) = v match
-  case _: tl.Num => e.emit(inst(opcode.Store(I32), name(label)))
+  case _: tl.Num => e.emit(inst(Store(I32), name(label)))
   case _: tl.Str => ???
   case _: tl.Id => ???
   case v: tl.Lambda =>
     // XXX 1
-    // e.emit(inst(opcode.Push(Ptr), name(v.ptr)))
-    e.emit(inst(opcode.Store(Ptr), name(label)))
+    // e.emit(inst(Push(Ptr), name(v.ptr)))
+    e.emit(inst(Store(Ptr), name(label)))
   case _: tl.App =>
     // TODO App's result may not be i32, need to pass ty.Type instead of
     // typeless Ir.
-    e.emit(inst(opcode.Store(I32), name(label)))
+    e.emit(inst(Store(I32), name(label)))
   case _: tl.Cond =>
     // TODO Cond's result may not be i32, need to pass ty.Type instead of
     // typeless Ir.
-    e.emit(inst(opcode.Store(I32), name(label)))
+    e.emit(inst(Store(I32), name(label)))
   case _: tl.Let =>
     // TODO Let's result may not be i32, need to pass ty.Type instead of
     // typeless Ir.
-    e.emit(inst(opcode.Store(I32), name(label)))
+    e.emit(inst(Store(I32), name(label)))
 
 def cond(cnd: Ir, pas: Ir, fal: Ir, e: Emitter, s: Scope) =
   val lcond = unique("cond")
@@ -204,15 +204,15 @@ def cond(cnd: Ir, pas: Ir, fal: Ir, e: Emitter, s: Scope) =
   val lelse = unique("else")
   val ldone = unique("done")
 
-  e.emit(inst(opcode.Label, lcond))
+  e.emit(inst(Label, lcond))
   compile(cnd, e, s)
-  e.emit(inst(opcode.Jz, lelse))
-  e.emit(inst(opcode.Label, lthen))
+  e.emit(inst(Jz, lelse))
+  e.emit(inst(Label, lthen))
   compile(pas, e, s)
-  e.emit(inst(opcode.Jmp, ldone))
-  e.emit(inst(opcode.Label, lelse))
+  e.emit(inst(Jmp, ldone))
+  e.emit(inst(Label, lelse))
   compile(fal, e, s)
-  e.emit(inst(opcode.Label, ldone))
+  e.emit(inst(Label, ldone))
 
 def let(bindings: List[tl.Binding], body: Ir, e: Emitter, s: Scope) =
   bindings.foreach { case tl.Binding(ast.Id(label, _), v, _) =>
@@ -224,9 +224,9 @@ def let(bindings: List[tl.Binding], body: Ir, e: Emitter, s: Scope) =
 
 def lambda(params: List[tl.Id], body: Ir, e: Emitter, s: Scope) =
   params.reverse.foreach { case tl.Id(ast.Id(label, _)) =>
-    e.emit(inst(opcode.Swap))
+    e.emit(inst(Swap))
     store(label, e, s)
   }
   compile(body, e, s)
-  e.emit(inst(opcode.Swap))
-  e.emit(inst(opcode.Ret))
+  e.emit(inst(Swap))
+  e.emit(inst(Ret))
