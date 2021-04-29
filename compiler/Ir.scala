@@ -30,6 +30,7 @@ object Typeless:
     def ptr = s"lambda${hashCode}"
   case class Cond(cond: Ir, pass: Ir, fail: Ir, expr: Expr) extends Ir with Print(s"(if cond: $cond then: $pass else: $fail)")
   case class Let(bindings: List[Binding], body: Ir, expr: Expr) extends Ir with Print(s"(let bindings: (${bindings.mkString(" ")}) body: $body)")
+  case class Begin(ins: List[Ir], expr: Expr) extends Ir with Print(s"(begin ${ins.mkString(" ")})")
 
   case class Binding(label: ast.Id, value: Ir, expr: ast.Binding) extends Print(s"binding: $label value: $value")
 
@@ -49,6 +50,7 @@ object Typeless:
     case ast.Binop(op, lhs, rhs) => App(lift(op), List(lhs, rhs).map(lift), expr)
     case ast.Cond(_, cond, pass, fail) => Cond(lift(cond), lift(pass), lift(fail), expr)
     case ast.Let(_, bindings, body) => Let(bindings.map(lift), lift(body), expr)
+    case ast.Begin(head, tail) => Begin((head +: tail).map(lift), expr)
 
   def lift(binding: ast.Binding): Binding =
     Binding(binding.label, lift(binding.value), binding)

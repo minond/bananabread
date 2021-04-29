@@ -76,8 +76,15 @@ def main(args: Array[String]) =
         then count_down(x - 1)
         else x
       something = (func (a) = println(a + a))(232)
-    in
+    in begin
       count_down(1000)
+      count_down(1000)
+      count_down(1000)
+      println(123)
+      println(321)
+      1 + 3
+      println(22 + 20)
+    end
     """, syntax).map(tl.lift).map(opcode.compile).getOrElse(???).dump
 
   // val instructions = parse("<stdin>",

@@ -124,6 +124,7 @@ def compile(node: Ir, e: Emitter, s: Scope): Emitter =
     case tl.App(lambda, args, _) => call(lambda, args, e, s)
     case tl.Cond(cnd, pas, fal, _) => cond(cnd, pas, fal, e, s)
     case tl.Let(bindings, body, _) => let(bindings, body, e, s)
+    case tl.Begin(ins, _) => begin(ins, e, s)
   e
 
 
@@ -197,6 +198,10 @@ def storev(label: String, v: Ir, e: Emitter, s: Scope) = v match
     // TODO Let's result may not be i32, need to pass ty.Type instead of
     // typeless Ir.
     e.emit(inst(Store(I32), name(label)))
+  case _: tl.Begin =>
+    // TODO Begin's result may not be i32, need to pass ty.Type instead of
+    // typeless Ir.
+    e.emit(inst(Store(I32), name(label)))
 
 def cond(cnd: Ir, pas: Ir, fal: Ir, e: Emitter, s: Scope) =
   val lcond = unique("cond")
@@ -221,6 +226,11 @@ def let(bindings: List[tl.Binding], body: Ir, e: Emitter, s: Scope) =
     storev(label, v, e, s)
   }
   compile(body, e, s)
+
+def begin(ins: List[Ir], e: Emitter, s: Scope) =
+  ins.foreach { ir =>
+    compile(ir, e, s)
+  }
 
 def lambda(params: List[tl.Id], body: Ir, e: Emitter, s: Scope) =
   params.reverse.foreach { case tl.Id(ast.Id(label, _)) =>

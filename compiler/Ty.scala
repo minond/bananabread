@@ -26,6 +26,7 @@ def infer(node: Ir, scope: Scope): Type = node match
   case tl.Lambda(params, body, expr) => ???
   case _: tl.Cond => ???
   case _: tl.Let => ???
+  case _: tl.Begin => ???
 
 def lookup(label: String, scope: Scope): Type =
   scope.get(label) match

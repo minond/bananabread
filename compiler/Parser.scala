@@ -34,6 +34,7 @@ def parsePrimary(head: Token, tail: Tokens, sourceName: String, syntax: Syntax):
     case word: ast.Id if Word.isFunc(word) => parseLambda(word, tail, sourceName, syntax)
     case word: ast.Id if Word.isIf(word) => parseCond(word, tail, sourceName, syntax)
     case word: ast.Id if Word.isLet(word) => parseLet(word, tail, sourceName, syntax)
+    case word: ast.Id if Word.isBegin(word) => parseBegin(word, tail, sourceName, syntax)
     case paren: ast.OpenParen => parseGroup(paren, tail, sourceName, syntax)
     case lit: ast.Literal => Right(lit)
     case unexpected => Left(ast.UnexpectedTokenErr(unexpected))
@@ -81,6 +82,26 @@ def parseBinding(start: Token, tail: Tokens, sourceName: String, syntax: Syntax)
     value <- parseExpr(tail.next, tail, sourceName, syntax)
   yield
     ast.Binding(label, value)
+
+def parseBegin(start: Token, tail: Tokens, sourceName: String, syntax: Syntax): Either[Err, ast.Begin] =
+  for
+    heade <- parseExpr(tail.next, tail, sourceName, syntax)
+    taile <- parseBeginTail(start, tail, sourceName, syntax)
+    _ <- eat(Word.END, start, tail)
+  yield
+    ast.Begin(heade, taile)
+
+def parseBeginTail(start: Token, tail: Tokens, sourceName: String, syntax: Syntax): Either[Err, List[Expr]] =
+  for
+    heade <- if Word.isEnd(lookahead(start, tail))
+            then return Right(List.empty)
+            else parseExpr(tail.next, tail, sourceName, syntax)
+    next = lookahead(start, tail)
+    taile <- if Word.isEnd(next)
+            then Right(List.empty)
+            else parseBeginTail(start, tail, sourceName, syntax)
+  yield
+    heade +: taile
 
 def parseGroup(paren: Token, tail: Tokens, sourceName: String, syntax: Syntax): Either[Err, Expr] =
   for
@@ -218,6 +239,8 @@ object Word:
   val ELSE = "else"
   val LET = "let"
   val IN = "in"
+  val BEGIN = "begin"
+  val END = "end"
 
   def is(token: ast.Token, word: String) = token match
     case id: ast.Id => id.lexeme == word
@@ -228,6 +251,8 @@ object Word:
   def isIf(token: ast.Token) = is(token, IF)
   def isLet(token: ast.Token) = is(token, LET)
   def isIn(token: ast.Token) = is(token, IN)
+  def isBegin(token: ast.Token) = is(token, BEGIN)
+  def isEnd(token: ast.Token) = is(token, END)
 
 case class Syntax(
   prefix: Map[String, Int] = Map.empty,
