@@ -25,21 +25,20 @@ case object Call extends Opcode with Print("call")
 case object Ret extends Opcode with Print("ret")
 case object Swap extends Opcode with Print("swap")
 case object Mov extends Opcode with Print("mov")
-case object LoadI32 extends Opcode with Print("load_i32") // local to stack
+case class Load(typ: ty.Type) extends Opcode with Print(s"load[$typ]") // local to stack
 case object StoreI32 extends Opcode with Print("store_i32") // stack to local
 case object StorePtr extends Opcode with Print("store_ptr")
 
 sealed trait Run(val handler: vm.Machine => Unit)
-case object Println extends Opcode with Print("println"), Run(vm => println(vm.stack.head)), Exposed("println")
-case object AddI32 extends Opcode with Print("add_i32"), Run(vm => vm.bini32op(_ + _)), Exposed("+")
-case object SubI32 extends Opcode with Print("sub_i32"), Run(vm => vm.bini32op(_ - _)), Exposed("-")
+case object Println extends Opcode with Print("println"), Run(vm => println(vm.stack.head))
+case class Add(typ: ty.Type) extends Opcode with Print(s"add[$typ]"), Run(vm => vm.bini32op(_ + _))
+case class Sub(typ: ty.Type) extends Opcode with Print(s"sub[$typ]"), Run(vm => vm.bini32op(_ - _))
 
-trait Exposed(val label: String)
 object Exposed:
   val registry = Map(
-    Println.label -> Println,
-    AddI32.label -> AddI32,
-    SubI32.label -> SubI32,
+    "println" -> Println,
+    "+" -> Add(ty.I32),
+    "-" -> Sub(ty.I32),
   )
 
   def contains(label: String) =
@@ -170,7 +169,7 @@ def loadArgsAndRet(args: List[Ir], e: Emitter, s: Scope) =
   e.emit(inst(opcode.PushReg, vm.Reg.Pc, value.I32(2)))
 
 def load(label: String, e: Emitter, s: Scope) =
-  e.emit(inst(opcode.LoadI32, name(label)))
+  e.emit(inst(opcode.Load(ty.I32), name(label)))
 
 def store(label: String, e: Emitter, s: Scope) =
   e.emit(inst(opcode.StoreI32, name(label)))

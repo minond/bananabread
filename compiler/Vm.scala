@@ -195,7 +195,7 @@ class Machine(instructions: Seq[Instruction], info: Boolean = false, prompt: Boo
     case (opcode.StorePtr, _) =>
       /* bad call */
       ???
-    case (opcode.LoadI32, value.Id(label) :: Nil) =>
+    case (opcode.Load(ty.I32), value.Id(label) :: Nil) =>
       frame.head.get(label) match
         case None =>
           /* undeclared var */
@@ -203,7 +203,7 @@ class Machine(instructions: Seq[Instruction], info: Boolean = false, prompt: Boo
         case Some(v) =>
           stack.push(v)
           Cont
-    case (opcode.LoadI32, _) =>
+    case (opcode.Load(_), _) =>
       /* bad call */
       ???
 
