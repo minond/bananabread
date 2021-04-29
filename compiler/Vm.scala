@@ -94,10 +94,10 @@ class Machine(instructions: Seq[Instruction], info: Boolean = false, prompt: Boo
     case (opcode.Push(opcode.I32), (v : value.I32) :: Nil) =>
       stack.push(v)
       Cont
-    case (opcode.Push(_), _) =>
-      /* missing impl */
-      ???
-    case (opcode.PushReg, reg :: value.I32(offset) :: Nil) =>
+    case (opcode.Push(opcode.Ptr), ptr :: Nil) =>
+      stack.push(ptr)
+      Cont
+    case (opcode.Push(opcode.Reg), reg :: value.I32(offset) :: Nil) =>
       reg match
         case Reg.Pc =>
           stack.push(value.I32(pc.value + offset))
@@ -111,7 +111,7 @@ class Machine(instructions: Seq[Instruction], info: Boolean = false, prompt: Boo
         case _ =>
           /* bad reg */
           ???
-    case (opcode.PushReg, reg :: Nil) =>
+    case (opcode.Push(opcode.Reg), reg :: Nil) =>
       reg match
         case Reg.Pc =>
           stack.push(pc)
@@ -125,14 +125,8 @@ class Machine(instructions: Seq[Instruction], info: Boolean = false, prompt: Boo
         case _ =>
           /* bad reg */
           ???
-    case (opcode.PushReg, _) =>
-      /* bad call */
-      ???
-    case (opcode.PushPtr, ptr :: Nil) =>
-      stack.push(ptr)
-      Cont
-    case (opcode.PushPtr, _) =>
-      /* bad call */
+    case (opcode.Push(_), _) =>
+      /* missing impl */
       ???
     case (handled: opcode.Run, Nil) =>
       handled.handler(this)
@@ -186,13 +180,10 @@ class Machine(instructions: Seq[Instruction], info: Boolean = false, prompt: Boo
     case (opcode.Store(opcode.I32), value.Id(label) :: Nil) =>
       frame.head.put(label, stack.pop)
       Cont
-    case (opcode.Store(_), _) =>
-      /* bad call */
-      ???
-    case (opcode.StorePtr, value.Id(label) :: Nil) =>
+    case (opcode.Store(opcode.Ptr), value.Id(label) :: Nil) =>
       frame.head.put(label, stack.pop)
       Cont
-    case (opcode.StorePtr, _) =>
+    case (opcode.Store(_), _) =>
       /* bad call */
       ???
     case (opcode.Load(opcode.I32), value.Id(label) :: Nil) =>

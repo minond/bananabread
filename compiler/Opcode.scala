@@ -25,15 +25,12 @@ case object Label extends Opcode
 case object Jz extends Opcode with Print("jz")
 case object Jmp extends Opcode with Print("jmp")
 case class Push(typ: Type) extends Opcode with Print(s"push[$typ]")
-case object PushPtr extends Opcode with Print("push_ptr")
-case object PushReg extends Opcode with Print("push_reg")
 case object Call extends Opcode with Print("call")
 case object Ret extends Opcode with Print("ret")
 case object Swap extends Opcode with Print("swap")
 case object Mov extends Opcode with Print("mov")
 case class Load(typ: Type) extends Opcode with Print(s"load[$typ]") // local to stack
 case class Store(typ: Type) extends Opcode with Print(s"store[$typ]") // stack to local
-case object StorePtr extends Opcode with Print("store_ptr")
 
 sealed trait Run(val handler: vm.Machine => Unit)
 case object Println extends Opcode with Print("println"), Run(vm => println(vm.stack.head))
@@ -122,7 +119,7 @@ def compile(node: Ir, e: Emitter, s: Scope): Emitter =
     case v: tl.Lambda =>
       // XXX 1
       lambda(v.params, v.body, e.to(v.ptr), s)
-      e.emit(inst(opcode.PushPtr, name(v.ptr)))
+      e.emit(inst(opcode.Push(Ptr), name(v.ptr)))
     case tl.Id(ast.Id(label, _)) => load(label, e, s)
     case tl.App(lambda, args, _) => call(lambda, args, e, s)
     case tl.Cond(cnd, pas, fal, _) => cond(cnd, pas, fal, e, s)
@@ -172,7 +169,7 @@ def call(lambda: Ir, args: List[Ir], e: Emitter, s: Scope): Unit = lambda match
 
 def loadArgsAndRet(args: List[Ir], e: Emitter, s: Scope) =
   args.foreach(compile(_, e, s))
-  e.emit(inst(opcode.PushReg, vm.Reg.Pc, value.I32(2)))
+  e.emit(inst(opcode.Push(Reg), vm.Reg.Pc, value.I32(2)))
 
 def load(label: String, e: Emitter, s: Scope) =
   e.emit(inst(opcode.Load(I32), name(label)))
@@ -186,8 +183,8 @@ def storev(label: String, v: Ir, e: Emitter, s: Scope) = v match
   case _: tl.Id => ???
   case v: tl.Lambda =>
     // XXX 1
-    // e.emit(inst(opcode.PushPtr, name(v.ptr)))
-    e.emit(inst(opcode.StorePtr, name(label)))
+    // e.emit(inst(opcode.Push(Ptr), name(v.ptr)))
+    e.emit(inst(opcode.Store(Ptr), name(label)))
   case _: tl.App =>
     // TODO App's result may not be i32, need to pass ty.Type instead of
     // typeless Ir.
