@@ -24,18 +24,18 @@ case object Halt extends Opcode with Print("halt")
 case object Label extends Opcode
 case object Jz extends Opcode with Print("jz")
 case object Jmp extends Opcode with Print("jmp")
-case class Push(typ: Type) extends Opcode with Print(s"push[$typ]")
+case class Push(typ: Type) extends Opcode with Print(s"push [$typ]")
 case object Call extends Opcode with Print("call")
 case object Ret extends Opcode with Print("ret")
 case object Swap extends Opcode with Print("swap")
 case object Mov extends Opcode with Print("mov")
-case class Load(typ: Type) extends Opcode with Print(s"load[$typ]") // local to stack
-case class Store(typ: Type) extends Opcode with Print(s"store[$typ]") // stack to local
+case class Load(typ: Type) extends Opcode with Print(s"load [$typ]") // local to stack
+case class Store(typ: Type) extends Opcode with Print(s"store [$typ]") // stack to local
 
 sealed trait Run(val handler: vm.Machine => Unit)
 case object Println extends Opcode with Print("println"), Run(vm => println(vm.stack.head))
-case class Add(typ: Type) extends Opcode with Print(s"add[$typ]"), Run(vm => vm.bini32op(_ + _))
-case class Sub(typ: Type) extends Opcode with Print(s"sub[$typ]"), Run(vm => vm.bini32op(_ - _))
+case class Add(typ: Type) extends Opcode with Print(s"add [$typ]"), Run(vm => vm.bini32op(_ + _))
+case class Sub(typ: Type) extends Opcode with Print(s"sub [$typ]"), Run(vm => vm.bini32op(_ - _))
 
 object Exposed:
   val registry = Map(
