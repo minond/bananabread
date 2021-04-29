@@ -18,7 +18,7 @@ case object Halt extends Opcode with Print("halt")
 case object Label extends Opcode
 case object Jz extends Opcode with Print("jz")
 case object Jmp extends Opcode with Print("jmp")
-case object PushI32 extends Opcode with Print("push_i32")
+case class Push(typ: ty.Type) extends Opcode with Print(s"push[$typ]")
 case object PushPtr extends Opcode with Print("push_ptr")
 case object PushReg extends Opcode with Print("push_reg")
 case object Call extends Opcode with Print("call")
@@ -26,7 +26,7 @@ case object Ret extends Opcode with Print("ret")
 case object Swap extends Opcode with Print("swap")
 case object Mov extends Opcode with Print("mov")
 case class Load(typ: ty.Type) extends Opcode with Print(s"load[$typ]") // local to stack
-case object StoreI32 extends Opcode with Print("store_i32") // stack to local
+case class Store(typ: ty.Type) extends Opcode with Print(s"store[$typ]") // stack to local
 case object StorePtr extends Opcode with Print("store_ptr")
 
 sealed trait Run(val handler: vm.Machine => Unit)
@@ -125,7 +125,7 @@ def compile(node: Ir, e: Emitter, s: Scope): Emitter =
 
 
 def push(node: Ir, typ: ty.Type, e: Emitter, s: Scope) = typ match
-  case ty.I32 => e.emit(inst(opcode.PushI32, value.lift(node)))
+  case ty.I32 => e.emit(inst(opcode.Push(ty.I32), value.lift(node)))
   case ty.Str => ???
   case _: ty.Var => ???
   case _: ty.Lambda => ???
@@ -172,10 +172,10 @@ def load(label: String, e: Emitter, s: Scope) =
   e.emit(inst(opcode.Load(ty.I32), name(label)))
 
 def store(label: String, e: Emitter, s: Scope) =
-  e.emit(inst(opcode.StoreI32, name(label)))
+  e.emit(inst(opcode.Store(ty.I32), name(label)))
 
 def storev(label: String, v: Ir, e: Emitter, s: Scope) = v match
-  case _: tl.Num => e.emit(inst(opcode.StoreI32, name(label)))
+  case _: tl.Num => e.emit(inst(opcode.Store(ty.I32), name(label)))
   case _: tl.Str => ???
   case _: tl.Id => ???
   case v: tl.Lambda =>
@@ -185,15 +185,15 @@ def storev(label: String, v: Ir, e: Emitter, s: Scope) = v match
   case _: tl.App =>
     // TODO App's result may not be i32, need to pass ty.Type instead of
     // typeless Ir.
-    e.emit(inst(opcode.StoreI32, name(label)))
+    e.emit(inst(opcode.Store(ty.I32), name(label)))
   case _: tl.Cond =>
     // TODO Cond's result may not be i32, need to pass ty.Type instead of
     // typeless Ir.
-    e.emit(inst(opcode.StoreI32, name(label)))
+    e.emit(inst(opcode.Store(ty.I32), name(label)))
   case _: tl.Let =>
     // TODO Let's result may not be i32, need to pass ty.Type instead of
     // typeless Ir.
-    e.emit(inst(opcode.StoreI32, name(label)))
+    e.emit(inst(opcode.Store(ty.I32), name(label)))
 
 def cond(cnd: Ir, pas: Ir, fal: Ir, e: Emitter, s: Scope) =
   val lcond = unique("cond")

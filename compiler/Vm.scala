@@ -91,10 +91,10 @@ class Machine(instructions: Seq[Instruction], info: Boolean = false, prompt: Boo
     case (opcode.Jmp, _) =>
       /* bad call */
       ???
-    case (opcode.PushI32, (v : value.I32) :: Nil) =>
+    case (opcode.Push(ty.I32), (v : value.I32) :: Nil) =>
       stack.push(v)
       Cont
-    case (opcode.PushI32, _) =>
+    case (opcode.Push(_), _) =>
       /* missing impl */
       ???
     case (opcode.PushReg, reg :: value.I32(offset) :: Nil) =>
@@ -183,10 +183,10 @@ class Machine(instructions: Seq[Instruction], info: Boolean = false, prompt: Boo
     case (opcode.Mov, _) =>
       /* missing impl */
       ???
-    case (opcode.StoreI32, value.Id(label) :: Nil) =>
+    case (opcode.Store(ty.I32), value.Id(label) :: Nil) =>
       frame.head.put(label, stack.pop)
       Cont
-    case (opcode.StoreI32, _) =>
+    case (opcode.Store(_), _) =>
       /* bad call */
       ???
     case (opcode.StorePtr, value.Id(label) :: Nil) =>
