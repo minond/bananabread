@@ -91,7 +91,7 @@ class Machine(instructions: Seq[Instruction], info: Boolean = false, prompt: Boo
     case (opcode.Jmp, _) =>
       /* bad call */
       ???
-    case (opcode.Push(ty.I32), (v : value.I32) :: Nil) =>
+    case (opcode.Push(opcode.I32), (v : value.I32) :: Nil) =>
       stack.push(v)
       Cont
     case (opcode.Push(_), _) =>
@@ -183,7 +183,7 @@ class Machine(instructions: Seq[Instruction], info: Boolean = false, prompt: Boo
     case (opcode.Mov, _) =>
       /* missing impl */
       ???
-    case (opcode.Store(ty.I32), value.Id(label) :: Nil) =>
+    case (opcode.Store(opcode.I32), value.Id(label) :: Nil) =>
       frame.head.put(label, stack.pop)
       Cont
     case (opcode.Store(_), _) =>
@@ -195,7 +195,7 @@ class Machine(instructions: Seq[Instruction], info: Boolean = false, prompt: Boo
     case (opcode.StorePtr, _) =>
       /* bad call */
       ???
-    case (opcode.Load(ty.I32), value.Id(label) :: Nil) =>
+    case (opcode.Load(opcode.I32), value.Id(label) :: Nil) =>
       frame.head.get(label) match
         case None =>
           /* undeclared var */
