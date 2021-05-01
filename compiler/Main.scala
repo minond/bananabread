@@ -77,10 +77,10 @@ def main(args: Array[String]) =
       count_down(1000)
       count_down(1000)
       count_down(1000)
-      println(123)
-      println(321)
+      // println(123)
+      // println(321)
       1 + 3
-      println(22 + 20)
+      // println(22 + 20)
       println(something_else)
     end
     """

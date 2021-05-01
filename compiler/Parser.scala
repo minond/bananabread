@@ -20,10 +20,10 @@ def parse(sourceName: String, tokens: Tokens, syntax: Syntax): Either[Err, List[
     .squished
 
 def parseExpr(head: Token, tail: Tokens, sourceName: String, syntax: Syntax): Either[Err, Expr] =
-  parseExprCont(head match {
-    case op: ast.Id if syntax.isPrefix(op) => parseUniop(op, tail, sourceName, syntax)
-    case _ => parsePrimary(head, tail, sourceName, syntax)
-  }, tail, sourceName, syntax)
+  head match
+    case comment: ast.Comment => Right(comment)
+    case op: ast.Id if syntax.isPrefix(op) => parseExprCont(parseUniop(op, tail, sourceName, syntax), tail, sourceName, syntax)
+    case _ => parseExprCont(parsePrimary(head, tail, sourceName, syntax), tail, sourceName, syntax)
 
 def parseUniop(op: ast.Id, tail: Tokens, sourceName: String, syntax: Syntax): Either[Err, ast.Uniop] =
   for rhs <- parsePrimary(tail.next, tail, sourceName, syntax)
@@ -178,7 +178,7 @@ def tokenize(sourceName: String, sourceStream: BufferedIterator[(Char, Int)], sy
     .map { (c, i) => nextToken(c, sourceStream, ast.Location(sourceName, i), syntax) }
     .squished
 
-def nextToken(head: Char, tail: BufferedIterator[(Char, Int)], loc: ast.Location, syntax: Syntax): Either[Err, Token] =
+def nextToken(head: Char, tail: BufferedIterator[(Char, Int)], loc: ast.Location, syntax: Syntax, ignoreComment: Boolean = false): Either[Err, Token] =
   head match
     case Tokens.COMMA => Right(ast.Comma(loc))
     case Tokens.DOT => Right(ast.Dot(loc))
@@ -188,6 +188,13 @@ def nextToken(head: Char, tail: BufferedIterator[(Char, Int)], loc: ast.Location
     case Tokens.CLOSECURLYPAREN => Right(ast.CloseCurlyParen(loc))
     case Tokens.OPENSQUAREBRAKET => Right(ast.OpenSquareBraket(loc))
     case Tokens.CLOSESQUAREBRAKET => Right(ast.CloseSquareBraket(loc))
+
+    case Tokens.FORWARDSLASH if !ignoreComment =>
+      tail.headOption match
+        case Some(Tokens.FORWARDSLASH, _) =>
+          val comment = takeWhile(skip(tail), not(isNewline))
+          Right(ast.Comment(comment.mkString.strip, loc))
+        case _ => nextToken(head, tail, loc, syntax, true)
 
     case head if isNumHead(head) =>
       val rest = takeWhile(tail, isNumTail).mkString
@@ -221,6 +228,7 @@ object Tokens:
   val CLOSECURLYPAREN = '}'
   val OPENSQUAREBRAKET = '['
   val CLOSESQUAREBRAKET = ']'
+  val FORWARDSLASH = '/'
 
   val all = Seq(
     COMMA,
@@ -307,6 +315,7 @@ def not[T <: Char](f: Pred[T]) = flpreds(Seq(f))(_ && !_)
 def and[T <: Char](fs: Pred[T]*) = flpreds(fs)(_ && _)
 def or[T <: Char](fs: Pred[T]*) = flpreds(fs, false)(_ || _)
 
+val isNewline = oneof('\r', '\n')
 val isWhitespace = oneof(' ', '\t', '\r', '\n', '\f')
 val isLetter = or(and(ge('a'), le('z')),
                   and(ge('A'), le('Z')))

@@ -24,3 +24,4 @@ def lift(node: Ir): Value = node match
   case _: tl.Cond => ???
   case _: tl.Let => ???
   case _: tl.Begin => ???
+  case tl.Noop => ???

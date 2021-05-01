@@ -30,6 +30,8 @@ case class Num(lexeme: String, loc: Location) extends Token(loc) with Expr, Lite
 case class Str(lexeme: String, loc: Location) extends Token(loc) with Expr, Literal, Print(lexeme)
 case class Id(lexeme: String, loc: Location) extends Token(loc) with Expr, Literal, Print(lexeme)
 
+case class Comment(lexeme: String, loc: Location) extends Token(loc) with Expr
+
 
 // Expressions
 
