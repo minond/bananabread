@@ -85,7 +85,9 @@ def parseBinding(start: Token, tail: Tokens, sourceName: String, syntax: Syntax)
 
 def parseBegin(start: Token, tail: Tokens, sourceName: String, syntax: Syntax): Either[Err, ast.Begin] =
   for
-    heade <- parseExpr(tail.next, tail, sourceName, syntax)
+    heade <- if Word.isEnd(lookahead(start, tail))
+             then Left(ast.EmptyBeginNotAllowedErr(start))
+             else parseExpr(tail.next, tail, sourceName, syntax)
     taile <- parseBeginTail(start, tail, sourceName, syntax)
     _ <- eat(Word.END, start, tail)
   yield

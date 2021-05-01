@@ -50,6 +50,7 @@ case class Binding(label: Id, value: Expr) extends At(label.location), Print(s"$
 
 sealed trait SyntaxErr(loc: Location) extends Located { def location = loc }
 case class BadNumErr(lexeme: String, loc: Location) extends SyntaxErr(loc)
+case class EmptyBeginNotAllowedErr(start: Token) extends SyntaxErr(start.location)
 case class UnexpectedTokenErr[Expected](found: Token) extends SyntaxErr(found.location)
 case class UnexpectedEofErr(prev: Located) extends SyntaxErr(prev.location)
 
