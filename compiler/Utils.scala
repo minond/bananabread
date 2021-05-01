@@ -18,3 +18,9 @@ implicit class ListImplicits[T](xs: List[T]):
       case (acc, x : X) => acc.flatMap(xs => Right(xs :+ x))
       case _ => return Left(xs)
     }
+
+  def without[X : ClassTag] =
+    xs.filter {
+      case _: X => false
+      case _    => true
+    }

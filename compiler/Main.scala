@@ -88,7 +88,9 @@ def main(args: Array[String]) =
   val res =
     for
       ast <- parse("<stdin>", code, syntax)
+      _=println(s"AST: ${ast}\n\n")
       ir = ast.map(tl.lift)
+      _=println(s"IR: ${ir}\n\n")
       ins = opcode.compile(ir)
     yield
       val rt = Machine(ins.dump, info = false, prompt = false)

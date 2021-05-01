@@ -116,7 +116,6 @@ def compile(node: Ir, e: Emitter, s: Scope): Emitter =
   node match
     case _: tl.Num => push(node, ty.I32, e, s)
     case _: tl.Str => ???
-    case tl.Noop =>
     case v: tl.Lambda =>
       // XXX 1
       lambda(v.params, v.body, e.to(v.ptr), s)
@@ -183,7 +182,6 @@ def storev(label: String, v: Ir, e: Emitter, s: Scope) = v match
   case _: tl.Num => e.emit(inst(Store(I32), name(label)))
   case _: tl.Str => ???
   case _: tl.Id => ???
-  case tl.Noop =>
   case v: tl.Lambda =>
     // XXX 1
     // e.emit(inst(Push(Ptr), name(v.ptr)))

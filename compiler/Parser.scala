@@ -2,6 +2,7 @@ package bananabread
 package parser
 
 import ast.{Token, Expr, SyntaxErr => Err}
+import utils.ListImplicits
 
 import scala.util.{Try, Success, Failure}
 import scala.reflect.ClassTag
@@ -12,7 +13,9 @@ type Tokens = BufferedIterator[Token]
 // Main parser/lexer
 
 def parse(sourceName: String, sourceString: String, syntax: Syntax): Either[Err, List[Expr]] =
-  tokenize(sourceName, sourceString, syntax).flatMap { tokens => parse(sourceName, tokens.iterator.buffered, syntax) }
+  tokenize(sourceName, sourceString, syntax).flatMap { tokens =>
+    parse(sourceName, tokens.without[ast.Comment].iterator.buffered, syntax)
+  }
 
 def parse(sourceName: String, tokens: Tokens, syntax: Syntax): Either[Err, List[Expr]] =
   tokens
@@ -21,7 +24,6 @@ def parse(sourceName: String, tokens: Tokens, syntax: Syntax): Either[Err, List[
 
 def parseExpr(head: Token, tail: Tokens, sourceName: String, syntax: Syntax): Either[Err, Expr] =
   head match
-    case comment: ast.Comment => Right(comment)
     case op: ast.Id if syntax.isPrefix(op) => parseExprCont(parseUniop(op, tail, sourceName, syntax), tail, sourceName, syntax)
     case _ => parseExprCont(parsePrimary(head, tail, sourceName, syntax), tail, sourceName, syntax)
 

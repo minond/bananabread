@@ -22,7 +22,6 @@ case class Binding(label: ast.Id, value: Ir, expr: ast.Binding, ty: Type)
   */
 object Typeless:
   sealed trait Ir
-  case object Noop extends Ir
   case class Num(num: ast.Num) extends Ir with Print(s"(num ${num.lexeme})")
   case class Str(str: ast.Str) extends Ir with Print(s"(str ${str.lexeme})")
   case class Id(id: ast.Id) extends Ir with Print(s"(id ${id.lexeme})")
@@ -39,7 +38,6 @@ object Typeless:
     exprs.map(lift)
 
   def lift(expr: Expr): Ir = expr match
-    case _: ast.Comment => Noop
     case num: ast.Num => Num(num)
     case str: ast.Str => Str(str)
     case id: ast.Id => Id(id)

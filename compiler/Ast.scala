@@ -24,13 +24,15 @@ case class OpenSquareBraket(loc: Location) extends Token(loc) with Print()
 case class CloseSquareBraket(loc: Location) extends Token(loc) with Print()
 
 
+// Aux tokens
+case class Comment(lexeme: String, loc: Location) extends Token(loc)
+
+
 // Token expressions
 
 case class Num(lexeme: String, loc: Location) extends Token(loc) with Expr, Literal, Print(lexeme)
 case class Str(lexeme: String, loc: Location) extends Token(loc) with Expr, Literal, Print(lexeme)
 case class Id(lexeme: String, loc: Location) extends Token(loc) with Expr, Literal, Print(lexeme)
-
-case class Comment(lexeme: String, loc: Location) extends Token(loc) with Expr
 
 
 // Expressions
