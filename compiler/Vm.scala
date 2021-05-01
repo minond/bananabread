@@ -42,6 +42,8 @@ class Machine(instructions: Seq[Instruction], info: Boolean = false, prompt: Boo
   def lr = registers.get(Reg.Lr).get
   def jmp = registers.get(Reg.Jmp).get
 
+  def run = while running do next
+
   def running = pc.value != -1
 
   def next: Unit =
