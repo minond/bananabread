@@ -9,9 +9,8 @@ import utils.Print
 case class Tree(nodes: List[Expr | Stmt])
 
 
-sealed class Token(loc: Location) extends Located, At(loc)
+sealed trait Token extends Located
 sealed trait Expr extends Located
-sealed trait Literal extends Expr
 sealed trait Stmt extends Located
 
 // case class Def(name: Id) extends Stmt, At(name.location)
@@ -19,26 +18,26 @@ sealed trait Stmt extends Located
 
 // Tokens
 
-case class Eof(loc: Location) extends Token(loc) with Print()
-case class Comma(loc: Location) extends Token(loc) with Print()
-case class Dot(loc: Location) extends Token(loc) with Print()
-case class OpenParen(loc: Location) extends Token(loc) with Print()
-case class CloseParen(loc: Location) extends Token(loc) with Print()
-case class OpenCurlyParen(loc: Location) extends Token(loc) with Print()
-case class CloseCurlyParen(loc: Location) extends Token(loc) with Print()
-case class OpenSquareBraket(loc: Location) extends Token(loc) with Print()
-case class CloseSquareBraket(loc: Location) extends Token(loc) with Print()
+case class Eof(loc: Location) extends Token, At(loc) with Print()
+case class Comma(loc: Location) extends Token, At(loc) with Print()
+case class Dot(loc: Location) extends Token, At(loc) with Print()
+case class OpenParen(loc: Location) extends Token, At(loc) with Print()
+case class CloseParen(loc: Location) extends Token, At(loc) with Print()
+case class OpenCurlyParen(loc: Location) extends Token, At(loc) with Print()
+case class CloseCurlyParen(loc: Location) extends Token, At(loc) with Print()
+case class OpenSquareBraket(loc: Location) extends Token, At(loc) with Print()
+case class CloseSquareBraket(loc: Location) extends Token, At(loc) with Print()
 
 
 // Aux tokens
-case class Comment(lexeme: String, loc: Location) extends Token(loc)
+case class Comment(lexeme: String, loc: Location) extends Token, At(loc)
 
 
 // Token expressions
 
-case class Num(lexeme: String, loc: Location) extends Token(loc) with Expr, Literal, Print(lexeme)
-case class Str(lexeme: String, loc: Location) extends Token(loc) with Expr, Literal, Print(lexeme)
-case class Id(lexeme: String, loc: Location) extends Token(loc) with Expr, Literal, Print(lexeme)
+case class Num(lexeme: String, loc: Location) extends Token, At(loc) with Expr, Print(lexeme)
+case class Str(lexeme: String, loc: Location) extends Token, At(loc) with Expr, Print(lexeme)
+case class Id(lexeme: String, loc: Location) extends Token, At(loc) with Expr, Print(lexeme)
 
 
 // Expressions

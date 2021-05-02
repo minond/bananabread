@@ -41,7 +41,9 @@ def parsePrimary(head: Token, tail: Tokens, sourceName: String, syntax: Syntax):
     case word: ast.Id if Word.isLet(word) => parseLet(word, tail, sourceName, syntax)
     case word: ast.Id if Word.isBegin(word) => parseBegin(word, tail, sourceName, syntax)
     case paren: ast.OpenParen => parseGroup(paren, tail, sourceName, syntax)
-    case lit: ast.Literal => Right(lit)
+    case lit: ast.Num => Right(lit)
+    case lit: ast.Str => Right(lit)
+    case lit: ast.Id => Right(lit)
     case unexpected => Left(ast.UnexpectedTokenErr(unexpected))
 
 def parseLambda(start: Token, tail: Tokens, sourceName: String, syntax: Syntax): Either[Err, ast.Lambda] =
