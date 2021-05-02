@@ -89,7 +89,7 @@ def main(args: Array[String]) =
     for
       ast <- parse("<stdin>", code, syntax)
       _=println(s"AST: ${ast}\n\n")
-      ir = ast.map(tl.lift)
+      ir = tl.lift(ast)
       _=println(s"IR: ${ir}\n\n")
       ins = opcode.compile(ir)
     yield

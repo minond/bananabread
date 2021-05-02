@@ -6,9 +6,15 @@ import utils.Print
 
 // Base AST
 
+case class Tree(nodes: List[Expr | Stmt])
+
+
 sealed class Token(loc: Location) extends Located, At(loc)
 sealed trait Expr extends Located
 sealed trait Literal extends Expr
+sealed trait Stmt extends Located
+
+// case class Def(name: Id) extends Stmt, At(name.location)
 
 
 // Tokens

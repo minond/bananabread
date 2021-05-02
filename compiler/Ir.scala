@@ -1,7 +1,7 @@
 package bananabread
 package ir
 
-import ast.Expr
+import ast.{Tree, Expr, Stmt}
 import ty.Type
 import utils.{Print, ListImplicits}
 
@@ -34,23 +34,23 @@ object Typeless:
 
   case class Binding(label: ast.Id, value: Ir, expr: ast.Binding) extends Print(s"binding: $label value: $value")
 
-  def lift(exprs: List[Expr]): List[Ir] =
-    exprs.map(lift)
+  def lift(tree: Tree): List[Ir] =
+    tree.nodes.map(lift)
 
-  def lift(expr: Expr): Ir = expr match
+  def lift(node: Stmt | Expr): Ir = node match
     case num: ast.Num => Num(num)
     case str: ast.Str => Str(str)
     case id: ast.Id => Id(id)
-    case ast.App(lambda, args) => App(lift(lambda), args.map(lift), expr)
-    case ast.Lambda(params, body) =>
+    case expr @ ast.App(lambda, args) => App(lift(lambda), args.map(lift), expr)
+    case expr @ ast.Lambda(params, body) =>
       params.map(lift).onlys[Id] match
         case Left(_) => ???
         case Right(ids) => Lambda(ids, lift(body), expr)
-    case ast.Uniop(op, operand) => App(lift(op), List(operand).map(lift), expr)
-    case ast.Binop(op, lhs, rhs) => App(lift(op), List(lhs, rhs).map(lift), expr)
-    case ast.Cond(_, cond, pass, fail) => Cond(lift(cond), lift(pass), lift(fail), expr)
-    case ast.Let(_, bindings, body) => Let(bindings.map(lift), lift(body), expr)
-    case ast.Begin(head, tail) => Begin((head +: tail).map(lift), expr)
+    case expr @ ast.Uniop(op, operand) => App(lift(op), List(operand).map(lift), expr)
+    case expr @ ast.Binop(op, lhs, rhs) => App(lift(op), List(lhs, rhs).map(lift), expr)
+    case expr @ ast.Cond(_, cond, pass, fail) => Cond(lift(cond), lift(pass), lift(fail), expr)
+    case expr @ ast.Let(_, bindings, body) => Let(bindings.map(lift), lift(body), expr)
+    case expr @ ast.Begin(head, tail) => Begin((head +: tail).map(lift), expr)
 
   def lift(binding: ast.Binding): Binding =
     Binding(binding.label, lift(binding.value), binding)

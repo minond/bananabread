@@ -1,7 +1,7 @@
 package bananabread
 package parser
 
-import ast.{Token, Expr, SyntaxErr => Err}
+import ast.{Token, Tree, Expr, Stmt, SyntaxErr => Err}
 import utils.ListImplicits
 
 import scala.util.{Try, Success, Failure}
@@ -12,15 +12,18 @@ type Tokens = BufferedIterator[Token]
 
 // Main parser/lexer
 
-def parse(sourceName: String, sourceString: String, syntax: Syntax): Either[Err, List[Expr]] =
+def parse(sourceName: String, sourceString: String, syntax: Syntax): Either[Err, Tree] =
   tokenize(sourceName, sourceString, syntax).flatMap { tokens =>
     parse(sourceName, tokens.without[ast.Comment].iterator.buffered, syntax)
   }
 
-def parse(sourceName: String, tokens: Tokens, syntax: Syntax): Either[Err, List[Expr]] =
-  tokens
-    .map { (token) => parseExpr(token, tokens, sourceName, syntax) }
-    .squished
+def parse(sourceName: String, tokens: Tokens, syntax: Syntax): Either[Err, Tree] =
+  for
+    nodes <- tokens
+      .map { (token) => parseExpr(token, tokens, sourceName, syntax) }
+      .squished
+  yield
+    Tree(nodes)
 
 def parseExpr(head: Token, tail: Tokens, sourceName: String, syntax: Syntax): Either[Err, Expr] =
   head match
