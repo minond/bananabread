@@ -27,6 +27,7 @@ def infer(node: Ir, scope: Scope): Type = node match
   case _: tl.Cond => ???
   case _: tl.Let => ???
   case _: tl.Begin => ???
+  case tl.Def(_, value, _) => infer(value, scope)
 
 def lookup(label: String, scope: Scope): Type =
   scope.get(label) match

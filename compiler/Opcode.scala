@@ -125,6 +125,7 @@ def compile(node: Ir, e: Emitter, s: Scope): Emitter =
     case tl.Cond(cnd, pas, fal, _) => cond(cnd, pas, fal, e, s)
     case tl.Let(bindings, body, _) => let(bindings, body, e, s)
     case tl.Begin(ins, _) => begin(ins, e, s)
+    case tl.Def(name, value, _) => define(name, value, e, s)
   e
 
 
@@ -182,6 +183,7 @@ def storev(label: String, v: Ir, e: Emitter, s: Scope) = v match
   case _: tl.Num => e.emit(inst(Store(I32), name(label)))
   case _: tl.Str => ???
   case _: tl.Id => ???
+  case _: tl.Def => ???
   case v: tl.Lambda =>
     // XXX 1
     // e.emit(inst(Push(Ptr), name(v.ptr)))
@@ -240,3 +242,8 @@ def lambda(params: List[tl.Id], body: Ir, e: Emitter, s: Scope) =
   compile(body, e, s)
   e.emit(inst(Swap))
   e.emit(inst(Ret))
+
+def define(name: ast.Id, value: Ir, e: Emitter, s: Scope) =
+  // compile(value, e.to(name.lexeme), s)
+  // storev(name.lexeme, value, e.to(name.lexeme), s)
+  ???

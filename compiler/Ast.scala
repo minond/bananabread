@@ -13,8 +13,6 @@ sealed trait Token extends Located
 sealed trait Expr extends Located
 sealed trait Stmt extends Located
 
-// case class Def(name: Id) extends Stmt, At(name.location)
-
 
 // Tokens
 
@@ -53,6 +51,11 @@ case class Begin(head: Expr, tail: List[Expr]) extends Expr with At(head.locatio
 
 // Aux expressions
 case class Binding(label: Id, value: Expr) extends At(label.location), Print(s"$label = $value")
+
+
+// Statements
+
+case class Def(name: Id, value: Expr) extends Stmt, At(name.location)
 
 
 // Errors
