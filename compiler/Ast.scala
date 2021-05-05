@@ -72,6 +72,7 @@ case class BadNumErr(lexeme: String, loc: Location) extends SyntaxErr(loc)
 case class EmptyBeginNotAllowedErr(start: Token) extends SyntaxErr(start.location)
 case class UnexpectedTokenErr[Expected](found: Token) extends SyntaxErr(found.location)
 case class UnexpectedEofErr(prev: Located) extends SyntaxErr(prev.location)
+case class UnclosedStringErr(loc: Location) extends SyntaxErr(loc)
 
 
 // Token/expression location information

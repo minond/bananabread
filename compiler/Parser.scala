@@ -207,43 +207,59 @@ def tokenize(sourceName: String, sourceStream: BufferedIterator[(Char, Int)], sy
     .map { (c, i) => nextToken(c, sourceStream, ast.Location(sourceName, i), syntax) }
     .squished
 
-def nextToken(head: Char, tail: BufferedIterator[(Char, Int)], loc: ast.Location, syntax: Syntax, ignoreComment: Boolean = false): Either[Err, Token] =
-  head match
-    case Tokens.COMMA => Right(ast.Comma(loc))
-    case Tokens.DOT => Right(ast.Dot(loc))
-    case Tokens.OPENPAREN => Right(ast.OpenParen(loc))
-    case Tokens.CLOSEPAREN => Right(ast.CloseParen(loc))
-    case Tokens.OPENCURLYPAREN => Right(ast.OpenCurlyParen(loc))
-    case Tokens.CLOSECURLYPAREN => Right(ast.CloseCurlyParen(loc))
-    case Tokens.OPENSQUAREBRAKET => Right(ast.OpenSquareBraket(loc))
-    case Tokens.CLOSESQUAREBRAKET => Right(ast.CloseSquareBraket(loc))
+def nextToken(
+  head: Char,
+  tail: BufferedIterator[(Char, Int)],
+  loc: ast.Location,
+  syntax: Syntax,
+  ignoreComment: Boolean = false,
+  ignorePString: Boolean = false,
+): Either[Err, Token] = head match
+  case Tokens.COMMA => Right(ast.Comma(loc))
+  case Tokens.DOT => Right(ast.Dot(loc))
+  case Tokens.OPENPAREN => Right(ast.OpenParen(loc))
+  case Tokens.CLOSEPAREN => Right(ast.CloseParen(loc))
+  case Tokens.OPENCURLYPAREN => Right(ast.OpenCurlyParen(loc))
+  case Tokens.CLOSECURLYPAREN => Right(ast.CloseCurlyParen(loc))
+  case Tokens.OPENSQUAREBRAKET => Right(ast.OpenSquareBraket(loc))
+  case Tokens.CLOSESQUAREBRAKET => Right(ast.CloseSquareBraket(loc))
 
-    case Tokens.FORWARDSLASH if !ignoreComment =>
-      tail.headOption match
-        case Some(Tokens.FORWARDSLASH, _) =>
-          val comment = takeWhile(skip(tail), not(isNewline))
-          Right(ast.Comment(comment.mkString.strip, loc))
-        case _ => nextToken(head, tail, loc, syntax, true)
+  case Tokens.FORWARDSLASH if !ignoreComment =>
+    tail.headOption match
+      case Some(Tokens.FORWARDSLASH, _) =>
+        val comment = takeWhile(skip(tail), not(isNewline))
+        Right(ast.Comment(comment.mkString.strip, loc))
+      case _ => nextToken(head, tail, loc, syntax, ignoreComment=true)
 
-    case head if isNumHead(head) =>
-      val rest = takeWhile(tail, isNumTail).mkString
-      val lexeme = head +: rest
+  case Tokens.PERCENTAGE if !ignorePString =>
+    tail.headOption match
+      case Some(Tokens.OPENCURLYPAREN, _) =>
+        val str = takeWhile(skip(tail), not(is(Tokens.CLOSECURLYPAREN)))
+        // TODO Unsafe head lookup
+        if tail.next._1 != Tokens.CLOSECURLYPAREN
+        then Left(ast.UnclosedStringErr(loc))
+        else Right(ast.Str(str.mkString.strip, loc))
+      case _ => nextToken(head, tail, loc, syntax, ignorePString=true)
 
-      Try { lexeme.toFloat } match
-        case Failure(_) => Left(ast.BadNumErr(lexeme, loc))
-        case Success(_) => Right(ast.Num(lexeme, loc))
+  case head if isNumHead(head) =>
+    val rest = takeWhile(tail, isNumTail).mkString
+    val lexeme = head +: rest
 
-    case head if isIdHead(head) =>
-      val rest = takeWhile(tail, isIdTail).mkString
-      val lexeme = head +: rest
+    Try { lexeme.toFloat } match
+      case Failure(_) => Left(ast.BadNumErr(lexeme, loc))
+      case Success(_) => Right(ast.Num(lexeme, loc))
 
-      Right(ast.Id(lexeme, loc))
+  case head if isIdHead(head) =>
+    val rest = takeWhile(tail, isIdTail).mkString
+    val lexeme = head +: rest
 
-    case head =>
-      val rest = takeWhile(tail, isUnknownTail).mkString
-      val lexeme = head +: rest
+    Right(ast.Id(lexeme, loc))
 
-      Right(ast.Id(lexeme, loc))
+  case head =>
+    val rest = takeWhile(tail, isUnknownTail).mkString
+    val lexeme = head +: rest
+
+    Right(ast.Id(lexeme, loc))
 
 
 // Syntax definition and extensions
@@ -258,6 +274,7 @@ object Tokens:
   val OPENSQUAREBRAKET = '['
   val CLOSESQUAREBRAKET = ']'
   val FORWARDSLASH = '/'
+  val PERCENTAGE = '%'
 
   val all = Seq(
     COMMA,
