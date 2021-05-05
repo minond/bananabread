@@ -92,7 +92,7 @@ def main(args: Array[String]) =
     println(x + x)
     let y = x + x + x in println(y)
 
-    def add = func (a, b) = a + b
+    def add (a, b) = a + b
 
     def res = add(1, x)
     println(res)

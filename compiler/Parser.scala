@@ -80,10 +80,19 @@ def parseLet(start: Token, tail: Tokens, sourceName: String, syntax: Syntax): Ei
 def parseDef(start: Token, tail: Tokens, sourceName: String, syntax: Syntax): Either[Err, ast.Def] =
   for
     name <- eat[ast.Id](start, tail)
+    next = lookahead(start, tail)
+    value <- if next.is[ast.OpenParen]
+             then parseLambda(start, tail, sourceName, syntax)
+             else parseDefValue(start, tail, sourceName, syntax)
+  yield
+    ast.Def(name, value)
+
+def parseDefValue(start: Token, tail: Tokens, sourceName: String, syntax: Syntax): Either[Err, Expr] =
+  for
     _ <- eat(Word.EQ, start, tail)
     value <- parseExpr(tail.next, tail, sourceName, syntax)
   yield
-    ast.Def(name, value)
+    value
 
 def parseBindings(start: Token, tail: Tokens, sourceName: String, syntax: Syntax): Either[Err, List[ast.Binding]] =
   for
