@@ -20,10 +20,15 @@ def parse(sourceName: String, sourceString: String, syntax: Syntax): Either[Err,
 def parse(sourceName: String, tokens: Tokens, syntax: Syntax): Either[Err, Tree] =
   for
     nodes <- tokens
-      .map { (token) => parseExpr(token, tokens, sourceName, syntax) }
+      .map { (token) => parseTop(token, tokens, sourceName, syntax) }
       .squished
   yield
     Tree(nodes)
+
+def parseTop(head: Token, tail: Tokens, sourceName: String, syntax: Syntax): Either[Err, Stmt | Expr] =
+  head match
+    case _ if Word.isDef(head) => parseDef(head, tail, sourceName, syntax)
+    case _ => parseExpr(head, tail, sourceName, syntax)
 
 def parseExpr(head: Token, tail: Tokens, sourceName: String, syntax: Syntax): Either[Err, Expr] =
   head match
@@ -71,6 +76,14 @@ def parseLet(start: Token, tail: Tokens, sourceName: String, syntax: Syntax): Ei
     body <- parseExpr(tail.next, tail, sourceName, syntax)
   yield
     ast.Let(start, bindings, body)
+
+def parseDef(start: Token, tail: Tokens, sourceName: String, syntax: Syntax): Either[Err, ast.Def] =
+  for
+    name <- eat[ast.Id](start, tail)
+    _ <- eat(Word.EQ, start, tail)
+    value <- parseExpr(tail.next, tail, sourceName, syntax)
+  yield
+    ast.Def(name, value)
 
 def parseBindings(start: Token, tail: Tokens, sourceName: String, syntax: Syntax): Either[Err, List[ast.Binding]] =
   for
@@ -258,6 +271,7 @@ object Word:
   val IN = "in"
   val BEGIN = "begin"
   val END = "end"
+  val DEF = "def"
 
   def is(token: ast.Token, word: String) = token match
     case id: ast.Id => id.lexeme == word
@@ -270,6 +284,7 @@ object Word:
   def isIn(token: ast.Token) = is(token, IN)
   def isBegin(token: ast.Token) = is(token, BEGIN)
   def isEnd(token: ast.Token) = is(token, END)
+  def isDef(token: ast.Token) = is(token, DEF)
 
 case class Syntax(
   prefix: Map[String, Int] = Map.empty,

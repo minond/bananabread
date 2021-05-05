@@ -7,7 +7,7 @@ import value.Value
 import utils.Print
 
 import scala.util.Random
-import scala.collection.mutable.{Map, Queue}
+import scala.collection.mutable.{Map, Queue, Stack}
 
 
 type Instructions = Queue[Instruction]
@@ -51,7 +51,9 @@ object Exposed:
     registry(label)
 
 
-case class Scope(env: Map[String, Ir] = Map.empty, parent: Option[Scope] = None):
+class Scope(env: Map[String, Ir] = Map.empty, parent: Option[Scope] = None):
+  private val children = Stack[Scope]()
+
   def contains(label: String): Boolean = (env.contains(label), parent) match
     case (true, _) => true
     case (_, Some(scope)) => scope.contains(label)
@@ -64,12 +66,18 @@ case class Scope(env: Map[String, Ir] = Map.empty, parent: Option[Scope] = None)
 
   def define(label: String, ir: Ir) =
     env.update(label, ir)
+    this
 
-  def child =
-    Scope(Map.empty, Some(this))
+  def subscope =
+    val child = Scope(Map.empty, Some(this))
+    children.push(child)
+    child
+
+  def scoped(fn: Scope => Unit) =
+    fn(subscope)
 
 
-class Emitter(section: String = "main", sections: Map[String, Instructions] = Map.empty):
+class Emitter(section: String = "main", sections: Map[String, Instructions] = Map("main" -> Queue.empty)):
   def to(section: String) =
     Emitter(section, sections)
 
@@ -123,9 +131,9 @@ def compile(node: Ir, e: Emitter, s: Scope): Emitter =
     case tl.Id(ast.Id(label, _)) => load(label, e, s)
     case tl.App(lambda, args, _) => call(lambda, args, e, s)
     case tl.Cond(cnd, pas, fal, _) => cond(cnd, pas, fal, e, s)
-    case tl.Let(bindings, body, _) => let(bindings, body, e, s)
+    case tl.Let(bindings, body, _) => let(bindings, body, e, s.subscope)
     case tl.Begin(ins, _) => begin(ins, e, s)
-    case tl.Def(name, value, _) => define(name, value, e, s)
+    case tl.Def(name, value, _) => define(name.lexeme, value, e, s)
   e
 
 
@@ -174,7 +182,9 @@ def loadArgsAndRet(args: List[Ir], e: Emitter, s: Scope) =
   e.emit(inst(Push(Reg), vm.Reg.Pc, value.I32(2)))
 
 def load(label: String, e: Emitter, s: Scope) =
-  e.emit(inst(Load(I32), name(label)))
+  if s.contains(label)
+  then e.emit(inst(Load(I32), name(label)))
+  else ???
 
 def store(label: String, e: Emitter, s: Scope) =
   e.emit(inst(Store(I32), name(label)))
@@ -243,7 +253,15 @@ def lambda(params: List[tl.Id], body: Ir, e: Emitter, s: Scope) =
   e.emit(inst(Swap))
   e.emit(inst(Ret))
 
-def define(name: ast.Id, value: Ir, e: Emitter, s: Scope) =
-  // compile(value, e.to(name.lexeme), s)
-  // storev(name.lexeme, value, e.to(name.lexeme), s)
-  ???
+def define(name: String, value: Ir, e: Emitter, s: Scope): Unit = value match
+  case v: tl.Lambda =>
+    s.define(name, v)
+    s.scoped { scope =>
+      v.params.foreach { param => scope.define(param.id.lexeme, v) }
+      lambda(v.params, v.body, e.to(v.ptr), scope)
+    }
+
+  case _ =>
+    s.define(name, value)
+    compile(value, e, s)
+    storev(name, value, e, s)
