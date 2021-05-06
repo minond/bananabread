@@ -39,7 +39,7 @@ class Machine(instructions: Seq[Instruction], info: Boolean = false, prompt: Boo
   }.toMap
 
   val constants = instructions.zipWithIndex.collect {
-    case (Instruction(opcode.Const, value.Id(label), v), index) => (label, v)
+    case (Instruction(opcode.Value, value.Id(label), _, v), index) => (label, v)
   }.toMap
 
   def pc = registers.get(Reg.Pc).get
@@ -85,7 +85,7 @@ class Machine(instructions: Seq[Instruction], info: Boolean = false, prompt: Boo
       Halt
     case (opcode.Label, _) =>
       Cont
-    case (opcode.Const, _) =>
+    case (opcode.Value, _) =>
       Cont
     case (opcode.Jz, value.Id(label) :: Nil) =>
       stack.pop match
@@ -101,6 +101,9 @@ class Machine(instructions: Seq[Instruction], info: Boolean = false, prompt: Boo
       ???
     case (opcode.Push(opcode.I32), (v : value.I32) :: Nil) =>
       stack.push(v)
+      Cont
+    case (opcode.Push(opcode.Const), value.Id(label) :: Nil) =>
+      stack.push(constants(label))
       Cont
     case (opcode.Push(opcode.Ptr), ptr :: Nil) =>
       stack.push(ptr)

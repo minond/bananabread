@@ -17,12 +17,13 @@ sealed trait Type
 case object I32 extends Type
 case object Reg extends Type
 case object Ptr extends Type
+case object Const extends Type
 
 
 sealed trait Opcode
 case object Halt extends Opcode with Print("halt")
 case object Label extends Opcode
-case object Const extends Opcode
+case object Value extends Opcode
 case object Jz extends Opcode with Print("jz")
 case object Jmp extends Opcode with Print("jmp")
 case class Push(typ: Type) extends Opcode with Print(s"push [$typ]")
@@ -106,7 +107,7 @@ class Emitter(
     (for (sec, instructions) <- sections if sec != "main"
      yield inst(Label, value.Id(sec)) ++ instructions).flatten ++
     (for (label, str) <- strings
-     yield inst(Const, value.Id(label), value.Id("Str"), str)).flatten
+     yield inst(Value, value.Id(label), value.Id("Str"), str)).flatten
 
 
 case class Instruction(op: Opcode, args: Value*):
@@ -114,7 +115,7 @@ case class Instruction(op: Opcode, args: Value*):
 
   override def toString = op match
     case Label => s"${args(0)}:"
-    case Const => s"${args(0)}: [${args(1)}] ${args(2)}"
+    case Value => s"${args(0)}: [${args(1)}] ${args(2)}"
     case _ => s"  $op ${args.mkString(", ")}"
 
 
@@ -149,7 +150,7 @@ def push(node: Ir, typ: ty.Type, e: Emitter, s: Scope) = (typ, value.lift(node),
   case (ty.I32, v, _) => e.emit(inst(Push(I32), v))
   case (ty.Str, v : value.Str, str : tl.Str) =>
     e.string(str.ptr, v)
-    e.emit(inst(Push(Ptr), value.Id(str.ptr)))
+    e.emit(inst(Push(Const), value.Id(str.ptr)))
   case (ty.Str, _, _) => ???
   case (_: ty.Var, _, _) => ???
   case (_: ty.Lambda, _, _) => ???
