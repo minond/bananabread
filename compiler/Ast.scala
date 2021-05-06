@@ -41,7 +41,7 @@ case class Comment(lexeme: String, loc: Location) extends Token, At(loc)
 // Token expressions
 
 case class Num(lexeme: String, loc: Location) extends Token, At(loc) with Expr, Print(lexeme)
-case class Str(lexeme: String, loc: Location) extends Token, At(loc) with Expr, Print(lexeme)
+case class Str(lexeme: String, loc: Location) extends Token, At(loc) with Expr, Print(s""""$lexeme"""")
 case class Id(lexeme: String, loc: Location) extends Token, At(loc) with Expr, Print(lexeme)
 
 
@@ -62,7 +62,7 @@ case class Binding(label: Id, value: Expr) extends At(label.location), Print(s"$
 
 // Statements
 
-case class Def(name: Id, value: Expr) extends Stmt, At(name.location)
+case class Def(name: Id, value: Expr) extends Stmt, At(name.location), Print(s"def $name = $value")
 
 
 // Errors
