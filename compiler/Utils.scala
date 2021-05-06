@@ -24,3 +24,13 @@ implicit class ListImplicits[T](xs: List[T]):
       case _: X => false
       case _    => true
     }
+
+
+implicit class EitherImplicits[L, R](val eithers: Iterator[Either[L, R]]):
+  /** Converts an [[Iterator[Either[L, R]]]] into an [[Either[L, List[R]]]].
+   */
+  def squished: Either[L, List[R]] =
+    eithers.foldLeft[Either[L, List[R]]](Right(List())) {
+      (acc, x) =>
+        acc.flatMap(xs => x.map(xs :+ _))
+    }

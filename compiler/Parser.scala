@@ -2,7 +2,7 @@ package bananabread
 package parser
 
 import ast.{Token, Tree, Expr, Stmt, SyntaxErr => Err}
-import utils.ListImplicits
+import utils.{ListImplicits, EitherImplicits}
 
 import scala.util.{Try, Success, Failure}
 import scala.reflect.ClassTag
@@ -422,12 +422,3 @@ def lookahead(head: Token, tail: Tokens): Token =
   tail.headOption match
     case None => ast.Eof(head.location)
     case Some(token) => token
-
-implicit class Eithers[L, R](val eithers: Iterator[Either[L, R]]):
-  /** Converts an [[Iterator[Either[L, R]]]] into an [[Either[L, List[R]]]].
-   */
-  def squished: Either[L, List[R]] =
-    eithers.foldLeft[Either[L, List[R]]](Right(List())) {
-      (acc, x) =>
-        acc.flatMap(xs => x.map(xs :+ _))
-    }
