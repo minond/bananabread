@@ -37,4 +37,4 @@ def lookup(label: String, scope: Scope): Type =
 val freshIds = LazyList.from(1).sliding(1)
 
 def fresh() =
-    Var(freshIds.next.head)
+  Var(freshIds.next.head)

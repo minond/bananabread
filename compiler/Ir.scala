@@ -5,6 +5,8 @@ import ast.{Tree, Expr, Stmt}
 import ty.Type
 import utils.{Print, ListImplicits}
 
+import scala.collection.mutable.Map
+
 
 sealed trait Ir(expr: Expr, ty: Type)
 case class Num(num: ast.Num, ty: Type) extends Ir(num, ty)
@@ -17,6 +19,16 @@ case class Let(bindings: List[Binding], body: Ir, expr: Expr, ty: Type) extends 
 
 case class Binding(label: ast.Id, value: Ir, expr: ast.Binding, ty: Type)
 
+val ids = LazyList.from(1).sliding(1)
+val ptrs = Map[String, String]()
+def ptrOf(header: String, hash: Int) = ptrs.get(header + hash.toString) match
+  case Some(ptr) => ptr
+  case None =>
+    val ptr = s"$header-${ids.next.head}"
+    ptrs.update(header + hash.toString, ptr)
+    ptr
+
+
 /** Simplifies the source tree by removing all operators, leaving only
   * literals, functions, and function application.
   */
@@ -24,11 +36,11 @@ object Typeless:
   sealed trait Ir
   case class Num(num: ast.Num) extends Ir with Print(s"(num ${num.lexeme})")
   case class Str(str: ast.Str) extends Ir with Print(s"(str ${str.lexeme})"):
-    def ptr = s"str${hashCode}"
+    def ptr = ptrOf("str", hashCode)
   case class Id(id: ast.Id) extends Ir with Print(s"(id ${id.lexeme})")
   case class App(lambda: Ir, args: List[Ir], expr: Expr) extends Ir with Print(s"(app lambda: ${lambda} args: (${args.mkString(" ")}))")
   case class Lambda(params: List[Id], body: Ir, expr: Expr) extends Ir with Print(s"(lambda params: (${params.mkString(" ")}) body: $body)"):
-    def ptr = s"lambda${hashCode}"
+    def ptr = ptrOf("lambda", hashCode)
   case class Cond(cond: Ir, pass: Ir, fail: Ir, expr: Expr) extends Ir with Print(s"(if cond: $cond then: $pass else: $fail)")
   case class Let(bindings: List[Binding], body: Ir, expr: Expr) extends Ir with Print(s"(let bindings: (${bindings.mkString(" ")}) body: $body)")
   case class Begin(ins: List[Ir], expr: Expr) extends Ir with Print(s"(begin ${ins.mkString(" ")})")
