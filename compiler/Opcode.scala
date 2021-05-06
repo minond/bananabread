@@ -115,7 +115,7 @@ case class Instruction(op: Opcode, args: Value*):
 
   override def toString = op match
     case Label => s"${args(0)}:"
-    case Value => s"${args(0)}: [${args(1)}] ${args(2)}"
+    case Value => s"${args(0)} [${args(1)}]: ${args(2)}"
     case _ => s"  $op ${args.mkString(", ")}"
 
 
