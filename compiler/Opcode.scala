@@ -22,6 +22,7 @@ case object Ptr extends Type
 sealed trait Opcode
 case object Halt extends Opcode with Print("halt")
 case object Label extends Opcode
+case object Const extends Opcode
 case object Jz extends Opcode with Print("jz")
 case object Jmp extends Opcode with Print("jmp")
 case class Push(typ: Type) extends Opcode with Print(s"push [$typ]")
@@ -77,9 +78,13 @@ class Scope(env: Map[String, Ir] = Map.empty, parent: Option[Scope] = None):
     fn(subscope)
 
 
-class Emitter(section: String = "main", sections: Map[String, Instructions] = Map("main" -> Queue.empty)):
+class Emitter(
+  section: String = "main",
+  sections: Map[String, Instructions] = Map("main" -> Queue.empty),
+  strings: Map[String, value.Str] = Map.empty,
+):
   def to(section: String) =
-    Emitter(section, sections)
+    Emitter(section, sections, strings)
 
   def emit(i: Instruction): Emitter =
     sections.get(section) match
@@ -91,22 +96,25 @@ class Emitter(section: String = "main", sections: Map[String, Instructions] = Ma
     is.map(emit)
     this
 
+  def string(label: String, str: value.Str) =
+    strings.update(label, str)
+
   def dump =
     inst(Label, value.Id("main")) ++
     sections.get("main").get ++
     inst(Halt) ++
     (for (sec, instructions) <- sections if sec != "main"
-     yield inst(Label, value.Id(sec)) ++ instructions).flatten
+     yield inst(Label, value.Id(sec)) ++ instructions).flatten ++
+    (for (label, str) <- strings
+     yield inst(Const, value.Id(label), value.Id("Str"), str)).flatten
 
 
 case class Instruction(op: Opcode, args: Value*):
   def toList = List(this)
 
   override def toString = op match
-    case Label => args(0).toString
-      // if args(0).toString.startsWith("lambda")
-      // then s"\n${args(0)}:"
-      // else s"${args(0)}:"
+    case Label => s"${args(0)}:"
+    case Const => s"${args(0)}: [${args(1)}] ${args(2)}"
     case _ => s"  $op ${args.mkString(", ")}"
 
 
@@ -123,7 +131,7 @@ def compile(nodes: List[Ir]): Emitter =
 def compile(node: Ir, e: Emitter, s: Scope): Emitter =
   node match
     case _: tl.Num => push(node, ty.I32, e, s)
-    case _: tl.Str => ???
+    case _: tl.Str => push(node, ty.Str, e, s)
     case v: tl.Lambda =>
       // XXX 1
       lambda(v.params, v.body, e.to(v.ptr), s)
@@ -137,11 +145,14 @@ def compile(node: Ir, e: Emitter, s: Scope): Emitter =
   e
 
 
-def push(node: Ir, typ: ty.Type, e: Emitter, s: Scope) = typ match
-  case ty.I32 => e.emit(inst(Push(I32), value.lift(node)))
-  case ty.Str => ???
-  case _: ty.Var => ???
-  case _: ty.Lambda => ???
+def push(node: Ir, typ: ty.Type, e: Emitter, s: Scope) = (typ, value.lift(node), node) match
+  case (ty.I32, v, _) => e.emit(inst(Push(I32), v))
+  case (ty.Str, v : value.Str, str : tl.Str) =>
+    e.string(str.ptr, v)
+    e.emit(inst(Push(Ptr), value.Id(str.ptr)))
+  case (ty.Str, _, _) => ???
+  case (_: ty.Var, _, _) => ???
+  case (_: ty.Lambda, _, _) => ???
 
 def name(name: String): value.Id =
   value.Id(name)

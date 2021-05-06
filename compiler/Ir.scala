@@ -23,7 +23,8 @@ case class Binding(label: ast.Id, value: Ir, expr: ast.Binding, ty: Type)
 object Typeless:
   sealed trait Ir
   case class Num(num: ast.Num) extends Ir with Print(s"(num ${num.lexeme})")
-  case class Str(str: ast.Str) extends Ir with Print(s"(str ${str.lexeme})")
+  case class Str(str: ast.Str) extends Ir with Print(s"(str ${str.lexeme})"):
+    def ptr = s"str${hashCode}"
   case class Id(id: ast.Id) extends Ir with Print(s"(id ${id.lexeme})")
   case class App(lambda: Ir, args: List[Ir], expr: Expr) extends Ir with Print(s"(app lambda: ${lambda} args: (${args.mkString(" ")}))")
   case class Lambda(params: List[Id], body: Ir, expr: Expr) extends Ir with Print(s"(lambda params: (${params.mkString(" ")}) body: $body)"):

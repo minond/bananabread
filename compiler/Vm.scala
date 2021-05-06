@@ -38,6 +38,10 @@ class Machine(instructions: Seq[Instruction], info: Boolean = false, prompt: Boo
     case (Instruction(opcode.Label, value.Id(label)), index) => (label, index)
   }.toMap
 
+  val constants = instructions.zipWithIndex.collect {
+    case (Instruction(opcode.Const, value.Id(label), v), index) => (label, v)
+  }.toMap
+
   def pc = registers.get(Reg.Pc).get
   def lr = registers.get(Reg.Lr).get
   def jmp = registers.get(Reg.Jmp).get
@@ -80,6 +84,8 @@ class Machine(instructions: Seq[Instruction], info: Boolean = false, prompt: Boo
     case (opcode.Halt, _) =>
       Halt
     case (opcode.Label, _) =>
+      Cont
+    case (opcode.Const, _) =>
       Cont
     case (opcode.Jz, value.Id(label) :: Nil) =>
       stack.pop match
@@ -165,6 +171,9 @@ class Machine(instructions: Seq[Instruction], info: Boolean = false, prompt: Boo
     case (opcode.Ret, Nil) =>
       stack.pop match
         case value.I32(addr) =>
+          // println(s"RET $addr")
+          // printInfo
+          // Thread.sleep(3000)
           frame.pop
           Jump(addr)
         case _ =>

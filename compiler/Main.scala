@@ -87,15 +87,24 @@ def main(args: Array[String]) =
     // def print_something = func (a) =
     //   let b = a + 1 in println(b)
 
-    def x = 2
-    println(777)
-    println(x + x)
-    let y = x + x + x in println(y)
+    // def x = 2
+    // println(777)
+    // println(x + x)
+    // let y = x + x + x in println(y)
+    //
+    // def add (a, b) = a + b
 
-    def add (a, b) = a + b
+    def add2 (a, b) =
+      begin
+        %{ add [I32] }
+      end
 
-    def res = add(1, x)
-    println(res)
+    println(add2(1, 2))
+
+
+
+    // def res = add(1, x)
+    // println(res)
 
     // def to_s (n : I32) = dispatch('i32_to_str, n)
     // def to_s (n : I64) = dispatch('i64_to_str, n)
