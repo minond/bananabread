@@ -173,6 +173,12 @@ def call(lambda: Ir, args: List[Ir], e: Emitter, s: Scope): Unit = lambda match
       case _ =>
         loadArgsAndRet(args, e, s)
         e.emit(inst(Call, value.lift(lambda)))
+  case tl.Id(ast.Id("opcode", _)) => args match
+    case tl.Str(str) :: Nil =>
+      println(str)
+    case _ =>
+      /* bad call */
+      ???
   case tl.Id(ast.Id(label, _)) =>
     loadArgsAndRet(args, e, s)
     e.emit(inst(Call, value.lift(lambda)))

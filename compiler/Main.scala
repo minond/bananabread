@@ -10,6 +10,7 @@ def main(args: Array[String]) =
                      .withPrefix(1, "*")
                      .withPrefix(1, "∀")
                      .withPrefix(1, "!")
+                     .withPrefix(1, "opcode")
                      .withInfix(4, "^")
                      .withInfix(3, "*")
                      .withInfix(3, "/")
@@ -95,9 +96,9 @@ def main(args: Array[String]) =
     // def add (a, b) = a + b
 
     def add2 (a, b) =
-      begin
-        %{ add [I32] }
-      end
+      opcode %{
+        add [I32]
+      }
 
     println(add2(1, 2))
 
