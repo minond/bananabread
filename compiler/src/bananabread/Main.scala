@@ -5,6 +5,7 @@ import ir.Typeless => tl
 import opcode.{Opcode, Instruction}
 import vm.Machine
 
+
 def main(args: Array[String]) =
   val syntax = Syntax.withPrefix(1, "-")
                      .withPrefix(1, "*")
