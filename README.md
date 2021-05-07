@@ -33,6 +33,7 @@ literal = id1
         | id2
         | number
         | string
+        | symbol
         ;
 
 id1 = id1-head , id1-tail
@@ -56,7 +57,10 @@ id2-tail = ? all visible chars minus whitespace ? - id1-tail - reserved-token
 number = digit , { digit }
        ;
 
-string = '"' { chars - '"' } '"'
+symbol = "'" , { chars - "(" | ")" | "{" | "}" | "[" | "]" }
+       ;
+
+string = "%{" { chars - "}" } "}"
        ;
 
 char = ? any visible character ?

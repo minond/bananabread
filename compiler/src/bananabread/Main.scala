@@ -102,6 +102,8 @@ def main(args: Array[String]) =
       }
 
     println(add2(1, 2))
+    println('testing)
+    println(%{testing 1 2 3})
 
 
 

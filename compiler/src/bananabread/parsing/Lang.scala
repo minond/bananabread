@@ -51,6 +51,7 @@ def parsePrimary(head: Token, tail: Tokens, sourceName: String, syntax: Syntax):
     case lit: ast.Num => Right(lit)
     case lit: ast.Str => Right(lit)
     case lit: ast.Id => Right(lit)
+    case lit: ast.Symbol => Right(lit)
     case unexpected => Left(ast.UnexpectedTokenErr(unexpected))
 
 def parseLambda(start: Token, tail: Tokens, sourceName: String, syntax: Syntax): Either[Err, ast.Lambda] =
@@ -243,6 +244,11 @@ def nextToken(
         else Right(ast.Str(str.mkString.strip, loc))
       case _ => nextToken(head, tail, loc, syntax, ignorePString=true)
 
+  case Tokens.SINGLEQUOTE =>
+    val symbol = takeWhile(tail, isSymbolTail).mkString
+
+    Right(ast.Symbol(symbol, loc))
+
   case head if isNumHead(head) =>
     val rest = takeWhile(tail, isNumTail).mkString
     val lexeme = head +: rest
@@ -277,6 +283,7 @@ object Tokens:
   val CLOSESQUAREBRAKET = ']'
   val FORWARDSLASH = '/'
   val PERCENTAGE = '%'
+  val SINGLEQUOTE = '\''
 
   val all = Seq(
     COMMA,
@@ -383,6 +390,8 @@ val isIdHead = and(isIdTail,
 val isUnknownTail = and(not(isIdTail),
                         not(isWhitespace),
                         not(oneof(Tokens.all:_*)))
+val isSymbolTail = and(not(isWhitespace),
+                       not(oneof('(', ')', '{', '}', '[', ']')))
 
 
 // Predicate/combinator stream processors

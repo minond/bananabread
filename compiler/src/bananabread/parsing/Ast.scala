@@ -43,6 +43,7 @@ case class Comment(lexeme: String, loc: Location) extends Token, At(loc)
 case class Num(lexeme: String, loc: Location) extends Token, At(loc) with Expr, Print(lexeme)
 case class Str(lexeme: String, loc: Location) extends Token, At(loc) with Expr, Print(s""""$lexeme"""")
 case class Id(lexeme: String, loc: Location) extends Token, At(loc) with Expr, Print(lexeme)
+case class Symbol(lexeme: String, loc: Location) extends Token, At(loc) with Expr, Print(s"'$lexeme")
 
 
 // Expressions

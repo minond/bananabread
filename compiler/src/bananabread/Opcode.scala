@@ -85,9 +85,10 @@ class Emitter(
   section: String = "main",
   sections: Map[String, Instructions] = Map("main" -> Queue.empty),
   strings: Map[String, value.Str] = Map.empty,
+  symbols: Map[String, value.Symbol] = Map.empty,
 ):
   def to(section: String) =
-    Emitter(section, sections, strings)
+    Emitter(section, sections, strings, symbols)
 
   def emit(i: Instruction): Emitter =
     sections.get(section) match
@@ -102,6 +103,9 @@ class Emitter(
   def string(label: String, str: value.Str) =
     strings.update(label, str)
 
+  def symbol(label: String, sym: value.Symbol) =
+    symbols.update(label, sym)
+
   def dump =
     inst(Label, value.Id("main")) ++
     sections.get("main").get ++
@@ -109,7 +113,9 @@ class Emitter(
     (for (sec, instructions) <- sections if sec != "main"
      yield inst(Label, value.Id(sec)) ++ instructions).flatten ++
     (for (label, str) <- strings
-     yield inst(Value, value.Id(label), value.Id("Str"), str)).flatten
+     yield inst(Value, value.Id(label), value.Id("Str"), str)).flatten ++
+    (for (label, str) <- symbols
+     yield inst(Value, value.Id(label), value.Id("Symbol"), str)).flatten
 
 
 case class Instruction(op: Opcode, args: Value*):
@@ -135,6 +141,7 @@ def compile(node: Ir, e: Emitter, s: Scope): Emitter =
   node match
     case _: tl.Num => push(node, ty.I32, e, s)
     case _: tl.Str => push(node, ty.Str, e, s)
+    case _: tl.Symbol => push(node, ty.Symbol, e, s)
     case v: tl.Lambda =>
       // XXX 1
       lambda(v.params, v.body, e.to(v.ptr), s)
@@ -150,6 +157,10 @@ def compile(node: Ir, e: Emitter, s: Scope): Emitter =
 
 def push(node: Ir, typ: ty.Type, e: Emitter, s: Scope) = (typ, value.lift(node), node) match
   case (ty.I32, v, _) => e.emit(inst(Push(I32), v))
+  case (ty.Symbol, v : value.Symbol, sym : tl.Symbol) =>
+    e.symbol(sym.ptr, v)
+    e.emit(inst(Push(Const), value.Id(sym.ptr)))
+  case (ty.Symbol, _, _) => ???
   case (ty.Str, v : value.Str, str : tl.Str) =>
     e.string(str.ptr, v)
     e.emit(inst(Push(Const), value.Id(str.ptr)))
@@ -213,6 +224,7 @@ def storev(label: String, v: Ir, e: Emitter, s: Scope) = v match
   case _: tl.Num => e.emit(inst(Store(I32), name(label)))
   case _: tl.Str => ???
   case _: tl.Id => ???
+  case _: tl.Symbol => ???
   case _: tl.Def => ???
   case v: tl.Lambda =>
     // XXX 1

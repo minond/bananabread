@@ -14,6 +14,7 @@ sealed trait Ir(expr: Expr, ty: Type)
 case class Num(num: ast.Num, ty: Type) extends Ir(num, ty)
 case class Str(str: ast.Str) extends Ir(str, ty.Str)
 case class Id(expr: Expr, ty: Type) extends Ir(expr, ty)
+case class Symbol(id: ast.Id) extends Ir(id, ty.Symbol)
 case class App(lambda: Ir, args: List[Ir], expr: Expr, ty: Type) extends Ir(expr, ty)
 case class Lambda(params: List[Id], body: Ir, expr: Expr, ty: Type) extends Ir(expr, ty)
 case class Cond(cond: Ir, pass: Ir, fail: Ir, expr: Expr, ty: Type) extends Ir(expr, ty)
@@ -40,6 +41,8 @@ object Typeless:
   case class Str(str: ast.Str) extends Ir with Print(s"(str ${str.lexeme})"):
     def ptr = ptrOf("str", hashCode)
   case class Id(id: ast.Id) extends Ir with Print(s"(id ${id.lexeme})")
+  case class Symbol(symbol: ast.Symbol) extends Ir with Print(s"(symbol ${symbol.lexeme})"):
+    def ptr = ptrOf("symbol", hashCode)
   case class App(lambda: Ir, args: List[Ir], expr: Expr) extends Ir with Print(s"(app lambda: ${lambda} args: (${args.mkString(" ")}))")
   case class Lambda(params: List[Id], body: Ir, expr: Expr) extends Ir with Print(s"(lambda params: (${params.mkString(" ")}) body: $body)"):
     def ptr = ptrOf("lambda", hashCode)
@@ -57,6 +60,7 @@ object Typeless:
     case expr: ast.Num => Num(expr)
     case expr: ast.Str => Str(expr)
     case expr: ast.Id => Id(expr)
+    case expr: ast.Symbol => Symbol(expr)
     case expr @ ast.App(lambda, args) => App(lift(lambda), args.map(lift), expr)
     case expr @ ast.Lambda(params, body) =>
       params.map(lift).onlys[Id] match
