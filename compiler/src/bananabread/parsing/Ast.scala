@@ -1,5 +1,5 @@
 package bananabread
-package ast
+package parsing.ast
 
 import utils.Print
 

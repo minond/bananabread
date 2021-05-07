@@ -1,5 +1,7 @@
 package bananabread
-package parser
+package parsing.lang
+
+import parsing.ast
 
 import ast.{Token, Tree, Expr, Stmt, SyntaxErr => Err}
 import utils.{ListImplicits, EitherImplicits}

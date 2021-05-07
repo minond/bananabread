@@ -1,6 +1,8 @@
 package bananabread
 package ir
 
+import parsing.ast
+
 import ast.{Tree, Expr, Stmt}
 import ty.Type
 import utils.{Print, ListImplicits}

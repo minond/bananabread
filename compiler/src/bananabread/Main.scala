@@ -1,6 +1,6 @@
 package bananabread
 
-import parser.{tokenize, parse, Syntax}
+import parsing.lang.{tokenize, parse, Syntax}
 import ir.Typeless => tl
 import opcode.{Opcode, Instruction}
 import vm.Machine
@@ -97,9 +97,9 @@ def main(args: Array[String]) =
     // def add (a, b) = a + b
 
     def add2 (a, b) =
-      println(%{
+      %{
         add [I32]
-      })
+      }
 
     println(add2(1, 2))
 

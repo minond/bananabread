@@ -137,7 +137,7 @@ def compile(node: Ir, e: Emitter, s: Scope): Emitter =
       // XXX 1
       lambda(v.params, v.body, e.to(v.ptr), s)
       e.emit(inst(Push(Ptr), name(v.ptr)))
-    case tl.Id(ast.Id(label, _)) => load(label, e, s)
+    case tl.Id(parsing.ast.Id(label, _)) => load(label, e, s)
     case tl.App(lambda, args, _) => call(lambda, args, e, s)
     case tl.Cond(cnd, pas, fal, _) => cond(cnd, pas, fal, e, s)
     case tl.Let(bindings, body, _) => let(bindings, body, e, s.subscope)
@@ -162,10 +162,10 @@ def unique(name: String): value.Id =
   value.Id(s"$name-${Random.alphanumeric.take(16).mkString}")
 
 def call(lambda: Ir, args: List[Ir], e: Emitter, s: Scope): Unit = lambda match
-  case tl.Id(ast.Id(label, _)) if Exposed.contains(label) =>
+  case tl.Id(parsing.ast.Id(label, _)) if Exposed.contains(label) =>
     args.foreach(compile(_, e, s))
     e.emit(inst(Exposed.lookup(label)))
-  case tl.Id(ast.Id(label, _)) if s.contains(label) =>
+  case tl.Id(parsing.ast.Id(label, _)) if s.contains(label) =>
     s.lookup(label) match
       case lambda: tl.Lambda =>
         loadArgsAndRet(args, e, s)
@@ -173,13 +173,13 @@ def call(lambda: Ir, args: List[Ir], e: Emitter, s: Scope): Unit = lambda match
       case _ =>
         loadArgsAndRet(args, e, s)
         e.emit(inst(Call, value.lift(lambda)))
-  case tl.Id(ast.Id("opcode", _)) => args match
+  case tl.Id(parsing.ast.Id("opcode", _)) => args match
     case tl.Str(str) :: Nil =>
       println(str)
     case _ =>
       /* bad call */
       ???
-  case tl.Id(ast.Id(label, _)) =>
+  case tl.Id(parsing.ast.Id(label, _)) =>
     loadArgsAndRet(args, e, s)
     e.emit(inst(Call, value.lift(lambda)))
   case lambda: tl.Lambda =>
@@ -250,7 +250,7 @@ def cond(cnd: Ir, pas: Ir, fal: Ir, e: Emitter, s: Scope) =
   e.emit(inst(Label, ldone))
 
 def let(bindings: List[tl.Binding], body: Ir, e: Emitter, s: Scope) =
-  bindings.foreach { case tl.Binding(ast.Id(label, _), v, _) =>
+  bindings.foreach { case tl.Binding(parsing.ast.Id(label, _), v, _) =>
     s.define(label, v)
     compile(v, e, s)
     storev(label, v, e, s)
@@ -263,7 +263,7 @@ def begin(ins: List[Ir], e: Emitter, s: Scope) =
   }
 
 def lambda(params: List[tl.Id], body: Ir, e: Emitter, s: Scope) =
-  params.reverse.foreach { case tl.Id(ast.Id(label, _)) =>
+  params.reverse.foreach { case tl.Id(parsing.ast.Id(label, _)) =>
     e.emit(inst(Swap))
     store(label, e, s)
   }
