@@ -3,7 +3,7 @@ package bananabread
 import parsing.lang.{tokenize, parse, Syntax}
 import ir.Typeless => tl
 import opcode.{Opcode, Instruction}
-import vm.Machine
+import runtime.vm.Machine
 
 
 def main(args: Array[String]) =

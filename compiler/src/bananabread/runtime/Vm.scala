@@ -1,8 +1,10 @@
 package bananabread
-package vm
+package runtime.vm
 
-import opcode.{Opcode, Instruction, Exposed}
+import runtime.value
+
 import value.Value
+import opcode.{Opcode, Instruction, Exposed}
 
 import scala.collection.mutable.{Stack, Map}
 

@@ -1,6 +1,8 @@
 package bananabread
 package opcode
 
+import runtime.value
+
 import ir.Typeless => tl
 import ir.Typeless.Ir
 import value.Value
@@ -34,7 +36,7 @@ case object Mov extends Opcode with Print("mov")
 case class Load(typ: Type) extends Opcode with Print(s"load [$typ]") // local to stack
 case class Store(typ: Type) extends Opcode with Print(s"store [$typ]") // stack to local
 
-sealed trait Run(val handler: vm.Machine => Unit)
+sealed trait Run(val handler: runtime.vm.Machine => Unit)
 case object Println extends Opcode with Print("println"), Run(vm => println(vm.stack.head))
 case class Add(typ: Type) extends Opcode with Print(s"add [$typ]"), Run(vm => vm.bini32op(_ + _))
 case class Sub(typ: Type) extends Opcode with Print(s"sub [$typ]"), Run(vm => vm.bini32op(_ - _))
@@ -188,7 +190,7 @@ def call(lambda: Ir, args: List[Ir], e: Emitter, s: Scope): Unit = lambda match
     compile(lambda, e.to(lambda.ptr), s)
   case app: tl.App =>
     call(app.lambda, app.args, e, s)
-    e.emit(inst(Mov, vm.Reg.Jmp))
+    e.emit(inst(Mov, runtime.vm.Reg.Jmp))
     loadArgsAndRet(args, e, s)
     e.emit(inst(Call))
   case _ =>
@@ -197,7 +199,7 @@ def call(lambda: Ir, args: List[Ir], e: Emitter, s: Scope): Unit = lambda match
 
 def loadArgsAndRet(args: List[Ir], e: Emitter, s: Scope) =
   args.foreach(compile(_, e, s))
-  e.emit(inst(Push(Reg), vm.Reg.Pc, value.I32(2)))
+  e.emit(inst(Push(Reg), runtime.vm.Reg.Pc, value.I32(2)))
 
 def load(label: String, e: Emitter, s: Scope) =
   if s.contains(label)
