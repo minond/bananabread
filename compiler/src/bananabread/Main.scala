@@ -97,9 +97,9 @@ def main(args: Array[String]) =
     // def add (a, b) = a + b
 
     def add2 (a, b) =
-      opcode %{
+      println(%{
         add [I32]
-      }
+      })
 
     println(add2(1, 2))
 
