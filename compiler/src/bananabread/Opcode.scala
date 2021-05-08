@@ -55,7 +55,7 @@ object Exposed:
     registry(label)
 
 
-class Scope(env: Map[String, Ir] = Map.empty, parent: Option[Scope] = None):
+class Scope(val module: String, env: Map[String, Ir] = Map.empty, parent: Option[Scope] = None):
   private val children = Stack[Scope]()
 
   def contains(label: String): Boolean = (env.contains(label), parent) match
@@ -78,14 +78,13 @@ class Scope(env: Map[String, Ir] = Map.empty, parent: Option[Scope] = None):
     this
 
   def subscope =
-    val child = Scope(Map.empty, Some(this))
+    val child = Scope(module, Map.empty, Some(this))
     children.push(child)
     child
 
   def scoped(fn: Scope => Unit) =
     fn(subscope)
 
-val Main = "Main"
 
 class Emitter(
   section: String = "main",
@@ -145,7 +144,7 @@ def inst(op: Opcode, args: Value*) =
 
 def compile(nodes: List[Ir]): Emitter =
   val e = Emitter()
-  val s = Scope()
+  val s = Scope("main")
   nodes.foreach(compile(_, e, s))
   e
 
@@ -232,7 +231,7 @@ def loadArgsAndRet(args: List[Ir], e: Emitter, s: Scope) =
 
 def load(label: String, e: Emitter, s: Scope) = s.get(label) match
   case None => ???
-  case Some(lambda : tl.Lambda) => e.emit(inst(Load(Ptr), name(s"$Main.$label")))
+  case Some(lambda : tl.Lambda) => e.emit(inst(Load(Ptr), name(s"${s.module}.$label")))
   case Some(_) => e.emit(inst(Load(I32), name(label)))
 
 def store(label: String, e: Emitter, s: Scope) =
@@ -306,7 +305,7 @@ def lambda(params: List[tl.Id], body: Ir, e: Emitter, s: Scope) =
 def define(name: String, rawValue: Ir, e: Emitter, s: Scope): Unit = rawValue match
   case v: tl.Lambda =>
     // TODO don't hardcode module
-    e.pointer(s"$Main.$name", value.Id(v.ptr))
+    e.pointer(s"${s.module}.$name", value.Id(v.ptr))
     s.define(name, v)
     s.scoped { scope =>
       v.params.foreach { param => scope.define(param.id.lexeme, param) }
