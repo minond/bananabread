@@ -77,13 +77,13 @@ class Scope(val module: String, env: Map[String, Ir] = Map.empty, parent: Option
     env.update(label, ir)
     this
 
-  def subscope =
-    val child = Scope(module, Map.empty, Some(this))
+  def subscope(suffix: String) =
+    val child = Scope(s"$module.$suffix", Map.empty, Some(this))
     children.push(child)
     child
 
-  def scoped(fn: Scope => Unit) =
-    fn(subscope)
+  def scoped(suffix: String)(fn: Scope => Unit) =
+    fn(subscope(suffix))
 
 
 class Emitter(
@@ -155,7 +155,7 @@ def compile(node: Ir, e: Emitter, s: Scope): Emitter =
     case _: tl.Symbol => push(node, ty.Symbol, e, s)
     case v: tl.Lambda =>
       // XXX 1
-      s.scoped { scope =>
+      s.scoped(rand) { scope =>
         v.params.foreach { param => scope.define(param.id.lexeme, param) }
         lambda(v.params, v.body, e.to(v.ptr), scope)
         e.emit(inst(Push(Ptr), name(v.ptr)))
@@ -163,7 +163,7 @@ def compile(node: Ir, e: Emitter, s: Scope): Emitter =
     case tl.Id(parsing.ast.Id(label, _)) => load(label, e, s)
     case tl.App(lambda, args, _) => call(lambda, args, e, s)
     case tl.Cond(cnd, pas, fal, _) => cond(cnd, pas, fal, e, s)
-    case tl.Let(bindings, body, _) => let(bindings, body, e, s.subscope)
+    case tl.Let(bindings, body, _) => let(bindings, body, e, s.subscope(rand))
     case tl.Begin(ins, _) => begin(ins, e, s)
     case tl.Def(name, value, _) => define(name.lexeme, value, e, s)
   e
@@ -188,6 +188,9 @@ def name(name: String): value.Id =
 def unique(name: String): value.Id =
   value.Id(s"$name-${Random.alphanumeric.take(16).mkString}")
 
+def rand =
+  Random.alphanumeric.take(4).mkString
+
 def call(lambda: Ir, args: List[Ir], e: Emitter, s: Scope): Unit = lambda match
   case tl.Id(parsing.ast.Id(label, _)) if Exposed.contains(label) =>
     args.foreach(compile(_, e, s))
@@ -200,7 +203,7 @@ def call(lambda: Ir, args: List[Ir], e: Emitter, s: Scope): Unit = lambda match
       case id: tl.Id =>
         loadArgsAndRet(args, e, s)
         // e.emit(inst(Call, value.lift(id)))
-        e.emit(inst(Call, value.lift(lambda)))
+        e.emit(inst(Call, name(s"${s.module}.$label")))
       case _ =>
         ???
   case tl.Id(parsing.ast.Id("opcode", _)) => args match
@@ -232,13 +235,13 @@ def loadArgsAndRet(args: List[Ir], e: Emitter, s: Scope) =
 def load(label: String, e: Emitter, s: Scope) = s.get(label) match
   case None => ???
   case Some(lambda : tl.Lambda) => e.emit(inst(Load(Ptr), name(s"${s.module}.$label")))
-  case Some(_) => e.emit(inst(Load(I32), name(label)))
+  case Some(_) => e.emit(inst(Load(I32), name(s"${s.module}.$label")))
 
 def store(label: String, e: Emitter, s: Scope) =
-  e.emit(inst(Store(I32), name(label)))
+  e.emit(inst(Store(I32), name(s"${s.module}.$label")))
 
 def storev(label: String, v: Ir, e: Emitter, s: Scope): Unit = v match
-  case _: tl.Num => e.emit(inst(Store(I32), name(label)))
+  case _: tl.Num => e.emit(inst(Store(I32), name(s"${s.module}.$label")))
   case _: tl.Str => ???
   case tl.Id(id) => storev(label, s.lookup(id.lexeme), e, s)
   case _: tl.Symbol => ???
@@ -246,23 +249,23 @@ def storev(label: String, v: Ir, e: Emitter, s: Scope): Unit = v match
   case v: tl.Lambda =>
     // XXX 1
     // e.emit(inst(Push(Ptr), name(v.ptr)))
-    e.emit(inst(Store(Ptr), name(label)))
+    e.emit(inst(Store(Ptr), name(s"${s.module}.$label")))
   case _: tl.App =>
     // TODO App's result may not be i32, need to pass ty.Type instead of
     // typeless Ir.
-    e.emit(inst(Store(I32), name(label)))
+    e.emit(inst(Store(I32), name(s"${s.module}.$label")))
   case _: tl.Cond =>
     // TODO Cond's result may not be i32, need to pass ty.Type instead of
     // typeless Ir.
-    e.emit(inst(Store(I32), name(label)))
+    e.emit(inst(Store(I32), name(s"${s.module}.$label")))
   case _: tl.Let =>
     // TODO Let's result may not be i32, need to pass ty.Type instead of
     // typeless Ir.
-    e.emit(inst(Store(I32), name(label)))
+    e.emit(inst(Store(I32), name(s"${s.module}.$label")))
   case _: tl.Begin =>
     // TODO Begin's result may not be i32, need to pass ty.Type instead of
     // typeless Ir.
-    e.emit(inst(Store(I32), name(label)))
+    e.emit(inst(Store(I32), name(s"${s.module}.$label")))
 
 def cond(cnd: Ir, pas: Ir, fal: Ir, e: Emitter, s: Scope) =
   val lcond = unique("cond")
@@ -307,7 +310,7 @@ def define(name: String, rawValue: Ir, e: Emitter, s: Scope): Unit = rawValue ma
     // TODO don't hardcode module
     e.pointer(s"${s.module}.$name", value.Id(v.ptr))
     s.define(name, v)
-    s.scoped { scope =>
+    s.scoped(name) { scope =>
       v.params.foreach { param => scope.define(param.id.lexeme, param) }
       lambda(v.params, v.body, e.to(v.ptr), scope)
     }

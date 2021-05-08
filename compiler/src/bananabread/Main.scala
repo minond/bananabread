@@ -115,17 +115,17 @@ def main(args: Array[String]) =
       internalprintln = func (str) = println(str)
       puts = internalprintln
     in
-      132
+      puts(123)
 
     //def puts(str) = println(str)
-    def internalprintln(str) = println(str)
-    def puts = internalprintln
+    def globalprintln(str) = println(str)
+    def puts = globalprintln
     def puts2 = puts
     // def xxx = 123
 
     puts(%{from puts})
     puts2(%{from puts2})
-    internalprintln(%{from internalprintln})
+    globalprintln(%{from internalprintln})
     println(%{from println})
 
     // def res = add(1, x)
