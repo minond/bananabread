@@ -68,6 +68,11 @@ class Scope(env: Map[String, Ir] = Map.empty, parent: Option[Scope] = None):
     case (_, Some(scope)) => scope.lookup(label)
     case _ => ???
 
+  def get(label: String): Option[Ir] = (env.get(label), parent) match
+    case (Some(ir), _) => Some(ir)
+    case (_, Some(scope)) => scope.get(label)
+    case _ => None
+
   def define(label: String, ir: Ir) =
     env.update(label, ir)
     this
@@ -82,13 +87,14 @@ class Scope(env: Map[String, Ir] = Map.empty, parent: Option[Scope] = None):
 
 
 class Emitter(
-  section: String = "main",
-  sections: Map[String, Instructions] = Map("main" -> Queue.empty),
+  section: String = "Main",
+  sections: Map[String, Instructions] = Map("Main" -> Queue.empty),
   strings: Map[String, value.Str] = Map.empty,
   symbols: Map[String, value.Symbol] = Map.empty,
+  pointers: Map[String, value.Id] = Map.empty,
 ):
   def to(section: String) =
-    Emitter(section, sections, strings, symbols)
+    Emitter(section, sections, strings, symbols, pointers)
 
   def emit(i: Instruction): Emitter =
     sections.get(section) match
@@ -106,16 +112,21 @@ class Emitter(
   def symbol(label: String, sym: value.Symbol) =
     symbols.update(label, sym)
 
+  def pointer(label: String, ptr: value.Id) =
+    pointers.update(label, ptr)
+
   def dump =
-    inst(Label, value.Id("main")) ++
-    sections.get("main").get ++
+    inst(Label, value.Id("Main")) ++
+    sections.get("Main").get ++
     inst(Halt) ++
-    (for (sec, instructions) <- sections if sec != "main"
+    (for (sec, instructions) <- sections if sec != "Main"
      yield inst(Label, value.Id(sec)) ++ instructions).flatten ++
     (for (label, str) <- strings
      yield inst(Value, value.Id(label), value.Id("Str"), str)).flatten ++
     (for (label, str) <- symbols
-     yield inst(Value, value.Id(label), value.Id("Symbol"), str)).flatten
+     yield inst(Value, value.Id(label), value.Id("Symbol"), str)).flatten ++
+    (for (label, ptr) <- pointers
+     yield inst(Value, value.Id(label), value.Id("Ptr"), ptr)).flatten
 
 
 case class Instruction(op: Opcode, args: Value*):
@@ -144,8 +155,11 @@ def compile(node: Ir, e: Emitter, s: Scope): Emitter =
     case _: tl.Symbol => push(node, ty.Symbol, e, s)
     case v: tl.Lambda =>
       // XXX 1
-      lambda(v.params, v.body, e.to(v.ptr), s)
-      e.emit(inst(Push(Ptr), name(v.ptr)))
+      s.scoped { scope =>
+        v.params.foreach { param => scope.define(param.id.lexeme, param) }
+        lambda(v.params, v.body, e.to(v.ptr), scope)
+        e.emit(inst(Push(Ptr), name(v.ptr)))
+      }
     case tl.Id(parsing.ast.Id(label, _)) => load(label, e, s)
     case tl.App(lambda, args, _) => call(lambda, args, e, s)
     case tl.Cond(cnd, pas, fal, _) => cond(cnd, pas, fal, e, s)
@@ -183,9 +197,12 @@ def call(lambda: Ir, args: List[Ir], e: Emitter, s: Scope): Unit = lambda match
       case lambda: tl.Lambda =>
         loadArgsAndRet(args, e, s)
         e.emit(inst(Call, name(lambda.ptr)))
-      case _ =>
+      case id: tl.Id =>
         loadArgsAndRet(args, e, s)
+        // e.emit(inst(Call, value.lift(id)))
         e.emit(inst(Call, value.lift(lambda)))
+      case _ =>
+        ???
   case tl.Id(parsing.ast.Id("opcode", _)) => args match
     case tl.Str(str) :: Nil =>
       println(str)
@@ -212,18 +229,18 @@ def loadArgsAndRet(args: List[Ir], e: Emitter, s: Scope) =
   args.foreach(compile(_, e, s))
   e.emit(inst(Push(Reg), runtime.vm.Reg.Pc, value.I32(2)))
 
-def load(label: String, e: Emitter, s: Scope) =
-  if s.contains(label)
-  then e.emit(inst(Load(I32), name(label)))
-  else ???
+def load(label: String, e: Emitter, s: Scope) = s.get(label) match
+  case None => ???
+  case Some(lambda : tl.Lambda) => e.emit(inst(Load(Ptr), name(s"Main.$label")))
+  case Some(_) => e.emit(inst(Load(I32), name(label)))
 
 def store(label: String, e: Emitter, s: Scope) =
   e.emit(inst(Store(I32), name(label)))
 
-def storev(label: String, v: Ir, e: Emitter, s: Scope) = v match
+def storev(label: String, v: Ir, e: Emitter, s: Scope): Unit = v match
   case _: tl.Num => e.emit(inst(Store(I32), name(label)))
   case _: tl.Str => ???
-  case _: tl.Id => ???
+  case tl.Id(id) => storev(label, s.lookup(id.lexeme), e, s)
   case _: tl.Symbol => ???
   case _: tl.Def => ???
   case v: tl.Lambda =>
@@ -285,15 +302,17 @@ def lambda(params: List[tl.Id], body: Ir, e: Emitter, s: Scope) =
   e.emit(inst(Swap))
   e.emit(inst(Ret))
 
-def define(name: String, value: Ir, e: Emitter, s: Scope): Unit = value match
+def define(name: String, rawValue: Ir, e: Emitter, s: Scope): Unit = rawValue match
   case v: tl.Lambda =>
+    // TODO don't hardcode module
+    e.pointer(s"Main.$name", value.Id(v.ptr))
     s.define(name, v)
     s.scoped { scope =>
-      v.params.foreach { param => scope.define(param.id.lexeme, v) }
+      v.params.foreach { param => scope.define(param.id.lexeme, param) }
       lambda(v.params, v.body, e.to(v.ptr), scope)
     }
 
   case _ =>
-    s.define(name, value)
-    compile(value, e, s)
-    storev(name, value, e, s)
+    s.define(name, rawValue)
+    compile(rawValue, e, s)
+    storev(name, rawValue, e, s)

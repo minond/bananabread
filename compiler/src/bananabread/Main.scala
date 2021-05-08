@@ -96,16 +96,37 @@ def main(args: Array[String]) =
     //
     // def add (a, b) = a + b
 
-    def add2 (a, b) =
-      %{
-        add [I32]
-      }
+    // def add2 (a, b) =
+    //   %{
+    //     add [I32]
+    //   }
+    //
+    // println(add2(1, 2))
+    // println('testing)
+    // println(%{testing 1 2 3})
+    //
+    // 'north
+    // 'south
+    // 'east
+    // 'west
 
-    println(add2(1, 2))
-    println('testing)
-    println(%{testing 1 2 3})
+    let
+      testtesttest = func (a) = println(a)
+      internalprintln = func (str) = println(str)
+      puts = internalprintln
+    in
+      132
 
+    //def puts(str) = println(str)
+    def internalprintln(str) = println(str)
+    def puts = internalprintln
+    def puts2 = puts
+    // def xxx = 123
 
+    puts(%{from puts})
+    puts2(%{from puts2})
+    internalprintln(%{from internalprintln})
+    println(%{from println})
 
     // def res = add(1, x)
     // println(res)

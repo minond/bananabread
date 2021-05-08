@@ -210,6 +210,9 @@ class Machine(instructions: Seq[Instruction], info: Boolean = false, prompt: Boo
         case Some(v) =>
           stack.push(v)
           Cont
+    case (opcode.Load(opcode.Ptr), value.Id(label) :: Nil) =>
+      stack.push(constants(label))
+      Cont
     case (opcode.Load(_), _) =>
       /* bad call */
       ???
