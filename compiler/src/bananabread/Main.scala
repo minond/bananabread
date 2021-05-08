@@ -127,6 +127,7 @@ def main(args: Array[String]) =
     puts2(%{from puts2})
     globalprintln(%{from internalprintln})
     println(%{from println})
+    puts2(23 + 19)
 
     // def res = add(1, x)
     // println(res)

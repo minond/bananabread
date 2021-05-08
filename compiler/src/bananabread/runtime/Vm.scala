@@ -234,7 +234,7 @@ class Machine(instructions: Seq[Instruction], info: Boolean = false, prompt: Boo
   def run(v: value.Id) =
     Exposed.lookup(v.label).handler(this)
 
-  def bini32op(f: (Integer, Integer) => Integer) =
+  def bini32op(f: (Int, Int) => Int) =
     (stack.pop, stack.pop) match
       case (value.I32(rhs), value.I32(lhs)) =>
         stack.push(value.I32(f(lhs, rhs)))
