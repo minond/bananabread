@@ -88,8 +88,8 @@ class Scope(env: Map[String, Ir] = Map.empty, parent: Option[Scope] = None):
 val Main = "Main"
 
 class Emitter(
-  section: String = Main,
-  sections: Map[String, Instructions] = Map(Main -> Queue.empty),
+  section: String = "main",
+  sections: Map[String, Instructions] = Map("main" -> Queue.empty),
   strings: Map[String, value.Str] = Map.empty,
   symbols: Map[String, value.Symbol] = Map.empty,
   pointers: Map[String, value.Id] = Map.empty,
@@ -117,10 +117,10 @@ class Emitter(
     pointers.update(label, ptr)
 
   def dump =
-    inst(Label, value.Id(Main)) ++
-    sections.get(Main).get ++
+    inst(Label, value.Id("main")) ++
+    sections.get("main").get ++
     inst(Halt) ++
-    (for (sec, instructions) <- sections if sec != Main
+    (for (sec, instructions) <- sections if sec != "main"
      yield inst(Label, value.Id(sec)) ++ instructions).flatten ++
     (for (label, str) <- strings
      yield inst(Value, value.Id(label), value.Id("Str"), str)).flatten ++
