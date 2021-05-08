@@ -85,10 +85,11 @@ class Scope(env: Map[String, Ir] = Map.empty, parent: Option[Scope] = None):
   def scoped(fn: Scope => Unit) =
     fn(subscope)
 
+val Main = "Main"
 
 class Emitter(
-  section: String = "Main",
-  sections: Map[String, Instructions] = Map("Main" -> Queue.empty),
+  section: String = Main,
+  sections: Map[String, Instructions] = Map(Main -> Queue.empty),
   strings: Map[String, value.Str] = Map.empty,
   symbols: Map[String, value.Symbol] = Map.empty,
   pointers: Map[String, value.Id] = Map.empty,
@@ -116,10 +117,10 @@ class Emitter(
     pointers.update(label, ptr)
 
   def dump =
-    inst(Label, value.Id("Main")) ++
-    sections.get("Main").get ++
+    inst(Label, value.Id(Main)) ++
+    sections.get(Main).get ++
     inst(Halt) ++
-    (for (sec, instructions) <- sections if sec != "Main"
+    (for (sec, instructions) <- sections if sec != Main
      yield inst(Label, value.Id(sec)) ++ instructions).flatten ++
     (for (label, str) <- strings
      yield inst(Value, value.Id(label), value.Id("Str"), str)).flatten ++
@@ -231,7 +232,7 @@ def loadArgsAndRet(args: List[Ir], e: Emitter, s: Scope) =
 
 def load(label: String, e: Emitter, s: Scope) = s.get(label) match
   case None => ???
-  case Some(lambda : tl.Lambda) => e.emit(inst(Load(Ptr), name(s"Main.$label")))
+  case Some(lambda : tl.Lambda) => e.emit(inst(Load(Ptr), name(s"$Main.$label")))
   case Some(_) => e.emit(inst(Load(I32), name(label)))
 
 def store(label: String, e: Emitter, s: Scope) =
@@ -305,7 +306,7 @@ def lambda(params: List[tl.Id], body: Ir, e: Emitter, s: Scope) =
 def define(name: String, rawValue: Ir, e: Emitter, s: Scope): Unit = rawValue match
   case v: tl.Lambda =>
     // TODO don't hardcode module
-    e.pointer(s"Main.$name", value.Id(v.ptr))
+    e.pointer(s"$Main.$name", value.Id(v.ptr))
     s.define(name, v)
     s.scoped { scope =>
       v.params.foreach { param => scope.define(param.id.lexeme, param) }
