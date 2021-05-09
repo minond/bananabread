@@ -68,6 +68,11 @@ class Scope(val module: String, env: Map[String, Ir] = Map.empty, parent: Option
     case (_, Some(scope)) => scope.lookup(label)
     case _ => ???
 
+  def container(label: String): Scope = (env.get(label), parent) match
+    case (Some(_), _) => this
+    case (_, Some(scope)) => scope.container(label)
+    case _ => ???
+
   def get(label: String): Option[Ir] = (env.get(label), parent) match
     case (Some(ir), _) => Some(ir)
     case (_, Some(scope)) => scope.get(label)
@@ -203,7 +208,7 @@ def call(lambda: Ir, args: List[Ir], e: Emitter, s: Scope): Unit = lambda match
       case id: tl.Id =>
         loadArgsAndRet(args, e, s)
         // e.emit(inst(Call, value.lift(id)))
-        e.emit(inst(Call, name(s"${s.module}.$label")))
+        e.emit(inst(Call, name(s"${s.container(label).module}.$label")))
       case _ =>
         ???
   case tl.Id(parsing.ast.Id("opcode", _)) => args match
@@ -234,8 +239,8 @@ def loadArgsAndRet(args: List[Ir], e: Emitter, s: Scope) =
 
 def load(label: String, e: Emitter, s: Scope) = s.get(label) match
   case None => ???
-  case Some(lambda : tl.Lambda) => e.emit(inst(Load(Ptr), name(s"${s.module}.$label")))
-  case Some(_) => e.emit(inst(Load(I32), name(s"${s.module}.$label")))
+  case Some(lambda : tl.Lambda) => e.emit(inst(Load(Ptr), name(s"${s.container(label).module}.$label")))
+  case Some(_) => e.emit(inst(Load(I32), name(s"${s.container(label).module}.$label")))
 
 def store(label: String, e: Emitter, s: Scope) =
   e.emit(inst(Store(I32), name(s"${s.module}.$label")))

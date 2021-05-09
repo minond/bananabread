@@ -72,3 +72,40 @@ class VmTests extends AnyFlatSpec with should.Matchers:
       """
     ) shouldEqual I32(10)
   }
+
+  it should "evaluate a mix of indirect internal and global function calls" in {
+    stackHeadOf(
+      """
+      def global_add_em(a, b) = a + b
+      def global_add_em_2 = global_add_em
+
+      let
+        internal_add_em = func (a, b) = a + b
+        internal_add_em_2 = internal_add_em
+      in
+        global_add_em_2(internal_add_em_2(3, 4), 7)
+      """
+    ) shouldEqual I32(14)
+  }
+
+  it should "resolve variable scopes" in {
+    stackHeadOf(
+      """
+      let
+        a = 1
+      in
+        let
+          b = 2
+        in
+          a + b
+      """
+    ) shouldEqual I32(3)
+  }
+
+  it should "evaluate immediatelly invoked functions" in {
+    stackHeadOf(
+      """
+      (func (a) = a + a)(3)
+      """
+    ) shouldEqual I32(6)
+  }

@@ -159,8 +159,9 @@ def main(args: Array[String]) =
     //   in
     //     a + b
 
-    def a = 1
-    a
+    (func (a) = a + a)(3)
+    def addadd(a) = a + a
+    addadd(4)
     """
 
   val res =
