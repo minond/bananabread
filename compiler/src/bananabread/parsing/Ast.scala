@@ -8,7 +8,7 @@ import scala.reflect.ClassTag
 
 // Base AST
 
-case class Tree(nodes: List[Expr | Stmt])
+case class Tree(val nodes: List[Expr | Stmt])
 
 
 sealed trait Token extends Located {

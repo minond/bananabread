@@ -1,7 +1,7 @@
 package bananabread
 package test
 
-import parser.{parse, Syntax}
+import parsing.lang.{parse, Syntax}
 
 val stdOps = Syntax.withPrefix(0, "-")
                    .withPrefix(0, "∀")
@@ -17,7 +17,7 @@ val stdOps = Syntax.withPrefix(0, "-")
                    .withPostfix(10, "!")
 
 def exprsOf(code: String, syntax: Syntax = stdOps) =
-  parse("<test>", code, syntax).getOrElse(???).map(_.toString)
+  parse("<test>", code, syntax).getOrElse(???).nodes.map(_.toString)
 
 def astOf(code: String, syntax: Syntax = stdOps) =
   exprsOf(code, syntax).head
