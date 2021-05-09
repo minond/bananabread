@@ -2,6 +2,8 @@ package bananabread
 package test
 
 import parsing.lang.{parse, Syntax}
+import ir.Typeless => tl
+import runtime.vm.Machine
 
 val stdOps = Syntax.withPrefix(0, "-")
                    .withPrefix(0, "∀")
@@ -21,3 +23,14 @@ def exprsOf(code: String, syntax: Syntax = stdOps) =
 
 def astOf(code: String, syntax: Syntax = stdOps) =
   exprsOf(code, syntax).head
+
+def resultOf(code: String, syntax: Syntax = stdOps) =
+  val ast = parse("<stdin>", code, syntax).getOrElse(???)
+  val ir = tl.lift(ast)
+  val ins = opcode.compile(ir)
+  val machine = Machine(ins.dump)
+  machine.run
+  machine
+
+def stackHeadOf(code: String, syntax: Syntax = stdOps) =
+  resultOf(code, syntax).stack.head
