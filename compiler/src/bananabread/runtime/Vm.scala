@@ -9,8 +9,32 @@ import opcode.{Opcode, Instruction, Exposed}
 import scala.collection.mutable.{Stack, Map}
 
 
-type Frame = Map[String, Value]
-type Registers = Map[value.Id, value.I32]
+class Frames:
+  private var frame = Frame()
+
+  def next = frame = frame.next
+  def prev = frame = frame.prev
+  def from(f: Frame) = frame = frame.from(f)
+  def curr = frame
+
+
+case class Frame(val env: Map[String, Value] = Map.empty, parent: Option[Frame] = None):
+  def get(label: String): Option[Value] = (env.get(label), parent) match
+    case (Some(v), _) => Some(v)
+    case (_, Some(p)) =>  p.get(label)
+    case _ => None
+
+  def put(label: String, value: Value) =
+    env.put(label, value)
+
+  def next =
+    Frame(Map.empty, Some(this))
+
+  def prev =
+    parent.getOrElse(???)
+
+  def from(frame: Frame) =
+    Frame(frame.env, Some(this))
 
 
 sealed trait Pc
@@ -28,9 +52,9 @@ object Reg:
 
 class Machine(instructions: Seq[Instruction], info: Boolean = false, prompt: Boolean = false):
   val stack = Stack[Value]()
-  val frame = Stack[Frame](Map.empty)
+  val frames = Frames()
 
-  val registers: Registers = Map(
+  val registers: Map[value.Id, value.I32] = Map(
     Reg.Pc -> value.I32(0),
     Reg.Lr -> value.I32(0),
     Reg.Jmp -> value.I32(0),
@@ -80,7 +104,7 @@ class Machine(instructions: Seq[Instruction], info: Boolean = false, prompt: Boo
   def printInfo =
     println(s"STK: $stack")
     println(s"REG: $registers")
-    println(s"FRM: $frame")
+    println(s"FRM: $frames")
 
   def eval(instruction: Instruction): Pc = (instruction.op, instruction.args.toList) match
     case (opcode.Halt, _) =>
@@ -109,6 +133,9 @@ class Machine(instructions: Seq[Instruction], info: Boolean = false, prompt: Boo
       Cont
     case (opcode.Push(opcode.Ptr), ptr :: Nil) =>
       stack.push(ptr)
+      Cont
+    case (opcode.Push(opcode.Scope), value.Id(label) :: Nil) =>
+      stack.push(value.Scope(label, frames.curr))
       Cont
     case (opcode.Push(opcode.Reg), reg :: value.I32(offset) :: Nil) =>
       reg match
@@ -148,18 +175,24 @@ class Machine(instructions: Seq[Instruction], info: Boolean = false, prompt: Boo
       /* bad call */
       ???
     case (opcode.Call, value.Id(label) :: Nil) =>
-      frame.head.get(label) match
+      frames.curr.get(label) match
         case None =>
-          frame.push(Map.empty)
+          frames.next
           Goto(label)
         case Some(ptr: value.Id) =>
-          frame.push(Map.empty)
+          frames.next
           Goto(ptr.label)
+        case Some(value.Scope(label, frame)) =>
+          frames.from(frame)
+          Goto(label)
         case Some(_) =>
           /* bad call */
           ???
     case (opcode.Call, Nil) =>
-      frame.push(Map.empty)
+      // Not pushing another frame because we're about to execute a scoped
+      // function and the scope's frame has already been pushed into the frames
+      // stack.
+      // frames.push(Map.empty)
       Jump(jmp.value)
     case (opcode.Call, _) =>
       /* bad call */
@@ -179,7 +212,7 @@ class Machine(instructions: Seq[Instruction], info: Boolean = false, prompt: Boo
           // println(s"RET $addr")
           // printInfo
           // Thread.sleep(3000)
-          frame.pop
+          frames.prev
           Jump(addr)
         case _ =>
           /* bad ret addr */
@@ -194,16 +227,16 @@ class Machine(instructions: Seq[Instruction], info: Boolean = false, prompt: Boo
       /* missing impl */
       ???
     case (opcode.Store(opcode.I32), value.Id(label) :: Nil) =>
-      frame.head.put(label, stack.pop)
+      frames.curr.put(label, stack.pop)
       Cont
     case (opcode.Store(opcode.Ptr), value.Id(label) :: Nil) =>
-      frame.head.put(label, stack.pop)
+      frames.curr.put(label, stack.pop)
       Cont
     case (opcode.Store(_), _) =>
       /* bad call */
       ???
     case (opcode.Load(opcode.I32), value.Id(label) :: Nil) =>
-      frame.head.get(label) match
+      frames.curr.get(label) match
         case None =>
           stack.push(constants(label))
           Cont
@@ -211,7 +244,7 @@ class Machine(instructions: Seq[Instruction], info: Boolean = false, prompt: Boo
           stack.push(v)
           Cont
     case (opcode.Load(opcode.Ptr), value.Id(label) :: Nil) =>
-      frame.head.get(label) match
+      frames.curr.get(label) match
         case None =>
           stack.push(constants(label))
           Cont
@@ -226,6 +259,9 @@ class Machine(instructions: Seq[Instruction], info: Boolean = false, prompt: Boo
     case addr: value.I32 =>
       registers.update(dest, addr)
     case value.Id(label) =>
+      registers.update(dest, value.I32(labels(label)))
+    case value.Scope(label, frame) =>
+      frames.from(frame)
       registers.update(dest, value.I32(labels(label)))
     case _ =>
       /* not implemented  */

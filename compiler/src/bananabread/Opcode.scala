@@ -19,6 +19,7 @@ sealed trait Type
 case object I32 extends Type
 case object Reg extends Type
 case object Ptr extends Type
+case object Scope extends Type
 case object Const extends Type
 
 
@@ -163,7 +164,7 @@ def compile(node: Ir, e: Emitter, s: Scope): Emitter =
       s.scoped(rand) { scope =>
         v.params.foreach { param => scope.define(param.id.lexeme, param) }
         lambda(v.params, v.body, e.to(v.ptr), scope)
-        e.emit(inst(Push(Ptr), name(v.ptr)))
+        e.emit(inst(Push(Scope), name(v.ptr)))
       }
     case tl.Id(parsing.ast.Id(label, _)) => load(label, e, s)
     case tl.App(lambda, args, _) => call(lambda, args, e, s)
@@ -209,6 +210,11 @@ def call(lambda: Ir, args: List[Ir], e: Emitter, s: Scope): Unit = lambda match
         loadArgsAndRet(args, e, s)
         // e.emit(inst(Call, value.lift(id)))
         e.emit(inst(Call, name(s"${s.container(label).module}.$label")))
+      case app: tl.App =>
+        call(app.lambda, app.args, e, s)
+        e.emit(inst(Mov, runtime.vm.Reg.Jmp))
+        loadArgsAndRet(args, e, s)
+        e.emit(inst(Call))
       case _ =>
         ???
   case tl.Id(parsing.ast.Id("opcode", _)) => args match

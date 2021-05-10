@@ -109,3 +109,56 @@ class VmTests extends AnyFlatSpec with should.Matchers:
       """
     ) shouldEqual I32(6)
   }
+
+  it should "use lexical scope when evaluating functions" in {
+    stackHeadOf(
+      """
+      let
+        base = 1
+
+        start =
+          func (a) =
+            func (b) =
+              func (c) =
+                a + b + c + base
+
+        a = start(2)
+        a_b = a(5)
+        a_b_c = a_b(7) // 2 + 5 + 7 + 1 = 15
+
+        ab = start(2)(3)
+        ab_c = ab(6) // 2 + 5 + 6 + 1 = 12
+
+        abc = start(2)(3)(4) // 2 + 3 + 4 + 1 = 10
+      in
+        a_b_c + ab_c + abc // 15 + 12 + 10 = 37
+      """
+    ) shouldEqual I32(37)
+  }
+
+  it should "use lexical scope when evaluating global functions" in {
+    stackHeadOf(
+      """
+      def base = 10
+
+      def start =
+        func (a) =
+          func (b) =
+            func (c) =
+              a + b + c + base
+
+      def a = start(2)
+      def a_b = a(5)
+      def a_b_c = a_b(7) // 2 + 5 + 7 + 10 = 24
+
+      def ab = start(2)(3)
+      def ab_c = ab(6) // 2 + 5 + 6 + 10 = 21
+
+      def abc = start(2)(3)(4) // 2 + 3 + 4 + 10 = 19
+
+      def res = a_b_c + ab_c + abc // 24 + 21 + 19 = 64
+
+      res
+      """
+    ) shouldEqual I32(64)
+  }

@@ -159,9 +159,43 @@ def main(args: Array[String]) =
     //   in
     //     a + b
 
-    (func (a) = a + a)(3)
-    def addadd(a) = a + a
-    addadd(4)
+    // def x = 1
+    //
+    // def y = (
+    //   func (a) =
+    //     func (b) =
+    //       func () =
+    //         a + x + b)(3)(2)()
+    //
+    // y
+
+    // let
+    //   add = func (a, b) = a + b
+    //   add2 = add
+    // in
+    //   add2(1, 2)
+
+
+    def base = 1
+
+    def start =
+      func (a) =
+        func (b) =
+          func (c) =
+            a + b + c + base
+
+    def a = start(2)
+    def a_b = a(5)
+    def a_b_c = a_b(7) // 2 + 5 + 7 + 1 = 15
+
+    def ab = start(2)(3)
+    def ab_c = ab(6) // 2 + 5 + 6 + 1 = 12
+
+    def abc = start(2)(3)(4) // 2 + 3 + 4 + 1 = 10
+
+    def res = a_b_c + ab_c + abc // 15 + 12 + 10 = 37
+
+    res
     """
 
   val res =
