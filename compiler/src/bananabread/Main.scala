@@ -175,45 +175,54 @@ def main(args: Array[String]) =
     // in
     //   add2(1, 2)
 
+    // def base = 1
+    //
+    // def start =
+    //   func (a) =
+    //     func (b) =
+    //       func (c) =
+    //         a + b + c + base
+    //
+    // def a = start(2)
+    // def a_b = a(5)
+    // def a_b_c = a_b(7) // 2 + 5 + 7 + 1 = 15
+    //
+    // def ab = start(2)(3)
+    // def ab_c = ab(6) // 2 + 5 + 6 + 1 = 12
+    //
+    // def abc = start(2)(3)(4) // 2 + 3 + 4 + 1 = 10
+    //
+    // def res = a_b_c + ab_c + abc // 15 + 12 + 10 = 37
+    //
+    // res
 
-    def base = 1
+    def add(a, b) = opcode %{add [I32]}
 
-    def start =
-      func (a) =
-        func (b) =
-          func (c) =
-            a + b + c + base
-
-    def a = start(2)
-    def a_b = a(5)
-    def a_b_c = a_b(7) // 2 + 5 + 7 + 1 = 15
-
-    def ab = start(2)(3)
-    def ab_c = ab(6) // 2 + 5 + 6 + 1 = 12
-
-    def abc = start(2)(3)(4) // 2 + 3 + 4 + 1 = 10
-
-    def res = a_b_c + ab_c + abc // 15 + 12 + 10 = 37
-
-    res
+    println(add(1, 3))
     """
 
-  val res =
-    for
-      ast <- parse("<stdin>", code, syntax)
-      _=println(s"AST: ${ast}\n\n")
-      ir = tl.lift(ast)
-      _=println(s"IR: ${ir}\n\n")
-      ins = opcode.compile(ir)
-    yield
-      val rt = Machine(ins.dump, info = false, prompt = false)
+  println(parsing.opcode.parse(
+    """
+    add [I32]
+    """
+  ))
 
-      println("==================")
-      rt.printInstructions
-      println("==================")
-      rt.run
-      println("==================")
-      rt.printInfo
-      println("==================")
-
-  println(res)
+  // val res =
+  //   for
+  //     ast <- parse("<stdin>", code, syntax)
+  //     _=println(s"AST: ${ast}\n\n")
+  //     ir = tl.lift(ast)
+  //     _=println(s"IR: ${ir}\n\n")
+  //     ins = opcode.compile(ir)
+  //   yield
+  //     val rt = Machine(ins.dump, info = false, prompt = false)
+  //
+  //     println("==================")
+  //     rt.printInstructions
+  //     println("==================")
+  //     rt.run
+  //     println("==================")
+  //     rt.printInfo
+  //     println("==================")
+  //
+  // println(res)
