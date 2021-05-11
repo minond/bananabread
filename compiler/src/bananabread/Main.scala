@@ -203,7 +203,16 @@ def main(args: Array[String]) =
         add [I32]
       }
 
+    def ++(a, b) =
+      opcode %{
+        load [Str] a
+        load [Str] b
+        concat [Str]
+      }
+
     println(add(1, 3))
+    println(1 + 4)
+    println(%{one} ++ %{ two})
     """
 
   // parsing.opcode.parse(

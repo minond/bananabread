@@ -235,15 +235,7 @@ class Machine(instructions: Seq[Instruction], info: Boolean = false, prompt: Boo
     case (opcode.Store(_), _) =>
       /* bad call */
       ???
-    case (opcode.Load(opcode.I32), value.Id(label) :: Nil) =>
-      frames.curr.get(label) match
-        case None =>
-          stack.push(constants(label))
-          Cont
-        case Some(v) =>
-          stack.push(v)
-          Cont
-    case (opcode.Load(opcode.Ptr), value.Id(label) :: Nil) =>
+    case (opcode.Load(opcode.Str | opcode.I32 | opcode.Ptr), value.Id(label) :: Nil) =>
       frames.curr.get(label) match
         case None =>
           stack.push(constants(label))
@@ -270,10 +262,18 @@ class Machine(instructions: Seq[Instruction], info: Boolean = false, prompt: Boo
   def run(v: value.Id) =
     Exposed.lookup(v.label).handler(this)
 
-  def bini32op(f: (Int, Int) => Int) =
+  def binI32Op(f: (Int, Int) => Int) =
     (stack.pop, stack.pop) match
       case (value.I32(rhs), value.I32(lhs)) =>
         stack.push(value.I32(f(lhs, rhs)))
+      case _ =>
+        /* bad call */
+        ???
+
+  def binStrOp(f: (String, String) => String) =
+    (stack.pop, stack.pop) match
+      case (value.Str(rhs), value.Str(lhs)) =>
+        stack.push(value.Str(f(lhs, rhs)))
       case _ =>
         /* bad call */
         ???

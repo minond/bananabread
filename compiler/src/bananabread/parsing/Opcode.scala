@@ -41,6 +41,7 @@ def parse(tokens: Tokens): Either[Err, Tree] =
 
 def parseTop(head: Token, tail: Tokens): Either[Err, Expr] = head match
   case op @ Word("add") => parseOpcodeWithType(op, tail)
+  case op @ Word("concat") => parseOpcodeWithType(op, tail)
   case op @ Word("load") => parseOpcodeWithTypeAndArg1(op, tail)
   case op @ Word("ret") => parseOpcode(op, tail)
   case _ => Left(UnexpectedTokenErr(head))

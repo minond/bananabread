@@ -241,7 +241,7 @@ def nextToken(
         // TODO Unsafe head lookup
         if tail.next._1 != Tokens.CLOSECURLYPAREN
         then Left(ast.UnclosedStringErr(loc))
-        else Right(ast.Str(str.mkString.strip, loc))
+        else Right(ast.Str(str.mkString, loc))
       case _ => nextToken(head, tail, loc, syntax, ignorePString=true)
 
   case Tokens.SINGLEQUOTE =>

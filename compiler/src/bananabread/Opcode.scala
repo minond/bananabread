@@ -17,6 +17,7 @@ type Instructions = Queue[Instruction]
 
 sealed trait Type
 case object I32 extends Type
+case object Str extends Type
 case object Reg extends Type
 case object Ptr extends Type
 case object Scope extends Type
@@ -39,8 +40,9 @@ case class Store(typ: Type) extends Opcode with Print(s"store [$typ]") // stack 
 
 sealed trait Run(val handler: runtime.vm.Machine => Unit)
 case object Println extends Opcode with Print("println"), Run(vm => println(vm.stack.head))
-case class Add(typ: Type) extends Opcode with Print(s"add [$typ]"), Run(vm => vm.bini32op(_ + _))
-case class Sub(typ: Type) extends Opcode with Print(s"sub [$typ]"), Run(vm => vm.bini32op(_ - _))
+case class Add(typ: Type) extends Opcode with Print(s"add [$typ]"), Run(vm => vm.binI32Op(_ + _))
+case class Sub(typ: Type) extends Opcode with Print(s"sub [$typ]"), Run(vm => vm.binI32Op(_ - _))
+case class Concat(typ: Type) extends Opcode with Print(s"concat [$typ]"), Run(vm => vm.binStrOp(_ + _))
 
 object Exposed:
   val registry = Map(
@@ -245,8 +247,12 @@ def opcodes(instruction: parsing.opcode.Expr, e: Emitter, s: Scope): Emitter = i
   case _: parsing.opcode.Constant => ???
   case parsing.opcode.Instruction("add", Some("I32"), Nil) =>
     e.emit(inst(Add(I32)))
+  case parsing.opcode.Instruction("concat", Some("Str"), Nil) =>
+    e.emit(inst(Concat(Str)))
   case parsing.opcode.Instruction("load", Some("I32"), List(label)) =>
     e.emit(inst(Load(I32), name(s"${s.container(label).module}.$label")))
+  case parsing.opcode.Instruction("load", Some("Str"), List(label)) =>
+    e.emit(inst(Load(Str), name(s"${s.container(label).module}.$label")))
   case _: parsing.opcode.Instruction => ???
 
 def loadArgsAndRet(args: List[Ir], e: Emitter, s: Scope) =
