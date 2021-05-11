@@ -34,31 +34,36 @@ def parse(sourceString: String): Either[Err, Tree] =
 def parse(tokens: Tokens): Either[Err, Tree] =
   for
     nodes <- tokens
-      .map { (token) => parseExpr(token, tokens) }
+      .map { (token) => parseTop(token, tokens) }
       .squished
   yield
     Tree(nodes)
 
-def parseExpr(head: Token, tail: Tokens): Either[Err, Expr] = head match
-  case Word("add") =>
-    for
-      _  <- eat[OpenSquareBraket.type](head, tail)
-      ty <- eat[Word](head, tail)
-      _  <- eat[CloseSquareBraket.type](head, tail)
-    yield
-      Instruction("add", Some(ty.lexeme))
-
-  case Word("load") =>
-    for
-      _    <- eat[OpenSquareBraket.type](head, tail)
-      ty   <- eat[Word](head, tail)
-      _    <- eat[CloseSquareBraket.type](head, tail)
-      name <- eat[Word](head, tail)
-    yield
-      Instruction("load", Some(ty.lexeme), List(name.lexeme))
-
-  case Word("ret") => Right(Instruction("ret"))
+def parseTop(head: Token, tail: Tokens): Either[Err, Expr] = head match
+  case op @ Word("add") => parseOpcodeWithType(op, tail)
+  case op @ Word("load") => parseOpcodeWithTypeAndArg1(op, tail)
+  case op @ Word("ret") => parseOpcode(op, tail)
   case _ => Left(UnexpectedTokenErr(head))
+
+def parseOpcode(op: Word, tail: Tokens): Either[Err, Expr] =
+    Right(Instruction(op.lexeme))
+
+def parseOpcodeWithType(op: Word, tail: Tokens): Either[Err, Expr] =
+    for
+      _  <- eat[OpenSquareBraket.type](op, tail)
+      ty <- eat[Word](op, tail)
+      _  <- eat[CloseSquareBraket.type](op, tail)
+    yield
+      Instruction(op.lexeme, Some(ty.lexeme))
+
+def parseOpcodeWithTypeAndArg1(op: Word, tail: Tokens): Either[Err, Expr] =
+    for
+      _    <- eat[OpenSquareBraket.type](op, tail)
+      ty   <- eat[Word](op, tail)
+      _    <- eat[CloseSquareBraket.type](op, tail)
+      name <- eat[Word](op, tail)
+    yield
+      Instruction(op.lexeme, Some(ty.lexeme), List(name.lexeme))
 
 def eat[T: ClassTag](head: Token, tail: Tokens): Either[Err, T] = tail.headOption match
   case Some(token: T) =>
