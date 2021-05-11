@@ -48,6 +48,15 @@ def parseExpr(head: Token, tail: Tokens): Either[Err, Expr] = head match
     yield
       Instruction("add", Some(ty.lexeme))
 
+  case Word("load") =>
+    for
+      _    <- eat[OpenSquareBraket.type](head, tail)
+      ty   <- eat[Word](head, tail)
+      _    <- eat[CloseSquareBraket.type](head, tail)
+      name <- eat[Word](head, tail)
+    yield
+      Instruction("load", Some(ty.lexeme), List(name.lexeme))
+
   case Word("ret") => Right(Instruction("ret"))
   case _ => Left(UnexpectedTokenErr(head))
 

@@ -153,7 +153,6 @@ def compile(nodes: List[Ir]): Emitter =
   val s = Scope("main")
   nodes.foreach(compile(_, e, s))
   e
-
 def compile(node: Ir, e: Emitter, s: Scope): Emitter =
   node match
     case _: tl.Num => push(node, ty.I32, e, s)
@@ -173,7 +172,6 @@ def compile(node: Ir, e: Emitter, s: Scope): Emitter =
     case tl.Begin(ins, _) => begin(ins, e, s)
     case tl.Def(name, value, _) => define(name.lexeme, value, e, s)
   e
-
 
 def push(node: Ir, typ: ty.Type, e: Emitter, s: Scope) = (typ, value.lift(node), node) match
   case (ty.I32, v, _) => e.emit(inst(Push(I32), v))
@@ -218,8 +216,8 @@ def call(lambda: Ir, args: List[Ir], e: Emitter, s: Scope): Unit = lambda match
       case _ =>
         ???
   case tl.Id(parsing.ast.Id("opcode", _)) => args match
-    case tl.Str(str) :: Nil =>
-      println(str)
+    case tl.Str(parsing.ast.Str(str, _)) :: Nil =>
+      parsing.opcode.parse(str).map { tree => opcodes(tree.nodes, e, s) }
     case _ =>
       /* bad call */
       ???
@@ -238,6 +236,18 @@ def call(lambda: Ir, args: List[Ir], e: Emitter, s: Scope): Unit = lambda match
   case _ =>
     /* bad call */
     ???
+
+def opcodes(instructions: List[parsing.opcode.Expr], e: Emitter, s: Scope): Emitter =
+  instructions.foreach(opcodes(_, e, s))
+  e
+def opcodes(instruction: parsing.opcode.Expr, e: Emitter, s: Scope): Emitter = instruction match
+  case _: parsing.opcode.Label => ???
+  case _: parsing.opcode.Constant => ???
+  case parsing.opcode.Instruction("add", Some("I32"), Nil) =>
+    e.emit(inst(Add(I32)))
+  case parsing.opcode.Instruction("load", Some("I32"), List(label)) =>
+    e.emit(inst(Load(I32), name(s"${s.container(label).module}.$label")))
+  case _: parsing.opcode.Instruction => ???
 
 def loadArgsAndRet(args: List[Ir], e: Emitter, s: Scope) =
   args.foreach(compile(_, e, s))

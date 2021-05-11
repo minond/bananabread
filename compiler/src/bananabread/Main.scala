@@ -196,33 +196,38 @@ def main(args: Array[String]) =
     //
     // res
 
-    def add(a, b) = opcode %{add [I32]}
+    def add(a, b) =
+      opcode %{
+        load [I32] a
+        load [I32] b
+        add [I32]
+      }
 
     println(add(1, 3))
     """
 
-  println(parsing.opcode.parse(
-    """
-    add [I32]
-    """
-  ))
+  // parsing.opcode.parse(
+  //   """
+  //   add [I32]
+  //   """
+  // ).map { tree => println(tree.nodes.head) }
 
-  // val res =
-  //   for
-  //     ast <- parse("<stdin>", code, syntax)
-  //     _=println(s"AST: ${ast}\n\n")
-  //     ir = tl.lift(ast)
-  //     _=println(s"IR: ${ir}\n\n")
-  //     ins = opcode.compile(ir)
-  //   yield
-  //     val rt = Machine(ins.dump, info = false, prompt = false)
-  //
-  //     println("==================")
-  //     rt.printInstructions
-  //     println("==================")
-  //     rt.run
-  //     println("==================")
-  //     rt.printInfo
-  //     println("==================")
-  //
-  // println(res)
+  val res =
+    for
+      ast <- parse("<stdin>", code, syntax)
+      _=println(s"AST: ${ast}\n\n")
+      ir = tl.lift(ast)
+      _=println(s"IR: ${ir}\n\n")
+      ins = opcode.compile(ir)
+    yield
+      val rt = Machine(ins.dump, info = false, prompt = false)
+
+      println("==================")
+      rt.printInstructions
+      println("==================")
+      rt.run
+      println("==================")
+      rt.printInfo
+      println("==================")
+
+  println(res)
