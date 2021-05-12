@@ -61,7 +61,7 @@ def eat[T: ClassTag](head: Token, tail: TokenBuffer): Either[SyntaxErr, T] =
 
 def eat(word: String, head: Token, tail: TokenBuffer): Either[SyntaxErr, Token] =
   tail.headOption match
-    case Some(id: Id) if Word.is(id, word) =>
+    case Some(id: Id) if is(id, word) =>
       tail.next
       Right(id)
 
@@ -73,53 +73,6 @@ def lookahead(head: Token, tail: TokenBuffer): Token =
     case None => Eof(head.location)
     case Some(token) => token
 
-
-
-object Tokens:
-  val COMMA = ','
-  val DOT = '.'
-  val OPENPAREN = '('
-  val CLOSEPAREN = ')'
-  val OPENCURLYPAREN = '{'
-  val CLOSECURLYPAREN = '}'
-  val OPENSQUAREBRAKET = '['
-  val CLOSESQUAREBRAKET = ']'
-  val FORWARDSLASH = '/'
-  val PERCENTAGE = '%'
-  val SINGLEQUOTE = '\''
-
-  val all = Seq(
-    COMMA,
-    DOT,
-    OPENPAREN,
-    CLOSEPAREN,
-    OPENCURLYPAREN,
-    CLOSECURLYPAREN,
-    OPENSQUAREBRAKET,
-    CLOSESQUAREBRAKET,
-  )
-
-object Word:
-  val FUNC = "func"
-  val EQ = "="
-  val IF = "if"
-  val THEN = "then"
-  val ELSE = "else"
-  val LET = "let"
-  val IN = "in"
-  val BEGIN = "begin"
-  val END = "end"
-  val DEF = "def"
-
-  def is(token: Token, word: String) = token match
-    case id: Id => id.lexeme == word
-    case _ => false
-
-  def isFunc(token: Token) = is(token, FUNC)
-  def isEq(token: Token) = is(token, EQ)
-  def isIf(token: Token) = is(token, IF)
-  def isLet(token: Token) = is(token, LET)
-  def isIn(token: Token) = is(token, IN)
-  def isBegin(token: Token) = is(token, BEGIN)
-  def isEnd(token: Token) = is(token, END)
-  def isDef(token: Token) = is(token, DEF)
+def is(token: Token, word: String) = token match
+  case id: Id => id.lexeme == word
+  case _ => false

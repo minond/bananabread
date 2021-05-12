@@ -22,7 +22,6 @@ def parse(sourceName: String, sourceString: String, syntax: Syntax): Either[Synt
   tokenize(sourceName, sourceString, syntax).flatMap { tokens =>
     parse(sourceName, tokens.without[Comment].iterator.buffered, syntax)
   }
-
 def parse(sourceName: String, tokens: TokenBuffer, syntax: Syntax): Either[SyntaxErr, Tree] =
   for
     nodes <- tokens
@@ -33,7 +32,7 @@ def parse(sourceName: String, tokens: TokenBuffer, syntax: Syntax): Either[Synta
 
 def parseTop(head: Token, tail: TokenBuffer, sourceName: String, syntax: Syntax): Either[SyntaxErr, Stmt | Expr] =
   head match
-    case _ if Word.isDef(head) => parseDef(head, tail, sourceName, syntax)
+    case _ if is(head, "def") => parseDef(head, tail, sourceName, syntax)
     case _ => parseExpr(head, tail, sourceName, syntax)
 
 def parseExpr(head: Token, tail: TokenBuffer, sourceName: String, syntax: Syntax): Either[SyntaxErr, Expr] =
@@ -47,10 +46,10 @@ def parseUniop(op: Id, tail: TokenBuffer, sourceName: String, syntax: Syntax): E
 
 def parsePrimary(head: Token, tail: TokenBuffer, sourceName: String, syntax: Syntax): Either[SyntaxErr, Expr] =
   head match
-    case word: Id if Word.isFunc(word) => parseLambda(word, tail, sourceName, syntax)
-    case word: Id if Word.isIf(word) => parseCond(word, tail, sourceName, syntax)
-    case word: Id if Word.isLet(word) => parseLet(word, tail, sourceName, syntax)
-    case word: Id if Word.isBegin(word) => parseBegin(word, tail, sourceName, syntax)
+    case word: Id if is(word, "func") => parseLambda(word, tail, sourceName, syntax)
+    case word: Id if is(word, "if") => parseCond(word, tail, sourceName, syntax)
+    case word: Id if is(word, "let") => parseLet(word, tail, sourceName, syntax)
+    case word: Id if is(word, "begin") => parseBegin(word, tail, sourceName, syntax)
     case paren: OpenParen => parseGroup(paren, tail, sourceName, syntax)
     case lit: Num => Right(lit)
     case lit: Str => Right(lit)
@@ -61,7 +60,7 @@ def parsePrimary(head: Token, tail: TokenBuffer, sourceName: String, syntax: Syn
 def parseLambda(start: Token, tail: TokenBuffer, sourceName: String, syntax: Syntax): Either[SyntaxErr, Lambda] =
   for
     args <- parseNextExprsByUntil[Comma, CloseParen](start, skip(tail), sourceName, syntax)
-    eq <- eat(Word.EQ, start, tail)
+    eq <- eat("=", start, tail)
     body <- parseNextExpr(eq, tail, sourceName, syntax)
   yield
     Lambda(args, body)
@@ -69,9 +68,9 @@ def parseLambda(start: Token, tail: TokenBuffer, sourceName: String, syntax: Syn
 def parseCond(start: Token, tail: TokenBuffer, sourceName: String, syntax: Syntax): Either[SyntaxErr, Cond] =
   for
     cond <- parseExpr(tail.next, tail, sourceName, syntax)
-    _ <- eat(Word.THEN, start, tail)
+    _ <- eat("then", start, tail)
     pass <- parseExpr(tail.next, tail, sourceName, syntax)
-    _ <- eat(Word.ELSE, start, tail)
+    _ <- eat("else", start, tail)
     fail <- parseExpr(tail.next, tail, sourceName, syntax)
   yield
     Cond(start, cond, pass, fail)
@@ -79,7 +78,7 @@ def parseCond(start: Token, tail: TokenBuffer, sourceName: String, syntax: Synta
 def parseLet(start: Token, tail: TokenBuffer, sourceName: String, syntax: Syntax): Either[SyntaxErr, Let] =
   for
     bindings <- parseBindings(start, tail, sourceName, syntax)
-    _ <- eat(Word.IN, start, tail)
+    _ <- eat("in", start, tail)
     body <- parseExpr(tail.next, tail, sourceName, syntax)
   yield
     Let(start, bindings, body)
@@ -96,7 +95,7 @@ def parseDef(start: Token, tail: TokenBuffer, sourceName: String, syntax: Syntax
 
 def parseDefValue(start: Token, tail: TokenBuffer, sourceName: String, syntax: Syntax): Either[SyntaxErr, Expr] =
   for
-    _ <- eat(Word.EQ, start, tail)
+    _ <- eat("=", start, tail)
     value <- parseExpr(tail.next, tail, sourceName, syntax)
   yield
     value
@@ -105,7 +104,7 @@ def parseBindings(start: Token, tail: TokenBuffer, sourceName: String, syntax: S
   for
     binding <- parseBinding(start, tail, sourceName, syntax)
     next = lookahead(start, tail)
-    bindings <- if Word.isIn(next)
+    bindings <- if is(next, "in")
                 then Right(List.empty)
                 else parseBindings(start, tail, sourceName, syntax)
   yield
@@ -114,28 +113,28 @@ def parseBindings(start: Token, tail: TokenBuffer, sourceName: String, syntax: S
 def parseBinding(start: Token, tail: TokenBuffer, sourceName: String, syntax: Syntax): Either[SyntaxErr, Binding] =
   for
     label <- eat[Id](start, tail)
-    eq <- eat(Word.EQ, label, tail)
+    eq <- eat("=", label, tail)
     value <- parseExpr(tail.next, tail, sourceName, syntax)
   yield
     Binding(label, value)
 
 def parseBegin(start: Token, tail: TokenBuffer, sourceName: String, syntax: Syntax): Either[SyntaxErr, Begin] =
   for
-    heade <- if Word.isEnd(lookahead(start, tail))
+    heade <- if is(lookahead(start, tail), "end")
              then Left(EmptyBeginNotAllowedErr(start))
              else parseExpr(tail.next, tail, sourceName, syntax)
     taile <- parseBeginTail(start, tail, sourceName, syntax)
-    _ <- eat(Word.END, start, tail)
+    _ <- eat("end", start, tail)
   yield
     Begin(heade, taile)
 
 def parseBeginTail(start: Token, tail: TokenBuffer, sourceName: String, syntax: Syntax): Either[SyntaxErr, List[Expr]] =
   for
-    heade <- if Word.isEnd(lookahead(start, tail))
+    heade <- if is(lookahead(start, tail), "end")
             then return Right(List.empty)
             else parseExpr(tail.next, tail, sourceName, syntax)
     next = lookahead(start, tail)
-    taile <- if Word.isEnd(next)
+    taile <- if is(next, "end")
             then Right(List.empty)
             else parseBeginTail(start, tail, sourceName, syntax)
   yield
@@ -222,33 +221,33 @@ def nextToken(
   ignoreComment: Boolean = false,
   ignorePString: Boolean = false,
 ): Either[SyntaxErr, Token] = head match
-  case Tokens.COMMA => Right(Comma(loc))
-  case Tokens.DOT => Right(Dot(loc))
-  case Tokens.OPENPAREN => Right(OpenParen(loc))
-  case Tokens.CLOSEPAREN => Right(CloseParen(loc))
-  case Tokens.OPENCURLYPAREN => Right(OpenCurlyParen(loc))
-  case Tokens.CLOSECURLYPAREN => Right(CloseCurlyParen(loc))
-  case Tokens.OPENSQUAREBRAKET => Right(OpenSquareBraket(loc))
-  case Tokens.CLOSESQUAREBRAKET => Right(CloseSquareBraket(loc))
+  case ',' => Right(Comma(loc))
+  case '.' => Right(Dot(loc))
+  case '(' => Right(OpenParen(loc))
+  case ')' => Right(CloseParen(loc))
+  case '{' => Right(OpenCurlyParen(loc))
+  case '}' => Right(CloseCurlyParen(loc))
+  case '[' => Right(OpenSquareBraket(loc))
+  case ']' => Right(CloseSquareBraket(loc))
 
-  case Tokens.FORWARDSLASH if !ignoreComment =>
+  case '/' if !ignoreComment =>
     tail.headOption match
-      case Some(Tokens.FORWARDSLASH, _) =>
+      case Some('/', _) =>
         val comment = takeWhile(skip(tail), not(isNewline))
         Right(Comment(comment.mkString.strip, loc))
       case _ => nextToken(head, tail, loc, syntax, ignoreComment=true)
 
-  case Tokens.PERCENTAGE if !ignorePString =>
+  case '%' if !ignorePString =>
     tail.headOption match
-      case Some(Tokens.OPENCURLYPAREN, _) =>
-        val str = takeWhile(skip(tail), not(is(Tokens.CLOSECURLYPAREN)))
+      case Some('{', _) =>
+        val str = takeWhile(skip(tail), not(is('}')))
         // TODO Unsafe head lookup
-        if tail.next._1 != Tokens.CLOSECURLYPAREN
+        if tail.next._1 != '}'
         then Left(UnclosedStringErr(loc))
         else Right(Str(str.mkString, loc))
       case _ => nextToken(head, tail, loc, syntax, ignorePString=true)
 
-  case Tokens.SINGLEQUOTE =>
+  case '\'' =>
     val symbol = takeWhile(tail, isSymbolTail).mkString
 
     Right(Symbol(symbol, loc))
@@ -285,6 +284,6 @@ val isIdHead = and(isIdTail,
                    not(isNumeric))
 val isUnknownTail = and(not(isIdTail),
                         not(isWhitespace),
-                        not(oneof(Tokens.all:_*)))
+                        not(oneof(',', '.', '(', ')', '{', '}', '[', ']')))
 val isSymbolTail = and(not(isWhitespace),
                        not(oneof('(', ')', '{', '}', '[', ']')))
