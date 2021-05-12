@@ -269,7 +269,7 @@ def store(label: String, e: Emitter, s: Scope) =
 
 def storev(label: String, v: Ir, e: Emitter, s: Scope): Unit = v match
   case _: tl.Num => e.emit(inst(Store(I32), name(s"${s.module}.$label")))
-  case _: tl.Str => ???
+  case _: tl.Str => e.emit(inst(Store(Str), name(s"${s.module}.$label")))
   case tl.Id(id) => storev(label, s.lookup(id.lexeme), e, s)
   case _: tl.Symbol => ???
   case _: tl.Def => ???

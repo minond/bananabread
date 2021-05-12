@@ -226,10 +226,7 @@ class Machine(instructions: Seq[Instruction], info: Boolean = false, prompt: Boo
     case (opcode.Mov, _) =>
       /* missing impl */
       ???
-    case (opcode.Store(opcode.I32), value.Id(label) :: Nil) =>
-      frames.curr.put(label, stack.pop)
-      Cont
-    case (opcode.Store(opcode.Ptr), value.Id(label) :: Nil) =>
+    case (opcode.Store(opcode.Str | opcode.Ptr | opcode.I32), value.Id(label) :: Nil) =>
       frames.curr.put(label, stack.pop)
       Cont
     case (opcode.Store(_), _) =>
