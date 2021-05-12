@@ -42,11 +42,11 @@ def parse(sourceName: String, tokens: Tokens): Either[SyntaxErr, Tree] =
     Tree(nodes)
 
 def parseTop(head: Token, tail: Tokens): Either[SyntaxErr, Expr] = head match
-  case op @ Word("add", _) => parseOpcodeWithType(op, tail)
+  case op @ Word("add", _)    => parseOpcodeWithType(op, tail)
   case op @ Word("concat", _) => parseOpcodeWithType(op, tail)
-  case op @ Word("load", _) => parseOpcodeWithTypeAndArg1(op, tail)
-  case op @ Word("ret", _) => parseOpcode(op, tail)
-  case _ => Left(UnexpectedTokenErr(head))
+  case op @ Word("load", _)   => parseOpcodeWithTypeAndArg1(op, tail)
+  case op @ Word("ret", _)    => parseOpcode(op, tail)
+  case _                      => Left(UnexpectedTokenErr(head))
 
 def parseOpcode(op: Word, tail: Tokens): Either[SyntaxErr, Expr] =
     Right(Instruction(op.lexeme, None, List.empty, op.location))

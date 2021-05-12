@@ -8,7 +8,7 @@ import parsing.parser.{isLetter, isNewline, isNumeric, isWhitespace}
 import parsing.location.Location
 import parsing.ast._
 import parsing.error._
-import parsing.syntax.{Syntax, Tokens, Word}
+import parsing.syntax.Syntax
 
 import utils.{ListImplicits, EitherImplicits, ComparisonImplicits}
 
@@ -46,16 +46,16 @@ def parseUniop(op: Id, tail: TokenBuffer, sourceName: String, syntax: Syntax): E
 
 def parsePrimary(head: Token, tail: TokenBuffer, sourceName: String, syntax: Syntax): Either[SyntaxErr, Expr] =
   head match
-    case word: Id if is(word, "func") => parseLambda(word, tail, sourceName, syntax)
-    case word: Id if is(word, "if") => parseCond(word, tail, sourceName, syntax)
-    case word: Id if is(word, "let") => parseLet(word, tail, sourceName, syntax)
+    case word: Id if is(word, "func")  => parseLambda(word, tail, sourceName, syntax)
+    case word: Id if is(word, "if")    => parseCond(word, tail, sourceName, syntax)
+    case word: Id if is(word, "let")   => parseLet(word, tail, sourceName, syntax)
     case word: Id if is(word, "begin") => parseBegin(word, tail, sourceName, syntax)
-    case paren: OpenParen => parseGroup(paren, tail, sourceName, syntax)
-    case lit: Num => Right(lit)
-    case lit: Str => Right(lit)
-    case lit: Id => Right(lit)
+    case paren: OpenParen              => parseGroup(paren, tail, sourceName, syntax)
+    case lit: Num    => Right(lit)
+    case lit: Str    => Right(lit)
+    case lit: Id     => Right(lit)
     case lit: Symbol => Right(lit)
-    case unexpected => Left(UnexpectedTokenErr(unexpected))
+    case unexpected  => Left(UnexpectedTokenErr(unexpected))
 
 def parseLambda(start: Token, tail: TokenBuffer, sourceName: String, syntax: Syntax): Either[SyntaxErr, Lambda] =
   for
@@ -202,7 +202,7 @@ def parseNextExprsByUntil[By: ClassTag, Until: ClassTag](
 def parseNextExpr(head: Token, tail: TokenBuffer, sourceName: String, syntax: Syntax): Either[SyntaxErr, Expr] =
   tail.headOption match
     case Some(_) => parseExpr(tail.next, tail, sourceName, syntax)
-    case None => Left(UnexpectedEofErr(head))
+    case None    => Left(UnexpectedEofErr(head))
 
 
 def tokenize(sourceName: String, sourceString: String, syntax: Syntax): Either[SyntaxErr, List[Token]] =
