@@ -3,7 +3,7 @@ package test
 
 import parsing.lang.parse
 import parsing.syntax.Syntax
-import ir.Typeless => tl
+import ir.typeless
 import runtime.vm.Machine
 
 val stdOps = Syntax.withPrefix(0, "-")
@@ -27,7 +27,7 @@ def astOf(code: String, syntax: Syntax = stdOps) =
 
 def resultOf(code: String, syntax: Syntax = stdOps) =
   val ast = parse("<stdin>", code, syntax).getOrElse(???)
-  val ir = tl.lift(ast)
+  val ir = typeless.lift(ast)
   val ins = opcode.compile(ir)
   val machine = Machine(ins.dump)
   machine.run

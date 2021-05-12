@@ -3,8 +3,8 @@ package runtime.value
 
 import parsing.ast
 
-import ir.Typeless => tl
-import ir.Typeless.Ir
+import ir.typeless
+import ir.typeless.Ir
 import utils.Print
 
 
@@ -18,15 +18,14 @@ case class Symbol(value: String) extends Value with Print(value)
 
 def lift(nodes: List[Ir]): List[Value] =
   nodes.map(lift)
-
 def lift(node: Ir): Value = node match
-  case tl.Num(ast.Num(value, _)) => I32(value.toInt)
-  case tl.Str(ast.Str(value, _)) => Str(value)
-  case tl.Id(ast.Id(label, _)) => Id(label)
-  case tl.Symbol(ast.Symbol(value, _)) => Symbol(value)
-  case _: tl.App => ???
-  case _: tl.Lambda => ???
-  case _: tl.Cond => ???
-  case _: tl.Let => ???
-  case _: tl.Begin => ???
-  case tl.Def(_, value, _) => lift(value)
+  case typeless.Num(ast.Num(value, _)) => I32(value.toInt)
+  case typeless.Str(ast.Str(value, _)) => Str(value)
+  case typeless.Id(ast.Id(label, _)) => Id(label)
+  case typeless.Symbol(ast.Symbol(value, _)) => Symbol(value)
+  case _: typeless.App => ???
+  case _: typeless.Lambda => ???
+  case _: typeless.Cond => ???
+  case _: typeless.Let => ???
+  case _: typeless.Begin => ???
+  case typeless.Def(_, value, _) => lift(value)

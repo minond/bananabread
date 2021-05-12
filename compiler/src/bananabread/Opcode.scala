@@ -3,8 +3,8 @@ package opcode
 
 import runtime.value
 
-import ir.Typeless => tl
-import ir.Typeless.Ir
+import ir.typeless
+import ir.typeless.Ir
 import value.Value
 import utils.Print
 
@@ -157,31 +157,31 @@ def compile(nodes: List[Ir]): Emitter =
   e
 def compile(node: Ir, e: Emitter, s: Scope): Emitter =
   node match
-    case _: tl.Num => push(node, ty.I32, e, s)
-    case _: tl.Str => push(node, ty.Str, e, s)
-    case _: tl.Symbol => push(node, ty.Symbol, e, s)
-    case v: tl.Lambda =>
+    case _: typeless.Num => push(node, ty.I32, e, s)
+    case _: typeless.Str => push(node, ty.Str, e, s)
+    case _: typeless.Symbol => push(node, ty.Symbol, e, s)
+    case v: typeless.Lambda =>
       // XXX 1
       s.scoped(rand) { scope =>
         v.params.foreach { param => scope.define(param.id.lexeme, param) }
         lambda(v.params, v.body, e.to(v.ptr), scope)
         e.emit(inst(Push(Scope), name(v.ptr)))
       }
-    case tl.Id(parsing.ast.Id(label, _)) => load(label, e, s)
-    case tl.App(lambda, args, _) => call(lambda, args, e, s)
-    case tl.Cond(cnd, pas, fal, _) => cond(cnd, pas, fal, e, s)
-    case tl.Let(bindings, body, _) => let(bindings, body, e, s.subscope(rand))
-    case tl.Begin(ins, _) => begin(ins, e, s)
-    case tl.Def(name, value, _) => define(name.lexeme, value, e, s)
+    case typeless.Id(parsing.ast.Id(label, _)) => load(label, e, s)
+    case typeless.App(lambda, args, _) => call(lambda, args, e, s)
+    case typeless.Cond(cnd, pas, fal, _) => cond(cnd, pas, fal, e, s)
+    case typeless.Let(bindings, body, _) => let(bindings, body, e, s.subscope(rand))
+    case typeless.Begin(ins, _) => begin(ins, e, s)
+    case typeless.Def(name, value, _) => define(name.lexeme, value, e, s)
   e
 
 def push(node: Ir, typ: ty.Type, e: Emitter, s: Scope) = (typ, value.lift(node), node) match
   case (ty.I32, v, _) => e.emit(inst(Push(I32), v))
-  case (ty.Symbol, v : value.Symbol, sym : tl.Symbol) =>
+  case (ty.Symbol, v : value.Symbol, sym : typeless.Symbol) =>
     e.symbol(sym.ptr, v)
     e.emit(inst(Push(Const), value.Id(sym.ptr)))
   case (ty.Symbol, _, _) => ???
-  case (ty.Str, v : value.Str, str : tl.Str) =>
+  case (ty.Str, v : value.Str, str : typeless.Str) =>
     e.string(str.ptr, v)
     e.emit(inst(Push(Const), value.Id(str.ptr)))
   case (ty.Str, _, _) => ???
@@ -198,39 +198,39 @@ def rand =
   Random.alphanumeric.take(4).mkString
 
 def call(lambda: Ir, args: List[Ir], e: Emitter, s: Scope): Unit = lambda match
-  case tl.Id(parsing.ast.Id(label, _)) if Exposed.contains(label) =>
+  case typeless.Id(parsing.ast.Id(label, _)) if Exposed.contains(label) =>
     args.foreach(compile(_, e, s))
     e.emit(inst(Exposed.lookup(label)))
-  case tl.Id(parsing.ast.Id(label, _)) if s.contains(label) =>
+  case typeless.Id(parsing.ast.Id(label, _)) if s.contains(label) =>
     s.lookup(label) match
-      case lambda: tl.Lambda =>
+      case lambda: typeless.Lambda =>
         loadArgsAndRet(args, e, s)
         e.emit(inst(Call, name(lambda.ptr)))
-      case id: tl.Id =>
+      case id: typeless.Id =>
         loadArgsAndRet(args, e, s)
         // e.emit(inst(Call, value.lift(id)))
         e.emit(inst(Call, name(s"${s.container(label).module}.$label")))
-      case app: tl.App =>
+      case app: typeless.App =>
         call(app.lambda, app.args, e, s)
         e.emit(inst(Mov, runtime.vm.Reg.Jmp))
         loadArgsAndRet(args, e, s)
         e.emit(inst(Call))
       case _ =>
         ???
-  case tl.Id(parsing.ast.Id("opcode", _)) => args match
-    case tl.Str(parsing.ast.Str(str, _)) :: Nil =>
+  case typeless.Id(parsing.ast.Id("opcode", _)) => args match
+    case typeless.Str(parsing.ast.Str(str, _)) :: Nil =>
       parsing.opcode.parse("<opcode>", str).map { tree => opcodes(tree.nodes, e, s) }
     case _ =>
       /* bad call */
       ???
-  case tl.Id(parsing.ast.Id(label, _)) =>
+  case typeless.Id(parsing.ast.Id(label, _)) =>
     loadArgsAndRet(args, e, s)
     e.emit(inst(Call, value.lift(lambda)))
-  case lambda: tl.Lambda =>
+  case lambda: typeless.Lambda =>
     loadArgsAndRet(args, e, s)
     e.emit(inst(Call, name(lambda.ptr)))
     compile(lambda, e.to(lambda.ptr), s)
-  case app: tl.App =>
+  case app: typeless.App =>
     call(app.lambda, app.args, e, s)
     e.emit(inst(Mov, runtime.vm.Reg.Jmp))
     loadArgsAndRet(args, e, s)
@@ -261,35 +261,35 @@ def loadArgsAndRet(args: List[Ir], e: Emitter, s: Scope) =
 
 def load(label: String, e: Emitter, s: Scope) = s.get(label) match
   case None => ???
-  case Some(lambda : tl.Lambda) => e.emit(inst(Load(Ptr), name(s"${s.container(label).module}.$label")))
+  case Some(lambda : typeless.Lambda) => e.emit(inst(Load(Ptr), name(s"${s.container(label).module}.$label")))
   case Some(_) => e.emit(inst(Load(I32), name(s"${s.container(label).module}.$label")))
 
 def store(label: String, e: Emitter, s: Scope) =
   e.emit(inst(Store(I32), name(s"${s.module}.$label")))
 
 def storev(label: String, v: Ir, e: Emitter, s: Scope): Unit = v match
-  case _: tl.Num => e.emit(inst(Store(I32), name(s"${s.module}.$label")))
-  case _: tl.Str => e.emit(inst(Store(Str), name(s"${s.module}.$label")))
-  case tl.Id(id) => storev(label, s.lookup(id.lexeme), e, s)
-  case _: tl.Symbol => ???
-  case _: tl.Def => ???
-  case v: tl.Lambda =>
+  case _: typeless.Num => e.emit(inst(Store(I32), name(s"${s.module}.$label")))
+  case _: typeless.Str => e.emit(inst(Store(Str), name(s"${s.module}.$label")))
+  case typeless.Id(id) => storev(label, s.lookup(id.lexeme), e, s)
+  case _: typeless.Symbol => ???
+  case _: typeless.Def => ???
+  case v: typeless.Lambda =>
     // XXX 1
     // e.emit(inst(Push(Ptr), name(v.ptr)))
     e.emit(inst(Store(Ptr), name(s"${s.module}.$label")))
-  case _: tl.App =>
+  case _: typeless.App =>
     // TODO App's result may not be i32, need to pass ty.Type instead of
     // typeless Ir.
     e.emit(inst(Store(I32), name(s"${s.module}.$label")))
-  case _: tl.Cond =>
+  case _: typeless.Cond =>
     // TODO Cond's result may not be i32, need to pass ty.Type instead of
     // typeless Ir.
     e.emit(inst(Store(I32), name(s"${s.module}.$label")))
-  case _: tl.Let =>
+  case _: typeless.Let =>
     // TODO Let's result may not be i32, need to pass ty.Type instead of
     // typeless Ir.
     e.emit(inst(Store(I32), name(s"${s.module}.$label")))
-  case _: tl.Begin =>
+  case _: typeless.Begin =>
     // TODO Begin's result may not be i32, need to pass ty.Type instead of
     // typeless Ir.
     e.emit(inst(Store(I32), name(s"${s.module}.$label")))
@@ -310,8 +310,8 @@ def cond(cnd: Ir, pas: Ir, fal: Ir, e: Emitter, s: Scope) =
   compile(fal, e, s)
   e.emit(inst(Label, ldone))
 
-def let(bindings: List[tl.Binding], body: Ir, e: Emitter, s: Scope) =
-  bindings.foreach { case tl.Binding(parsing.ast.Id(label, _), v, _) =>
+def let(bindings: List[typeless.Binding], body: Ir, e: Emitter, s: Scope) =
+  bindings.foreach { case typeless.Binding(parsing.ast.Id(label, _), v, _) =>
     s.define(label, v)
     compile(v, e, s)
     storev(label, v, e, s)
@@ -323,8 +323,8 @@ def begin(ins: List[Ir], e: Emitter, s: Scope) =
     compile(ir, e, s)
   }
 
-def lambda(params: List[tl.Id], body: Ir, e: Emitter, s: Scope) =
-  params.reverse.foreach { case tl.Id(parsing.ast.Id(label, _)) =>
+def lambda(params: List[typeless.Id], body: Ir, e: Emitter, s: Scope) =
+  params.reverse.foreach { case typeless.Id(parsing.ast.Id(label, _)) =>
     e.emit(inst(Swap))
     store(label, e, s)
   }
@@ -333,7 +333,7 @@ def lambda(params: List[tl.Id], body: Ir, e: Emitter, s: Scope) =
   e.emit(inst(Ret))
 
 def define(name: String, rawValue: Ir, e: Emitter, s: Scope): Unit = rawValue match
-  case v: tl.Lambda =>
+  case v: typeless.Lambda =>
     // TODO don't hardcode module
     e.pointer(s"${s.module}.$name", value.Id(v.ptr))
     s.define(name, v)
