@@ -7,7 +7,7 @@ import parsing.error._
 import scala.reflect.ClassTag
 
 
-type TokenBuffer = BufferedIterator[Token]
+type Tokens = BufferedIterator[Token]
 type Parsed[T] = Either[SyntaxErr, T]
 
 // Parser predicates and combinators
@@ -51,7 +51,7 @@ def skip[T](it: BufferedIterator[T]): BufferedIterator[T] =
   it.next
   it
 
-def eat[T: ClassTag](head: Token, tail: TokenBuffer): Parsed[T] =
+def eat[T: ClassTag](head: Token, tail: Tokens): Parsed[T] =
   tail.headOption match
     case Some(token: T) =>
       tail.next
@@ -60,7 +60,7 @@ def eat[T: ClassTag](head: Token, tail: TokenBuffer): Parsed[T] =
     case Some(unexpected) => Left(UnexpectedTokenErr[T](unexpected))
     case None => Left(UnexpectedEofErr(head))
 
-def eat(word: String, head: Token, tail: TokenBuffer): Parsed[Token] =
+def eat(word: String, head: Token, tail: Tokens): Parsed[Token] =
   tail.headOption match
     case Some(id: Id) if is(id, word) =>
       tail.next
@@ -69,7 +69,7 @@ def eat(word: String, head: Token, tail: TokenBuffer): Parsed[Token] =
     case Some(unexpected) => Left(UnexpectedTokenErr(unexpected))
     case None => Left(UnexpectedEofErr(head))
 
-def lookahead(head: Token, tail: TokenBuffer): Token =
+def lookahead(head: Token, tail: Tokens): Token =
   tail.headOption match
     case None => Eof(head.location)
     case Some(token) => token
