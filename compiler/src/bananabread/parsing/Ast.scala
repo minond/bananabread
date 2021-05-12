@@ -42,13 +42,3 @@ case class Begin(head: Expr, tail: List[Expr]) extends Expr with At(head.locatio
 case class Comment(lexeme: String, loc: Location) extends Token, At(loc)
 case class Binding(label: Id, value: Expr) extends At(label.location), Print(s"$label = $value")
 case class Def(name: Id, value: Expr) extends Stmt, At(name.location), Print(s"def $name = $value")
-
-
-// Errors
-
-sealed trait SyntaxErr(loc: Location) extends Located { def location = loc }
-case class BadNumErr(lexeme: String, loc: Location) extends SyntaxErr(loc)
-case class EmptyBeginNotAllowedErr(start: Token) extends SyntaxErr(start.location)
-case class UnexpectedTokenErr[Expected](found: Token) extends SyntaxErr(found.location)
-case class UnexpectedEofErr(prev: Located) extends SyntaxErr(prev.location)
-case class UnclosedStringErr(loc: Location) extends SyntaxErr(loc)

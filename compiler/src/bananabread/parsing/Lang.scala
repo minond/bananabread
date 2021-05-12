@@ -6,7 +6,8 @@ import parsing.parser.{and, is, not, oneof, or}
 import parsing.parser.{isLetter, isNewline, isNumeric, isWhitespace}
 
 import parsing.location.Location
-import parsing.ast.{SyntaxErr => Err, _}
+import parsing.ast._
+import parsing.error._
 import parsing.syntax.{Syntax, Tokens, Word}
 
 import utils.{ListImplicits, EitherImplicits, ComparisonImplicits}
@@ -17,12 +18,12 @@ import scala.reflect.ClassTag
 
 type TokenBuffer = BufferedIterator[Token]
 
-def parse(sourceName: String, sourceString: String, syntax: Syntax): Either[Err, Tree] =
+def parse(sourceName: String, sourceString: String, syntax: Syntax): Either[SyntaxErr, Tree] =
   tokenize(sourceName, sourceString, syntax).flatMap { tokens =>
     parse(sourceName, tokens.without[Comment].iterator.buffered, syntax)
   }
 
-def parse(sourceName: String, tokens: TokenBuffer, syntax: Syntax): Either[Err, Tree] =
+def parse(sourceName: String, tokens: TokenBuffer, syntax: Syntax): Either[SyntaxErr, Tree] =
   for
     nodes <- tokens
       .map { (token) => parseTop(token, tokens, sourceName, syntax) }
@@ -30,21 +31,21 @@ def parse(sourceName: String, tokens: TokenBuffer, syntax: Syntax): Either[Err, 
   yield
     Tree(nodes)
 
-def parseTop(head: Token, tail: TokenBuffer, sourceName: String, syntax: Syntax): Either[Err, Stmt | Expr] =
+def parseTop(head: Token, tail: TokenBuffer, sourceName: String, syntax: Syntax): Either[SyntaxErr, Stmt | Expr] =
   head match
     case _ if Word.isDef(head) => parseDef(head, tail, sourceName, syntax)
     case _ => parseExpr(head, tail, sourceName, syntax)
 
-def parseExpr(head: Token, tail: TokenBuffer, sourceName: String, syntax: Syntax): Either[Err, Expr] =
+def parseExpr(head: Token, tail: TokenBuffer, sourceName: String, syntax: Syntax): Either[SyntaxErr, Expr] =
   head match
     case op: Id if syntax.isPrefix(op) => parseExprCont(parseUniop(op, tail, sourceName, syntax), tail, sourceName, syntax)
     case _ => parseExprCont(parsePrimary(head, tail, sourceName, syntax), tail, sourceName, syntax)
 
-def parseUniop(op: Id, tail: TokenBuffer, sourceName: String, syntax: Syntax): Either[Err, Uniop] =
+def parseUniop(op: Id, tail: TokenBuffer, sourceName: String, syntax: Syntax): Either[SyntaxErr, Uniop] =
   for rhs <- parsePrimary(tail.next, tail, sourceName, syntax)
   yield Uniop(op, rhs)
 
-def parsePrimary(head: Token, tail: TokenBuffer, sourceName: String, syntax: Syntax): Either[Err, Expr] =
+def parsePrimary(head: Token, tail: TokenBuffer, sourceName: String, syntax: Syntax): Either[SyntaxErr, Expr] =
   head match
     case word: Id if Word.isFunc(word) => parseLambda(word, tail, sourceName, syntax)
     case word: Id if Word.isIf(word) => parseCond(word, tail, sourceName, syntax)
@@ -57,7 +58,7 @@ def parsePrimary(head: Token, tail: TokenBuffer, sourceName: String, syntax: Syn
     case lit: Symbol => Right(lit)
     case unexpected => Left(UnexpectedTokenErr(unexpected))
 
-def parseLambda(start: Token, tail: TokenBuffer, sourceName: String, syntax: Syntax): Either[Err, Lambda] =
+def parseLambda(start: Token, tail: TokenBuffer, sourceName: String, syntax: Syntax): Either[SyntaxErr, Lambda] =
   for
     args <- parseNextExprsByUntil[Comma, CloseParen](start, skip(tail), sourceName, syntax)
     eq <- eat(Word.EQ, start, tail)
@@ -65,7 +66,7 @@ def parseLambda(start: Token, tail: TokenBuffer, sourceName: String, syntax: Syn
   yield
     Lambda(args, body)
 
-def parseCond(start: Token, tail: TokenBuffer, sourceName: String, syntax: Syntax): Either[Err, Cond] =
+def parseCond(start: Token, tail: TokenBuffer, sourceName: String, syntax: Syntax): Either[SyntaxErr, Cond] =
   for
     cond <- parseExpr(tail.next, tail, sourceName, syntax)
     _ <- eat(Word.THEN, start, tail)
@@ -75,7 +76,7 @@ def parseCond(start: Token, tail: TokenBuffer, sourceName: String, syntax: Synta
   yield
     Cond(start, cond, pass, fail)
 
-def parseLet(start: Token, tail: TokenBuffer, sourceName: String, syntax: Syntax): Either[Err, Let] =
+def parseLet(start: Token, tail: TokenBuffer, sourceName: String, syntax: Syntax): Either[SyntaxErr, Let] =
   for
     bindings <- parseBindings(start, tail, sourceName, syntax)
     _ <- eat(Word.IN, start, tail)
@@ -83,7 +84,7 @@ def parseLet(start: Token, tail: TokenBuffer, sourceName: String, syntax: Syntax
   yield
     Let(start, bindings, body)
 
-def parseDef(start: Token, tail: TokenBuffer, sourceName: String, syntax: Syntax): Either[Err, Def] =
+def parseDef(start: Token, tail: TokenBuffer, sourceName: String, syntax: Syntax): Either[SyntaxErr, Def] =
   for
     name <- eat[Id](start, tail)
     next = lookahead(start, tail)
@@ -93,14 +94,14 @@ def parseDef(start: Token, tail: TokenBuffer, sourceName: String, syntax: Syntax
   yield
     Def(name, value)
 
-def parseDefValue(start: Token, tail: TokenBuffer, sourceName: String, syntax: Syntax): Either[Err, Expr] =
+def parseDefValue(start: Token, tail: TokenBuffer, sourceName: String, syntax: Syntax): Either[SyntaxErr, Expr] =
   for
     _ <- eat(Word.EQ, start, tail)
     value <- parseExpr(tail.next, tail, sourceName, syntax)
   yield
     value
 
-def parseBindings(start: Token, tail: TokenBuffer, sourceName: String, syntax: Syntax): Either[Err, List[Binding]] =
+def parseBindings(start: Token, tail: TokenBuffer, sourceName: String, syntax: Syntax): Either[SyntaxErr, List[Binding]] =
   for
     binding <- parseBinding(start, tail, sourceName, syntax)
     next = lookahead(start, tail)
@@ -110,7 +111,7 @@ def parseBindings(start: Token, tail: TokenBuffer, sourceName: String, syntax: S
   yield
     binding +: bindings
 
-def parseBinding(start: Token, tail: TokenBuffer, sourceName: String, syntax: Syntax): Either[Err, Binding] =
+def parseBinding(start: Token, tail: TokenBuffer, sourceName: String, syntax: Syntax): Either[SyntaxErr, Binding] =
   for
     label <- eat[Id](start, tail)
     eq <- eat(Word.EQ, label, tail)
@@ -118,7 +119,7 @@ def parseBinding(start: Token, tail: TokenBuffer, sourceName: String, syntax: Sy
   yield
     Binding(label, value)
 
-def parseBegin(start: Token, tail: TokenBuffer, sourceName: String, syntax: Syntax): Either[Err, Begin] =
+def parseBegin(start: Token, tail: TokenBuffer, sourceName: String, syntax: Syntax): Either[SyntaxErr, Begin] =
   for
     heade <- if Word.isEnd(lookahead(start, tail))
              then Left(EmptyBeginNotAllowedErr(start))
@@ -128,7 +129,7 @@ def parseBegin(start: Token, tail: TokenBuffer, sourceName: String, syntax: Synt
   yield
     Begin(heade, taile)
 
-def parseBeginTail(start: Token, tail: TokenBuffer, sourceName: String, syntax: Syntax): Either[Err, List[Expr]] =
+def parseBeginTail(start: Token, tail: TokenBuffer, sourceName: String, syntax: Syntax): Either[SyntaxErr, List[Expr]] =
   for
     heade <- if Word.isEnd(lookahead(start, tail))
             then return Right(List.empty)
@@ -140,17 +141,17 @@ def parseBeginTail(start: Token, tail: TokenBuffer, sourceName: String, syntax: 
   yield
     heade +: taile
 
-def parseGroup(paren: Token, tail: TokenBuffer, sourceName: String, syntax: Syntax): Either[Err, Expr] =
+def parseGroup(paren: Token, tail: TokenBuffer, sourceName: String, syntax: Syntax): Either[SyntaxErr, Expr] =
   for
     inner <- parseExpr(tail.next, tail, sourceName, syntax)
     _ <- eat[CloseParen](paren, tail)
   yield
     inner
 
-def parseExprCont(currRes: Either[Err, Expr], tail: TokenBuffer, sourceName: String, syntax: Syntax): Either[Err, Expr] =
+def parseExprCont(currRes: Either[SyntaxErr, Expr], tail: TokenBuffer, sourceName: String, syntax: Syntax): Either[SyntaxErr, Expr] =
   currRes.flatMap { curr => parseExprCont(curr, tail, sourceName, syntax) }
 
-def parseExprCont(curr: Expr, tail: TokenBuffer, sourceName: String, syntax: Syntax): Either[Err, Expr] =
+def parseExprCont(curr: Expr, tail: TokenBuffer, sourceName: String, syntax: Syntax): Either[SyntaxErr, Expr] =
   tail.headOption match
     case Some(op: Id) if syntax.isPostfix(op) =>
       tail.next
@@ -180,7 +181,7 @@ def parseNextExprsByUntil[By: ClassTag, Until: ClassTag](
   sourceName: String,
   syntax: Syntax,
   acc: List[Expr] = List.empty
-): Either[Err, List[Expr]] =
+): Either[SyntaxErr, List[Expr]] =
   tail.headOption match
     case Some(_: Until) =>
       tail.next
@@ -199,15 +200,15 @@ def parseNextExprsByUntil[By: ClassTag, Until: ClassTag](
     case None =>
       Left(UnexpectedEofErr(head))
 
-def parseNextExpr(head: Token, tail: TokenBuffer, sourceName: String, syntax: Syntax): Either[Err, Expr] =
+def parseNextExpr(head: Token, tail: TokenBuffer, sourceName: String, syntax: Syntax): Either[SyntaxErr, Expr] =
   tail.headOption match
     case Some(_) => parseExpr(tail.next, tail, sourceName, syntax)
     case None => Left(UnexpectedEofErr(head))
 
 
-def tokenize(sourceName: String, sourceString: String, syntax: Syntax): Either[Err, List[Token]] =
+def tokenize(sourceName: String, sourceString: String, syntax: Syntax): Either[SyntaxErr, List[Token]] =
   tokenize(sourceName, sourceString.iterator.zipWithIndex.buffered, syntax)
-def tokenize(sourceName: String, sourceStream: BufferedIterator[(Char, Int)], syntax: Syntax): Either[Err, List[Token]] =
+def tokenize(sourceName: String, sourceStream: BufferedIterator[(Char, Int)], syntax: Syntax): Either[SyntaxErr, List[Token]] =
   sourceStream
     .filter { (c, _) => !c.isWhitespace }
     .map { (c, i) => nextToken(c, sourceStream, Location(sourceName, i), syntax) }
@@ -220,7 +221,7 @@ def nextToken(
   syntax: Syntax,
   ignoreComment: Boolean = false,
   ignorePString: Boolean = false,
-): Either[Err, Token] = head match
+): Either[SyntaxErr, Token] = head match
   case Tokens.COMMA => Right(Comma(loc))
   case Tokens.DOT => Right(Dot(loc))
   case Tokens.OPENPAREN => Right(OpenParen(loc))

@@ -1,14 +1,13 @@
 package bananabread
 package parsing.parser
 
-import parsing.ast
-
-import ast.{Token, Tree, Expr, Stmt, SyntaxErr => Err}
+import parsing.ast.{Token, Tree, Expr, Stmt, Eof, Id}
+import parsing.error._
 
 import scala.reflect.ClassTag
 
 
-type Tokens = BufferedIterator[Token]
+type TokenBuffer = BufferedIterator[Token]
 
 // Parser predicates and combinators
 
@@ -51,27 +50,27 @@ def skip[T](it: BufferedIterator[T]): BufferedIterator[T] =
   it.next
   it
 
-def eat[T: ClassTag](head: Token, tail: Tokens): Either[Err, T] =
+def eat[T: ClassTag](head: Token, tail: TokenBuffer): Either[SyntaxErr, T] =
   tail.headOption match
     case Some(token: T) =>
       tail.next
       Right(token)
 
-    case Some(unexpected) => Left(ast.UnexpectedTokenErr[T](unexpected))
-    case None => Left(ast.UnexpectedEofErr(head))
+    case Some(unexpected) => Left(UnexpectedTokenErr[T](unexpected))
+    case None => Left(UnexpectedEofErr(head))
 
-def eat(word: String, head: Token, tail: Tokens): Either[Err, Token] =
+def eat(word: String, head: Token, tail: TokenBuffer): Either[SyntaxErr, Token] =
   tail.headOption match
-    case Some(id: ast.Id) if Word.is(id, word) =>
+    case Some(id: Id) if Word.is(id, word) =>
       tail.next
       Right(id)
 
-    case Some(unexpected) => Left(ast.UnexpectedTokenErr(unexpected))
-    case None => Left(ast.UnexpectedEofErr(head))
+    case Some(unexpected) => Left(UnexpectedTokenErr(unexpected))
+    case None => Left(UnexpectedEofErr(head))
 
-def lookahead(head: Token, tail: Tokens): Token =
+def lookahead(head: Token, tail: TokenBuffer): Token =
   tail.headOption match
-    case None => ast.Eof(head.location)
+    case None => Eof(head.location)
     case Some(token) => token
 
 
@@ -112,15 +111,15 @@ object Word:
   val END = "end"
   val DEF = "def"
 
-  def is(token: ast.Token, word: String) = token match
-    case id: ast.Id => id.lexeme == word
+  def is(token: Token, word: String) = token match
+    case id: Id => id.lexeme == word
     case _ => false
 
-  def isFunc(token: ast.Token) = is(token, FUNC)
-  def isEq(token: ast.Token) = is(token, EQ)
-  def isIf(token: ast.Token) = is(token, IF)
-  def isLet(token: ast.Token) = is(token, LET)
-  def isIn(token: ast.Token) = is(token, IN)
-  def isBegin(token: ast.Token) = is(token, BEGIN)
-  def isEnd(token: ast.Token) = is(token, END)
-  def isDef(token: ast.Token) = is(token, DEF)
+  def isFunc(token: Token) = is(token, FUNC)
+  def isEq(token: Token) = is(token, EQ)
+  def isIf(token: Token) = is(token, IF)
+  def isLet(token: Token) = is(token, LET)
+  def isIn(token: Token) = is(token, IN)
+  def isBegin(token: Token) = is(token, BEGIN)
+  def isEnd(token: Token) = is(token, END)
+  def isDef(token: Token) = is(token, DEF)
