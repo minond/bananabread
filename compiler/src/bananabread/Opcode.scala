@@ -198,6 +198,7 @@ def rand =
   Random.alphanumeric.take(4).mkString
 
 def call(lambda: Ir, args: List[Ir], e: Emitter, s: Scope): Unit = lambda match
+  // XXX
   case typeless.Id(parsing.ast.Id(label, _)) if Exposed.contains(label) =>
     args.foreach(compile(_, e, s))
     e.emit(inst(Exposed.lookup(label)))
@@ -247,12 +248,16 @@ def opcodes(instruction: parsing.opcode.Expr, e: Emitter, s: Scope): Emitter = i
   case _: parsing.opcode.Constant => ???
   case parsing.opcode.Instruction("add", Some("I32"), Nil, _) =>
     e.emit(inst(Add(I32)))
+  case parsing.opcode.Instruction("sub", Some("I32"), Nil, _) =>
+    e.emit(inst(Sub(I32)))
   case parsing.opcode.Instruction("concat", Some("Str"), Nil, _) =>
     e.emit(inst(Concat(Str)))
   case parsing.opcode.Instruction("load", Some("I32"), List(label), _) =>
     e.emit(inst(Load(I32), name(s"${s.container(label).module}.$label")))
   case parsing.opcode.Instruction("load", Some("Str"), List(label), _) =>
     e.emit(inst(Load(Str), name(s"${s.container(label).module}.$label")))
+  case parsing.opcode.Instruction("println", None, Nil, _) =>
+    e.emit(inst(Println))
   case _: parsing.opcode.Instruction => ???
 
 def loadArgsAndRet(args: List[Ir], e: Emitter, s: Scope) =

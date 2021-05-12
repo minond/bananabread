@@ -41,11 +41,13 @@ def parse(sourceName: String, tokens: Tokens): Parsed[Tree] =
     Tree(nodes)
 
 def parseTop(head: Token, tail: Tokens): Parsed[Expr] = head match
-  case op @ Word("add", _)    => parseOpcodeWithType(op, tail)
-  case op @ Word("concat", _) => parseOpcodeWithType(op, tail)
-  case op @ Word("load", _)   => parseOpcodeWithTypeAndArg1(op, tail)
-  case op @ Word("ret", _)    => parseOpcode(op, tail)
-  case _                      => Left(UnexpectedTokenErr(head))
+  case op @ Word("add", _)     => parseOpcodeWithType(op, tail)
+  case op @ Word("sub", _)     => parseOpcodeWithType(op, tail)
+  case op @ Word("concat", _)  => parseOpcodeWithType(op, tail)
+  case op @ Word("load", _)    => parseOpcodeWithTypeAndArg1(op, tail)
+  case op @ Word("println", _) => parseOpcode(op, tail)
+  case op @ Word("ret", _)     => parseOpcode(op, tail)
+  case _                       => Left(UnexpectedTokenErr(head))
 
 def parseOpcode(op: Word, tail: Tokens): Parsed[Expr] =
     Right(Instruction(op.lexeme, None, List.empty, op.location))

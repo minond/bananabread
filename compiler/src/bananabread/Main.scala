@@ -197,11 +197,18 @@ def main(args: Array[String]) =
     //
     // res
 
-    def add(a, b) =
+    def +(a, b) =
       opcode %{
         load [I32] a
         load [I32] b
         add [I32]
+      }
+
+    def -(a, b) =
+      opcode %{
+        load [I32] a
+        load [I32] b
+        sub [I32]
       }
 
     def ++(a, b) =
@@ -211,8 +218,15 @@ def main(args: Array[String]) =
         concat [Str]
       }
 
-    println(add(1, 3))
+    def println(x) =
+      opcode %{
+        load [Str] x
+        println
+      }
+
+    println(123)
     println(1 + 4)
+    println(4 - 1)
     println(%{one} ++ %{ two})
     """
 
