@@ -3,6 +3,7 @@ package parsing.opcode
 
 import parsing.parser.{Parsed, takeWhile, not, isWhitespace, and, oneof, eat}
 import parsing.location.{Location, Located, At}
+import parsing.error.{SyntaxErr, UnexpectedTokenErr, UnexpectedEofErr}
 import utils.EitherImplicits
 
 import scala.reflect.ClassTag
@@ -23,8 +24,6 @@ case class Word(lexeme: String, loc: Location) extends Token, At(loc)
 case class Label(label: String, loc: Location) extends Expr, At(loc)
 case class Instruction(opcode: String, ty: Option[String] = None, args: List[String] = List.empty, loc: Location) extends Expr, At(loc)
 case class Constant(label: String, ty: String, value: String, loc: Location) extends Expr, At(loc)
-
-import parsing.error.{SyntaxErr, UnexpectedTokenErr, UnexpectedEofErr}
 
 
 type Tokens = BufferedIterator[Token]
