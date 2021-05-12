@@ -37,6 +37,6 @@ implicit class EitherImplicits[L, R](val eithers: Iterator[Either[L, R]]):
 
 
 implicit class ComparisonImplicits(val obj: Any):
-  def is[T : ClassTag] = this match
+  def is[T : ClassTag] = obj match
     case _ : T => true
     case _     => false
