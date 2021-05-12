@@ -8,6 +8,7 @@ import scala.reflect.ClassTag
 
 
 type TokenBuffer = BufferedIterator[Token]
+type Parsed[T] = Either[SyntaxErr, T]
 
 // Parser predicates and combinators
 
@@ -50,7 +51,7 @@ def skip[T](it: BufferedIterator[T]): BufferedIterator[T] =
   it.next
   it
 
-def eat[T: ClassTag](head: Token, tail: TokenBuffer): Either[SyntaxErr, T] =
+def eat[T: ClassTag](head: Token, tail: TokenBuffer): Parsed[T] =
   tail.headOption match
     case Some(token: T) =>
       tail.next
@@ -59,7 +60,7 @@ def eat[T: ClassTag](head: Token, tail: TokenBuffer): Either[SyntaxErr, T] =
     case Some(unexpected) => Left(UnexpectedTokenErr[T](unexpected))
     case None => Left(UnexpectedEofErr(head))
 
-def eat(word: String, head: Token, tail: TokenBuffer): Either[SyntaxErr, Token] =
+def eat(word: String, head: Token, tail: TokenBuffer): Parsed[Token] =
   tail.headOption match
     case Some(id: Id) if is(id, word) =>
       tail.next
