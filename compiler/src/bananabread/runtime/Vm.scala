@@ -4,7 +4,7 @@ package runtime.vm
 import runtime.value
 
 import value.Value
-import opcode.{Opcode, Instruction, Exposed}
+import opcode.{Opcode, Instruction}
 
 import scala.collection.mutable.{Stack, Map}
 
@@ -255,9 +255,6 @@ class Machine(instructions: Seq[Instruction], info: Boolean = false, prompt: Boo
     case _ =>
       /* not implemented  */
       ???
-
-  def run(v: value.Id) =
-    Exposed.lookup(v.label).handler(this)
 
   def binI32Op(f: (Int, Int) => Int) =
     (stack.pop, stack.pop) match
