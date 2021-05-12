@@ -1,8 +1,9 @@
 package bananabread
 package parsing.opcode
 
-import utils.EitherImplicits
 import parsing.parser.{takeWhile, not, isWhitespace, and, oneof, eat}
+import parsing.location.{Location, Located, At}
+import utils.EitherImplicits
 
 import scala.reflect.ClassTag
 
@@ -10,28 +11,29 @@ import scala.reflect.ClassTag
 case class Tree(nodes: List[Expr])
 
 
-sealed trait Expr
-case class Label(label: String) extends Expr
-case class Instruction(opcode: String, ty: Option[String] = None, args: List[String] = List.empty) extends Expr
-case class Constant(label: String, ty: String, value: String) extends Expr
+sealed trait Token extends Located
+sealed trait Expr extends Located
 
 
-sealed trait Token
-case object OpenSquareBraket extends Token
-case object CloseSquareBraket extends Token
-case class Word(lexeme: String) extends Token
+case class OpenSquareBraket(loc: Location) extends Token, At(loc)
+case class CloseSquareBraket(loc: Location) extends Token, At(loc)
+case class Word(lexeme: String, loc: Location) extends Token, At(loc)
 
 
-sealed trait Err
-case class UnexpectedTokenErr(token: Token) extends Err
-case object UnexpectedEofErr extends Err
+case class Label(label: String, loc: Location) extends Expr, At(loc)
+case class Instruction(opcode: String, ty: Option[String] = None, args: List[String] = List.empty, loc: Location) extends Expr, At(loc)
+case class Constant(label: String, ty: String, value: String, loc: Location) extends Expr, At(loc)
+
+import parsing.error.{SyntaxErr, UnexpectedTokenErr, UnexpectedEofErr}
 
 
 type Tokens = BufferedIterator[Token]
 
-def parse(sourceString: String): Either[Err, Tree] =
-  tokenize(sourceString).flatMap { tokens => parse(tokens.iterator.buffered) }
-def parse(tokens: Tokens): Either[Err, Tree] =
+def parse(sourceName: String, sourceString: String): Either[SyntaxErr, Tree] =
+  tokenize(sourceName, sourceString).flatMap { tokens =>
+    parse(sourceName, tokens.iterator.buffered)
+  }
+def parse(sourceName: String, tokens: Tokens): Either[SyntaxErr, Tree] =
   for
     nodes <- tokens
       .map { (token) => parseTop(token, tokens) }
@@ -39,51 +41,51 @@ def parse(tokens: Tokens): Either[Err, Tree] =
   yield
     Tree(nodes)
 
-def parseTop(head: Token, tail: Tokens): Either[Err, Expr] = head match
-  case op @ Word("add") => parseOpcodeWithType(op, tail)
-  case op @ Word("concat") => parseOpcodeWithType(op, tail)
-  case op @ Word("load") => parseOpcodeWithTypeAndArg1(op, tail)
-  case op @ Word("ret") => parseOpcode(op, tail)
+def parseTop(head: Token, tail: Tokens): Either[SyntaxErr, Expr] = head match
+  case op @ Word("add", _) => parseOpcodeWithType(op, tail)
+  case op @ Word("concat", _) => parseOpcodeWithType(op, tail)
+  case op @ Word("load", _) => parseOpcodeWithTypeAndArg1(op, tail)
+  case op @ Word("ret", _) => parseOpcode(op, tail)
   case _ => Left(UnexpectedTokenErr(head))
 
-def parseOpcode(op: Word, tail: Tokens): Either[Err, Expr] =
-    Right(Instruction(op.lexeme))
+def parseOpcode(op: Word, tail: Tokens): Either[SyntaxErr, Expr] =
+    Right(Instruction(op.lexeme, None, List.empty, op.location))
 
-def parseOpcodeWithType(op: Word, tail: Tokens): Either[Err, Expr] =
+def parseOpcodeWithType(op: Word, tail: Tokens): Either[SyntaxErr, Expr] =
     for
-      _  <- eat[OpenSquareBraket.type](op, tail)
+      _  <- eat[OpenSquareBraket](op, tail)
       ty <- eat[Word](op, tail)
-      _  <- eat[CloseSquareBraket.type](op, tail)
+      _  <- eat[CloseSquareBraket](op, tail)
     yield
-      Instruction(op.lexeme, Some(ty.lexeme))
+      Instruction(op.lexeme, Some(ty.lexeme), List.empty, op.location)
 
-def parseOpcodeWithTypeAndArg1(op: Word, tail: Tokens): Either[Err, Expr] =
+def parseOpcodeWithTypeAndArg1(op: Word, tail: Tokens): Either[SyntaxErr, Expr] =
     for
-      _    <- eat[OpenSquareBraket.type](op, tail)
+      _    <- eat[OpenSquareBraket](op, tail)
       ty   <- eat[Word](op, tail)
-      _    <- eat[CloseSquareBraket.type](op, tail)
+      _    <- eat[CloseSquareBraket](op, tail)
       name <- eat[Word](op, tail)
     yield
-      Instruction(op.lexeme, Some(ty.lexeme), List(name.lexeme))
+      Instruction(op.lexeme, Some(ty.lexeme), List(name.lexeme), op.location)
 
-def eat[T: ClassTag](head: Token, tail: Tokens): Either[Err, T] = tail.headOption match
+def eat[T: ClassTag](head: Token, tail: Tokens): Either[SyntaxErr, T] = tail.headOption match
   case Some(token: T) =>
     tail.next
     Right(token)
 
   case Some(bad) => Left(UnexpectedTokenErr(bad))
-  case None      => Left(UnexpectedEofErr)
+  case None      => Left(UnexpectedEofErr(head))
 
 
-def tokenize(sourceString: String): Either[Err, List[Token]] =
-  tokenize(sourceString.iterator.zipWithIndex.buffered)
-def tokenize(sourceStream: BufferedIterator[(Char, Int)]): Either[Err, List[Token]] =
+def tokenize(sourceName: String, sourceString: String): Either[SyntaxErr, List[Token]] =
+  tokenize(sourceName, sourceString.iterator.zipWithIndex.buffered)
+def tokenize(sourceName: String, sourceStream: BufferedIterator[(Char, Int)]): Either[SyntaxErr, List[Token]] =
   sourceStream
     .filter { (c, _) => !c.isWhitespace }
-    .map { (c, i) => nextToken(c, sourceStream) }
+    .map { (c, i) => nextToken(c, sourceStream, Location(sourceName, i)) }
     .squished
 
-def nextToken(head: Char, tail: BufferedIterator[(Char, Int)]): Either[Err, Token] = head match
-  case '[' => Right(OpenSquareBraket)
-  case ']' => Right(CloseSquareBraket)
-  case _   => Right(Word(head +: takeWhile(tail, and(not(isWhitespace), not(oneof('[', ']')))).mkString))
+def nextToken(head: Char, tail: BufferedIterator[(Char, Int)], loc: Location): Either[SyntaxErr, Token] = head match
+  case '[' => Right(OpenSquareBraket(loc))
+  case ']' => Right(CloseSquareBraket(loc))
+  case _   => Right(Word(head +: takeWhile(tail, and(not(isWhitespace), not(oneof('[', ']')))).mkString, loc))

@@ -219,7 +219,7 @@ def call(lambda: Ir, args: List[Ir], e: Emitter, s: Scope): Unit = lambda match
         ???
   case tl.Id(parsing.ast.Id("opcode", _)) => args match
     case tl.Str(parsing.ast.Str(str, _)) :: Nil =>
-      parsing.opcode.parse(str).map { tree => opcodes(tree.nodes, e, s) }
+      parsing.opcode.parse("<opcode>", str).map { tree => opcodes(tree.nodes, e, s) }
     case _ =>
       /* bad call */
       ???
@@ -245,13 +245,13 @@ def opcodes(instructions: List[parsing.opcode.Expr], e: Emitter, s: Scope): Emit
 def opcodes(instruction: parsing.opcode.Expr, e: Emitter, s: Scope): Emitter = instruction match
   case _: parsing.opcode.Label => ???
   case _: parsing.opcode.Constant => ???
-  case parsing.opcode.Instruction("add", Some("I32"), Nil) =>
+  case parsing.opcode.Instruction("add", Some("I32"), Nil, _) =>
     e.emit(inst(Add(I32)))
-  case parsing.opcode.Instruction("concat", Some("Str"), Nil) =>
+  case parsing.opcode.Instruction("concat", Some("Str"), Nil, _) =>
     e.emit(inst(Concat(Str)))
-  case parsing.opcode.Instruction("load", Some("I32"), List(label)) =>
+  case parsing.opcode.Instruction("load", Some("I32"), List(label), _) =>
     e.emit(inst(Load(I32), name(s"${s.container(label).module}.$label")))
-  case parsing.opcode.Instruction("load", Some("Str"), List(label)) =>
+  case parsing.opcode.Instruction("load", Some("Str"), List(label), _) =>
     e.emit(inst(Load(Str), name(s"${s.container(label).module}.$label")))
   case _: parsing.opcode.Instruction => ???
 
