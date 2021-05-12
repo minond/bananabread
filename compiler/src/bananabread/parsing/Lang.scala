@@ -60,7 +60,7 @@ def parsePrimary(head: Token, tail: TokenBuffer, sourceName: String, syntax: Syn
 def parseLambda(start: Token, tail: TokenBuffer, sourceName: String, syntax: Syntax): Either[SyntaxErr, Lambda] =
   for
     args <- parseNextExprsByUntil[Comma, CloseParen](start, skip(tail), sourceName, syntax)
-    eq <- eat("=", start, tail)
+    eq   <- eat("=", start, tail)
     body <- parseNextExpr(eq, tail, sourceName, syntax)
   yield
     Lambda(args, body)
@@ -68,9 +68,9 @@ def parseLambda(start: Token, tail: TokenBuffer, sourceName: String, syntax: Syn
 def parseCond(start: Token, tail: TokenBuffer, sourceName: String, syntax: Syntax): Either[SyntaxErr, Cond] =
   for
     cond <- parseExpr(tail.next, tail, sourceName, syntax)
-    _ <- eat("then", start, tail)
+    _    <- eat("then", start, tail)
     pass <- parseExpr(tail.next, tail, sourceName, syntax)
-    _ <- eat("else", start, tail)
+    _    <- eat("else", start, tail)
     fail <- parseExpr(tail.next, tail, sourceName, syntax)
   yield
     Cond(start, cond, pass, fail)
@@ -78,15 +78,15 @@ def parseCond(start: Token, tail: TokenBuffer, sourceName: String, syntax: Synta
 def parseLet(start: Token, tail: TokenBuffer, sourceName: String, syntax: Syntax): Either[SyntaxErr, Let] =
   for
     bindings <- parseBindings(start, tail, sourceName, syntax)
-    _ <- eat("in", start, tail)
-    body <- parseExpr(tail.next, tail, sourceName, syntax)
+    _        <- eat("in", start, tail)
+    body     <- parseExpr(tail.next, tail, sourceName, syntax)
   yield
     Let(start, bindings, body)
 
 def parseDef(start: Token, tail: TokenBuffer, sourceName: String, syntax: Syntax): Either[SyntaxErr, Def] =
   for
-    name <- eat[Id](start, tail)
-    next = lookahead(start, tail)
+    name  <- eat[Id](start, tail)
+    next  = lookahead(start, tail)
     value <- if next.is[OpenParen]
              then parseLambda(start, tail, sourceName, syntax)
              else parseDefValue(start, tail, sourceName, syntax)
@@ -95,15 +95,15 @@ def parseDef(start: Token, tail: TokenBuffer, sourceName: String, syntax: Syntax
 
 def parseDefValue(start: Token, tail: TokenBuffer, sourceName: String, syntax: Syntax): Either[SyntaxErr, Expr] =
   for
-    _ <- eat("=", start, tail)
+    _     <- eat("=", start, tail)
     value <- parseExpr(tail.next, tail, sourceName, syntax)
   yield
     value
 
 def parseBindings(start: Token, tail: TokenBuffer, sourceName: String, syntax: Syntax): Either[SyntaxErr, List[Binding]] =
   for
-    binding <- parseBinding(start, tail, sourceName, syntax)
-    next = lookahead(start, tail)
+    binding  <- parseBinding(start, tail, sourceName, syntax)
+    next     = lookahead(start, tail)
     bindings <- if is(next, "in")
                 then Right(List.empty)
                 else parseBindings(start, tail, sourceName, syntax)
@@ -113,7 +113,7 @@ def parseBindings(start: Token, tail: TokenBuffer, sourceName: String, syntax: S
 def parseBinding(start: Token, tail: TokenBuffer, sourceName: String, syntax: Syntax): Either[SyntaxErr, Binding] =
   for
     label <- eat[Id](start, tail)
-    eq <- eat("=", label, tail)
+    eq    <- eat("=", label, tail)
     value <- parseExpr(tail.next, tail, sourceName, syntax)
   yield
     Binding(label, value)
@@ -124,7 +124,7 @@ def parseBegin(start: Token, tail: TokenBuffer, sourceName: String, syntax: Synt
              then Left(EmptyBeginNotAllowedErr(start))
              else parseExpr(tail.next, tail, sourceName, syntax)
     taile <- parseBeginTail(start, tail, sourceName, syntax)
-    _ <- eat("end", start, tail)
+    _     <- eat("end", start, tail)
   yield
     Begin(heade, taile)
 
@@ -133,7 +133,7 @@ def parseBeginTail(start: Token, tail: TokenBuffer, sourceName: String, syntax: 
     heade <- if is(lookahead(start, tail), "end")
             then return Right(List.empty)
             else parseExpr(tail.next, tail, sourceName, syntax)
-    next = lookahead(start, tail)
+    next  = lookahead(start, tail)
     taile <- if is(next, "end")
             then Right(List.empty)
             else parseBeginTail(start, tail, sourceName, syntax)
@@ -143,7 +143,7 @@ def parseBeginTail(start: Token, tail: TokenBuffer, sourceName: String, syntax: 
 def parseGroup(paren: Token, tail: TokenBuffer, sourceName: String, syntax: Syntax): Either[SyntaxErr, Expr] =
   for
     inner <- parseExpr(tail.next, tail, sourceName, syntax)
-    _ <- eat[CloseParen](paren, tail)
+    _     <- eat[CloseParen](paren, tail)
   yield
     inner
 
