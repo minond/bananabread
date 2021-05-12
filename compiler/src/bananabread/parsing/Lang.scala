@@ -5,6 +5,7 @@ import parsing.parser.{takeWhile, eat, skip, lookahead}
 import parsing.parser.{and, is, not, oneof, or}
 import parsing.parser.{isLetter, isNewline, isNumeric, isWhitespace}
 
+import parsing.location.Location
 import parsing.ast.{SyntaxErr => Err, _}
 import parsing.syntax.{Syntax, Tokens, Word}
 

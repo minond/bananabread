@@ -1,6 +1,7 @@
 package bananabread
 package parsing.ast
 
+import parsing.location.{Location, Located, At}
 import utils.Print
 
 import scala.reflect.ClassTag
@@ -74,10 +75,3 @@ case class EmptyBeginNotAllowedErr(start: Token) extends SyntaxErr(start.locatio
 case class UnexpectedTokenErr[Expected](found: Token) extends SyntaxErr(found.location)
 case class UnexpectedEofErr(prev: Located) extends SyntaxErr(prev.location)
 case class UnclosedStringErr(loc: Location) extends SyntaxErr(loc)
-
-
-// Token/expression location information
-
-case class Location(source: String, offset: Int)
-trait Located { def location: Location }
-trait At(loc: Location) { def location = loc }
