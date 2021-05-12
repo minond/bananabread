@@ -2,7 +2,7 @@ package bananabread
 package parsing.opcode
 
 import utils.EitherImplicits
-import parsing.lang.{takeWhile, not, isWhitespace, and, oneof, eat}
+import parsing.parser.{takeWhile, not, isWhitespace, and, oneof, eat}
 
 import scala.reflect.ClassTag
 
