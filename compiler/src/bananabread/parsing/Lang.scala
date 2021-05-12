@@ -25,139 +25,139 @@ def parse(sourceName: String, sourceString: String, syntax: Syntax): Parsed[Tree
 def parse(sourceName: String, tokens: Tokens, syntax: Syntax): Parsed[Tree] =
   for
     nodes <- tokens
-      .map { (token) => parseTop(token, tokens, sourceName, syntax) }
+      .map { (token) => parseTop(token, tokens, syntax) }
       .squished
   yield
     Tree(nodes)
 
-def parseTop(head: Token, tail: Tokens, sourceName: String, syntax: Syntax): Parsed[Stmt | Expr] =
+def parseTop(head: Token, tail: Tokens, syntax: Syntax): Parsed[Stmt | Expr] =
   head match
-    case _ if is(head, "def") => parseDef(head, tail, sourceName, syntax)
-    case _ => parseExpr(head, tail, sourceName, syntax)
+    case _ if is(head, "def") => parseDef(head, tail, syntax)
+    case _ => parseExpr(head, tail, syntax)
 
-def parseExpr(head: Token, tail: Tokens, sourceName: String, syntax: Syntax): Parsed[Expr] =
+def parseExpr(head: Token, tail: Tokens, syntax: Syntax): Parsed[Expr] =
   head match
-    case op: Id if syntax.isPrefix(op) => parseExprCont(parseUniop(op, tail, sourceName, syntax), tail, sourceName, syntax)
-    case _ => parseExprCont(parsePrimary(head, tail, sourceName, syntax), tail, sourceName, syntax)
+    case op: Id if syntax.isPrefix(op) => parseExprCont(parseUniop(op, tail, syntax), tail, syntax)
+    case _ => parseExprCont(parsePrimary(head, tail, syntax), tail, syntax)
 
-def parseUniop(op: Id, tail: Tokens, sourceName: String, syntax: Syntax): Parsed[Uniop] =
-  for rhs <- parsePrimary(tail.next, tail, sourceName, syntax)
+def parseUniop(op: Id, tail: Tokens, syntax: Syntax): Parsed[Uniop] =
+  for rhs <- parsePrimary(tail.next, tail, syntax)
   yield Uniop(op, rhs)
 
-def parsePrimary(head: Token, tail: Tokens, sourceName: String, syntax: Syntax): Parsed[Expr] =
+def parsePrimary(head: Token, tail: Tokens, syntax: Syntax): Parsed[Expr] =
   head match
-    case word: Id if is(word, "func")  => parseLambda(word, tail, sourceName, syntax)
-    case word: Id if is(word, "if")    => parseCond(word, tail, sourceName, syntax)
-    case word: Id if is(word, "let")   => parseLet(word, tail, sourceName, syntax)
-    case word: Id if is(word, "begin") => parseBegin(word, tail, sourceName, syntax)
-    case paren: OpenParen              => parseGroup(paren, tail, sourceName, syntax)
+    case word: Id if is(word, "func")  => parseLambda(word, tail, syntax)
+    case word: Id if is(word, "if")    => parseCond(word, tail, syntax)
+    case word: Id if is(word, "let")   => parseLet(word, tail, syntax)
+    case word: Id if is(word, "begin") => parseBegin(word, tail, syntax)
+    case paren: OpenParen              => parseGroup(paren, tail, syntax)
     case lit: Num    => Right(lit)
     case lit: Str    => Right(lit)
     case lit: Id     => Right(lit)
     case lit: Symbol => Right(lit)
     case unexpected  => Left(UnexpectedTokenErr(unexpected))
 
-def parseLambda(start: Token, tail: Tokens, sourceName: String, syntax: Syntax): Parsed[Lambda] =
+def parseLambda(start: Token, tail: Tokens, syntax: Syntax): Parsed[Lambda] =
   for
-    args <- parseNextExprsByUntil[Comma, CloseParen](start, skip(tail), sourceName, syntax)
+    args <- parseNextExprsByUntil[Comma, CloseParen](start, skip(tail), syntax)
     eq   <- eat("=", start, tail)
-    body <- parseNextExpr(eq, tail, sourceName, syntax)
+    body <- parseNextExpr(eq, tail, syntax)
   yield
     Lambda(args, body)
 
-def parseCond(start: Token, tail: Tokens, sourceName: String, syntax: Syntax): Parsed[Cond] =
+def parseCond(start: Token, tail: Tokens, syntax: Syntax): Parsed[Cond] =
   for
-    cond <- parseExpr(tail.next, tail, sourceName, syntax)
+    cond <- parseExpr(tail.next, tail, syntax)
     _    <- eat("then", start, tail)
-    pass <- parseExpr(tail.next, tail, sourceName, syntax)
+    pass <- parseExpr(tail.next, tail, syntax)
     _    <- eat("else", start, tail)
-    fail <- parseExpr(tail.next, tail, sourceName, syntax)
+    fail <- parseExpr(tail.next, tail, syntax)
   yield
     Cond(start, cond, pass, fail)
 
-def parseLet(start: Token, tail: Tokens, sourceName: String, syntax: Syntax): Parsed[Let] =
+def parseLet(start: Token, tail: Tokens, syntax: Syntax): Parsed[Let] =
   for
-    bindings <- parseBindings(start, tail, sourceName, syntax)
+    bindings <- parseBindings(start, tail, syntax)
     _        <- eat("in", start, tail)
-    body     <- parseExpr(tail.next, tail, sourceName, syntax)
+    body     <- parseExpr(tail.next, tail, syntax)
   yield
     Let(start, bindings, body)
 
-def parseDef(start: Token, tail: Tokens, sourceName: String, syntax: Syntax): Parsed[Def] =
+def parseDef(start: Token, tail: Tokens, syntax: Syntax): Parsed[Def] =
   for
     name  <- eat[Id](start, tail)
     next  = lookahead(start, tail)
     value <- if next.is[OpenParen]
-             then parseLambda(start, tail, sourceName, syntax)
-             else parseDefValue(start, tail, sourceName, syntax)
+             then parseLambda(start, tail, syntax)
+             else parseDefValue(start, tail, syntax)
   yield
     Def(name, value)
 
-def parseDefValue(start: Token, tail: Tokens, sourceName: String, syntax: Syntax): Parsed[Expr] =
+def parseDefValue(start: Token, tail: Tokens, syntax: Syntax): Parsed[Expr] =
   for
     _     <- eat("=", start, tail)
-    value <- parseExpr(tail.next, tail, sourceName, syntax)
+    value <- parseExpr(tail.next, tail, syntax)
   yield
     value
 
-def parseBindings(start: Token, tail: Tokens, sourceName: String, syntax: Syntax): Parsed[List[Binding]] =
+def parseBindings(start: Token, tail: Tokens, syntax: Syntax): Parsed[List[Binding]] =
   for
-    binding  <- parseBinding(start, tail, sourceName, syntax)
+    binding  <- parseBinding(start, tail, syntax)
     next     = lookahead(start, tail)
     bindings <- if is(next, "in")
                 then Right(List.empty)
-                else parseBindings(start, tail, sourceName, syntax)
+                else parseBindings(start, tail, syntax)
   yield
     binding +: bindings
 
-def parseBinding(start: Token, tail: Tokens, sourceName: String, syntax: Syntax): Parsed[Binding] =
+def parseBinding(start: Token, tail: Tokens, syntax: Syntax): Parsed[Binding] =
   for
     label <- eat[Id](start, tail)
     eq    <- eat("=", label, tail)
-    value <- parseExpr(tail.next, tail, sourceName, syntax)
+    value <- parseExpr(tail.next, tail, syntax)
   yield
     Binding(label, value)
 
-def parseBegin(start: Token, tail: Tokens, sourceName: String, syntax: Syntax): Parsed[Begin] =
+def parseBegin(start: Token, tail: Tokens, syntax: Syntax): Parsed[Begin] =
   for
     heade <- if is(lookahead(start, tail), "end")
              then Left(EmptyBeginNotAllowedErr(start))
-             else parseExpr(tail.next, tail, sourceName, syntax)
-    taile <- parseBeginTail(start, tail, sourceName, syntax)
+             else parseExpr(tail.next, tail, syntax)
+    taile <- parseBeginTail(start, tail, syntax)
     _     <- eat("end", start, tail)
   yield
     Begin(heade, taile)
 
-def parseBeginTail(start: Token, tail: Tokens, sourceName: String, syntax: Syntax): Parsed[List[Expr]] =
+def parseBeginTail(start: Token, tail: Tokens, syntax: Syntax): Parsed[List[Expr]] =
   for
     heade <- if is(lookahead(start, tail), "end")
             then return Right(List.empty)
-            else parseExpr(tail.next, tail, sourceName, syntax)
+            else parseExpr(tail.next, tail, syntax)
     next  = lookahead(start, tail)
     taile <- if is(next, "end")
             then Right(List.empty)
-            else parseBeginTail(start, tail, sourceName, syntax)
+            else parseBeginTail(start, tail, syntax)
   yield
     heade +: taile
 
-def parseGroup(paren: Token, tail: Tokens, sourceName: String, syntax: Syntax): Parsed[Expr] =
+def parseGroup(paren: Token, tail: Tokens, syntax: Syntax): Parsed[Expr] =
   for
-    inner <- parseExpr(tail.next, tail, sourceName, syntax)
+    inner <- parseExpr(tail.next, tail, syntax)
     _     <- eat[CloseParen](paren, tail)
   yield
     inner
 
-def parseExprCont(currRes: Parsed[Expr], tail: Tokens, sourceName: String, syntax: Syntax): Parsed[Expr] =
-  currRes.flatMap { curr => parseExprCont(curr, tail, sourceName, syntax) }
+def parseExprCont(currRes: Parsed[Expr], tail: Tokens, syntax: Syntax): Parsed[Expr] =
+  currRes.flatMap { curr => parseExprCont(curr, tail, syntax) }
 
-def parseExprCont(curr: Expr, tail: Tokens, sourceName: String, syntax: Syntax): Parsed[Expr] =
+def parseExprCont(curr: Expr, tail: Tokens, syntax: Syntax): Parsed[Expr] =
   tail.headOption match
     case Some(op: Id) if syntax.isPostfix(op) =>
       tail.next
       Right(Uniop(op, curr))
 
     case Some(op: Id) if syntax.isInfix(op) =>
-      for rhs <- parseNextExpr(op, skip(tail), sourceName, syntax)
+      for rhs <- parseNextExpr(op, skip(tail), syntax)
       yield
         rhs match
           case Binop(nextOp, nextLhs, nextRhs) if syntax.isInfix(nextOp) &&
@@ -167,9 +167,9 @@ def parseExprCont(curr: Expr, tail: Tokens, sourceName: String, syntax: Syntax):
           case _ => Binop(op, curr, rhs)
 
     case Some(paren: OpenParen) =>
-      parseExprCont(parseNextExprsByUntil[Comma, CloseParen](paren, skip(tail), sourceName, syntax).map { args =>
+      parseExprCont(parseNextExprsByUntil[Comma, CloseParen](paren, skip(tail), syntax).map { args =>
         App(curr, args)
-      }, tail, sourceName, syntax)
+      }, tail, syntax)
 
     case Some(_) => Right(curr)
     case None => Right(curr)
@@ -177,7 +177,6 @@ def parseExprCont(curr: Expr, tail: Tokens, sourceName: String, syntax: Syntax):
 def parseNextExprsByUntil[By: ClassTag, Until: ClassTag](
   head: Token,
   tail: Tokens,
-  sourceName: String,
   syntax: Syntax,
   acc: List[Expr] = List.empty
 ): Parsed[List[Expr]] =
@@ -187,21 +186,21 @@ def parseNextExprsByUntil[By: ClassTag, Until: ClassTag](
       Right(acc)
 
     case Some(by: By) =>
-      parseNextExpr(tail.next, tail, sourceName, syntax).flatMap { expr =>
-        parseNextExprsByUntil[By, Until](head, tail, sourceName, syntax, acc :+ expr)
+      parseNextExpr(tail.next, tail, syntax).flatMap { expr =>
+        parseNextExprsByUntil[By, Until](head, tail, syntax, acc :+ expr)
       }
 
     case Some(_) =>
-      parseExpr(tail.next, tail, sourceName, syntax).flatMap { expr =>
-        parseNextExprsByUntil[By, Until](head, tail, sourceName, syntax, acc :+ expr)
+      parseExpr(tail.next, tail, syntax).flatMap { expr =>
+        parseNextExprsByUntil[By, Until](head, tail, syntax, acc :+ expr)
       }
 
     case None =>
       Left(UnexpectedEofErr(head))
 
-def parseNextExpr(head: Token, tail: Tokens, sourceName: String, syntax: Syntax): Parsed[Expr] =
+def parseNextExpr(head: Token, tail: Tokens, syntax: Syntax): Parsed[Expr] =
   tail.headOption match
-    case Some(_) => parseExpr(tail.next, tail, sourceName, syntax)
+    case Some(_) => parseExpr(tail.next, tail, syntax)
     case None    => Left(UnexpectedEofErr(head))
 
 
