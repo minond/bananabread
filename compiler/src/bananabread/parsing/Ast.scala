@@ -4,10 +4,6 @@ package parsing.ast
 import parsing.location.{Location, Located, At}
 import utils.Print
 
-import scala.reflect.ClassTag
-
-
-// Base AST
 
 case class Tree(val nodes: List[Expr | Stmt])
 
@@ -16,8 +12,6 @@ sealed trait Token extends Located
 sealed trait Expr extends Located
 sealed trait Stmt extends Located
 
-
-// Tokens
 
 case class Eof(loc: Location) extends Token, At(loc) with Print()
 case class Comma(loc: Location) extends Token, At(loc) with Print()
@@ -30,19 +24,11 @@ case class OpenSquareBraket(loc: Location) extends Token, At(loc) with Print()
 case class CloseSquareBraket(loc: Location) extends Token, At(loc) with Print()
 
 
-// Aux tokens
-case class Comment(lexeme: String, loc: Location) extends Token, At(loc)
-
-
-// Token expressions
-
 case class Num(lexeme: String, loc: Location) extends Token, At(loc) with Expr, Print(lexeme)
 case class Str(lexeme: String, loc: Location) extends Token, At(loc) with Expr, Print(s""""$lexeme"""")
 case class Id(lexeme: String, loc: Location) extends Token, At(loc) with Expr, Print(lexeme)
 case class Symbol(lexeme: String, loc: Location) extends Token, At(loc) with Expr, Print(s"'$lexeme")
 
-
-// Expressions
 
 case class Binop(op: Id, lhs: Expr, rhs: Expr) extends Expr with At(op.location), Print(s"($op $lhs $rhs)")
 case class Uniop(op: Id, operand: Expr) extends Expr with At(op.location), Print(s"($op $operand)")
@@ -53,12 +39,8 @@ case class Let(start: Token, bindings: List[Binding], body: Expr) extends Expr w
 case class Begin(head: Expr, tail: List[Expr]) extends Expr with At(head.location), Print(s"begin ${(head +: tail).mkString(" ")} end")
 
 
-// Aux expressions
+case class Comment(lexeme: String, loc: Location) extends Token, At(loc)
 case class Binding(label: Id, value: Expr) extends At(label.location), Print(s"$label = $value")
-
-
-// Statements
-
 case class Def(name: Id, value: Expr) extends Stmt, At(name.location), Print(s"def $name = $value")
 
 
