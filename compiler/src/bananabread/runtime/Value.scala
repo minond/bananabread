@@ -5,7 +5,7 @@ import parsing.ast
 
 import ir.typeless
 import ir.typeless.Ir
-import utils.Print
+import show.Print
 
 
 sealed trait Value

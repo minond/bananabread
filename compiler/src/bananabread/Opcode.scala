@@ -6,7 +6,7 @@ import runtime.value
 import ir.typeless
 import ir.typeless.Ir
 import value.Value
-import utils.Print
+import show.Print
 
 import scala.util.Random
 import scala.collection.mutable.{Map, Queue, Stack}

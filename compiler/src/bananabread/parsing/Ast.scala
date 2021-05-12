@@ -2,7 +2,7 @@ package bananabread
 package parsing.ast
 
 import parsing.location.{Location, Located, At}
-import utils.Print
+import show.Print
 
 
 case class Tree(val nodes: List[Expr | Stmt])
