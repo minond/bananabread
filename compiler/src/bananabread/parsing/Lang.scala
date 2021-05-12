@@ -9,7 +9,7 @@ import parsing.location.Location
 import parsing.ast.{SyntaxErr => Err, _}
 import parsing.syntax.{Syntax, Tokens, Word}
 
-import utils.{ListImplicits, EitherImplicits}
+import utils.{ListImplicits, EitherImplicits, ComparisonImplicits}
 
 import scala.util.{Try, Success, Failure}
 import scala.reflect.ClassTag

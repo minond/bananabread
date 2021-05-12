@@ -34,3 +34,9 @@ implicit class EitherImplicits[L, R](val eithers: Iterator[Either[L, R]]):
       (acc, x) =>
         acc.flatMap(xs => x.map(xs :+ _))
     }
+
+
+implicit class ComparisonImplicits(val obj: Any):
+  def is[T : ClassTag] = this match
+    case _ : T => true
+    case _     => false

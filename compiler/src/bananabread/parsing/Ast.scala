@@ -12,12 +12,7 @@ import scala.reflect.ClassTag
 case class Tree(val nodes: List[Expr | Stmt])
 
 
-sealed trait Token extends Located {
-  def is[T : ClassTag] = this match
-    case _ : T => true
-    case _     => false
-}
-
+sealed trait Token extends Located
 sealed trait Expr extends Located
 sealed trait Stmt extends Located
 
