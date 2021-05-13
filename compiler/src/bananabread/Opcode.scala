@@ -44,19 +44,6 @@ case class Add(typ: Type) extends Opcode with Print(s"add [$typ]"), Run(vm => vm
 case class Sub(typ: Type) extends Opcode with Print(s"sub [$typ]"), Run(vm => vm.binI32Op(_ - _))
 case class Concat(typ: Type) extends Opcode with Print(s"concat [$typ]"), Run(vm => vm.binStrOp(_ + _))
 
-object Exposed:
-  val registry = Map(
-    "println" -> Println,
-    "+" -> Add(I32),
-    "-" -> Sub(I32),
-  )
-
-  def contains(label: String) =
-    registry.keys.toSeq.contains(label)
-
-  def lookup(label: String) =
-    registry(label)
-
 
 class Scope(val module: String, env: Map[String, Ir] = Map.empty, parent: Option[Scope] = None):
   private val children = Stack[Scope]()
@@ -198,10 +185,6 @@ def rand =
   Random.alphanumeric.take(4).mkString
 
 def call(lambda: Ir, args: List[Ir], e: Emitter, s: Scope): Unit = lambda match
-  // XXX
-  case typeless.Id(parsing.ast.Id(label, _)) if Exposed.contains(label) =>
-    args.foreach(compile(_, e, s))
-    e.emit(inst(Exposed.lookup(label)))
   case typeless.Id(parsing.ast.Id(label, _)) if s.contains(label) =>
     s.lookup(label) match
       case lambda: typeless.Lambda =>
