@@ -18,6 +18,10 @@ implicit class ListImplicits[T](xs: List[T]):
     }
 
 
+implicit class ListOfEitherImplicits[L, R](val eithers: List[Either[L, R]]):
+  def squished: Either[L, List[R]] =
+    EitherImplicits(eithers.iterator).squished
+
 implicit class EitherImplicits[L, R](val eithers: Iterator[Either[L, R]]):
   /** Converts an [[Iterator[Either[L, R]]]] into an [[Either[L, List[R]]]].
    */
