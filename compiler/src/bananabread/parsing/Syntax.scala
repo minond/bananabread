@@ -1,5 +1,5 @@
 package bananabread
-package parsing.syntax
+package parsing.language
 
 import parsing.ast.{Token, Id}
 

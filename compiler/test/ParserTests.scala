@@ -5,8 +5,7 @@ import org.scalatest._
 import flatspec._
 import matchers._
 
-import parsing.lang.parse
-import parsing.syntax.Syntax
+import parsing.language.{Syntax, parse}
 
 
 class ParserTests extends AnyFlatSpec with should.Matchers:

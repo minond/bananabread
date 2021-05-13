@@ -1,8 +1,7 @@
 package bananabread
 package test
 
-import parsing.lang.parse
-import parsing.syntax.Syntax
+import parsing.language.{Syntax, parse}
 import ir.typeless
 import runtime.vm.Machine
 

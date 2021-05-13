@@ -1,7 +1,6 @@
 package bananabread
 
-import parsing.lang.{tokenize, parse}
-import parsing.syntax.Syntax
+import parsing.language.{Syntax, tokenize, parse}
 import ir.typeless
 import opcode.{Opcode, Instruction}
 import runtime.vm.Machine

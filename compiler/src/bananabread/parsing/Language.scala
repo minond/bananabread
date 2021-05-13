@@ -1,5 +1,5 @@
 package bananabread
-package parsing.lang
+package parsing.language
 
 import parsing.{Parsed, takeWhile, eat, skip, lookahead}
 import parsing.{and, is, not, oneof, or}
@@ -8,7 +8,6 @@ import parsing.{isLetter, isNewline, isNumeric, isWhitespace}
 import parsing.location.Location
 import parsing.ast._
 import parsing.error._
-import parsing.syntax.Syntax
 
 import utils.{ListImplicits, EitherImplicits, ComparisonImplicits}
 
