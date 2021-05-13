@@ -1,5 +1,5 @@
 package bananabread
-package parsing.parser
+package parsing
 
 import parsing.ast.{Token, Tree, Expr, Stmt, Eof, Id}
 import parsing.error._

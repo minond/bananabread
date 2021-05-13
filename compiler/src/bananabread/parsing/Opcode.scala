@@ -1,7 +1,7 @@
 package bananabread
 package parsing.opcode
 
-import parsing.parser.{Parsed, takeWhile, not, isWhitespace, and, oneof, eat}
+import parsing.{Parsed, takeWhile, not, isWhitespace, and, oneof, eat}
 import parsing.location.{Location, Located, At}
 import parsing.error.{SyntaxErr, UnexpectedTokenErr, UnexpectedEofErr}
 import utils.EitherImplicits

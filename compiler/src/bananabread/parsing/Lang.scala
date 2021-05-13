@@ -1,9 +1,9 @@
 package bananabread
 package parsing.lang
 
-import parsing.parser.{Parsed, takeWhile, eat, skip, lookahead}
-import parsing.parser.{and, is, not, oneof, or}
-import parsing.parser.{isLetter, isNewline, isNumeric, isWhitespace}
+import parsing.{Parsed, takeWhile, eat, skip, lookahead}
+import parsing.{and, is, not, oneof, or}
+import parsing.{isLetter, isNewline, isNumeric, isWhitespace}
 
 import parsing.location.Location
 import parsing.ast._
