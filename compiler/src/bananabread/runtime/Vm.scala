@@ -10,8 +10,6 @@ import opcode.{Opcode, Instruction}
 import scala.collection.mutable.{Stack, Map}
 
 
-
-
 sealed trait Pc
 case object Halt extends Pc
 case object Cont extends Pc
