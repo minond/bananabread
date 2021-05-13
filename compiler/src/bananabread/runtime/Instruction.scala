@@ -1,10 +1,9 @@
 package bananabread
-package backend
-package opcode
+package runtime.instruction
 
-import show.Print
 import runtime.value.Value
 import runtime.register.Register
+import show.Print
 
 
 sealed trait Type
