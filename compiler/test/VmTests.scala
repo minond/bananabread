@@ -102,10 +102,16 @@ class VmTests extends AnyFlatSpec with should.Matchers:
     ) shouldEqual I32(3)
   }
 
+  // TODO: Wrapping code in a begin/end block because it wasn't being properly
+  // parsed outside of one after the prelude started being prepended to the
+  // test code. Fix this since it's a general problem with parsing definitions
+  // plus top-level code in source.
   it should "evaluate immediatelly invoked functions" in {
     stackHeadOf(
       """
-      (func (a) = a + a)(3)
+      begin
+        (func (xxx) = xxx + xxx)(3)
+      end
       """
     ) shouldEqual I32(6)
   }
