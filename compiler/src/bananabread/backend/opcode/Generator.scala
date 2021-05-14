@@ -21,18 +21,9 @@ import scala.util.Random
 import scala.collection.mutable.{Map, Queue}
 
 
+case class Grouped(section: String, data: Instruction | Label)
 type Output = List[Grouped | Value | Label]
 type Result = Either[GeneratorError, Output]
-
-case class Grouped(section: String, data: Instruction | Label)
-
-sealed trait GeneratorError
-case class BadPushErr(ty: Type, node: Ir) extends GeneratorError
-case class BadCallErr(lambda: Ir) extends GeneratorError
-case class OpcodeSyntaxErr(source: parsing.ast.Str, err: parsing.error.SyntaxErr) extends GeneratorError
-case class UndeclaredIdentifierErr(id: typeless.Id) extends GeneratorError
-case class CannotStoreDefErr(definition: Ir) extends GeneratorError
-case class UnknownUserOpcodeErr(expr: OpcodeExpr) extends GeneratorError
 
 
 def generate(nodes: List[Ir]): Result =
