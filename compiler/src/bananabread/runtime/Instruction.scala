@@ -1,6 +1,7 @@
 package bananabread
 package runtime.instruction
 
+import runtime.value
 import runtime.value.Value
 import runtime.register.Register
 import show.Print
@@ -30,12 +31,11 @@ case object Halt extends Instruction with Print("halt")
 case class Jz(label: String) extends Instruction with Print(s"jz $label")
 case class Jmp(label: String) extends Instruction with Print(s"jmp $label")
 case class Push(typ: Type, value: String) extends Instruction with Print(s"push [$typ] $value")
-case class PushReg(reg: Register, value: runtime.value.I32) extends Instruction with Print(s"pushreg $reg $value")
 case class Call(label: String) extends Instruction with Print(s"call $label")
 case object Call0 extends Instruction with Print("call0")
 case object Ret extends Instruction with Print("ret")
 case object Swap extends Instruction with Print("swap")
-case class Mov(reg: Register) extends Instruction with Print(s"mov $reg")
+case class Mov(reg: Register, data: Option[value.I32]) extends Instruction with Print(s"mov $reg ${data.getOrElse("")}")
 case class Load(typ: Type, label: String) extends Instruction with Print(s"load [$typ] $label")
 case class Store(typ: Type, label: String) extends Instruction with Print(s"store [$typ] $label")
 case object Println extends Instruction with Print("println")

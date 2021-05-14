@@ -106,7 +106,7 @@ def generateCallLambda(scope: Scope, args: List[Ir], lambda: typeless.Lambda): R
 def generateCallApp(scope: Scope, args: List[Ir], app: typeless.App): Result =
   for
     call1 <- generateCall(scope, app.lambda, app.args)
-    mov    = group(scope, Mov(Jm))
+    mov    = group(scope, Mov(Jm, None))
     call2 <- generateCallWithArgs(scope, args, Call0)
     codes  = call1 ++ mov ++ call2
   yield
@@ -119,7 +119,7 @@ def generateCallWithArgs(scope: Scope, args: List[Ir], call: Instruction): Resul
 
 def generateCallArgsLoad(scope: Scope, args: List[Ir]): Result =
   args.map(generate(scope, _)).squished.map { instructions =>
-    instructions.flatten ++ group(scope, PushReg(Pc, value.I32(2)))
+    instructions.flatten ++ group(scope, Mov(Pc, Some(value.I32(2))))
   }
 
 def generateCond(scope: Scope, cond: Ir, pass: Ir, fail: Ir): Result =
