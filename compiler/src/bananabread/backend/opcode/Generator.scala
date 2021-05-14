@@ -4,6 +4,10 @@ package backend.opcode
 import ir.typeless
 import ir.typeless.Ir
 
+import parsing.opcode.Tree => OpcodeTree
+import parsing.opcode.Expr => OpcodeExpr
+import parsing.opcode.Instruction => InstructionExpr
+
 import runtime.value
 import runtime.register._
 import runtime.instruction
@@ -27,6 +31,7 @@ case class BadCallErr(lambda: Ir) extends GeneratorError
 case class OpcodeSyntaxErr(source: parsing.ast.Str, err: parsing.error.SyntaxErr) extends GeneratorError
 case class UndeclaredIdentifierErr(id: typeless.Id) extends GeneratorError
 case class CannotStoreDefErr(definition: Ir) extends GeneratorError
+case class UnknownUserOpcodeErr(expr: OpcodeExpr) extends GeneratorError
 
 
 def generate(nodes: List[Ir]): Result =
@@ -73,7 +78,7 @@ def generateCall(scope: Scope, lambda: Ir, args: List[Ir]): Result = lambda matc
   case typeless.Id(parsing.ast.Id("opcode", _)) => args match
     case typeless.Str(node @ parsing.ast.Str(str, _)) :: Nil =>
       parsing.opcode.parse("<opcode>", str) match
-        case Right(tr) => ???
+        case Right(tr) => generateOpcode(scope, tr)
         case Left(err) => Left(OpcodeSyntaxErr(node, err))
     case _             => Left(BadCallErr(lambda))
 
@@ -87,6 +92,17 @@ def generateCall(scope: Scope, lambda: Ir, args: List[Ir]): Result = lambda matc
   case id: typeless.Id      => generateCallId(scope, args, id)
   case app: typeless.App    => generateCallApp(scope, args, app)
   case _                    => Left(BadCallErr(lambda))
+
+def generateOpcode(scope: Scope, tree: OpcodeTree): Result =
+  tree.nodes.map(generateOpcode(scope, _)).squished.map(_.flatten)
+def generateOpcode(scope: Scope, expr: OpcodeExpr): Result = expr match
+  case InstructionExpr("add", Some("I32"), Nil, _) => Right(group(scope, Add(I32)))
+  case InstructionExpr("sub", Some("I32"), Nil, _) => Right(group(scope, Sub(I32)))
+  case InstructionExpr("concat", Some("Str"), Nil, _) => Right(group(scope, Concat))
+  case InstructionExpr("load", Some("I32"), List(label), _) => Right(group(scope, Load(I32, scope.qualified(label))))
+  case InstructionExpr("load", Some("Str"), List(label), _) => Right(group(scope, Load(Str, scope.qualified(label))))
+  case InstructionExpr("println", None, Nil, _) => Right(group(scope, Println))
+  case _ => Left(UnknownUserOpcodeErr(expr))
 
 def generateCallId(scope: Scope, args: List[Ir], id: typeless.Id): Result =
   generateCallWithArgs(scope, args, Call(scope.qualified(id)))

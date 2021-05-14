@@ -242,6 +242,7 @@ def main(args: Array[String]) =
       ir = typeless.lift(ast)
       _=println(s"IR: ${ir}\n\n")
       ins = opcode.compile(ir)
+      ins2 <- backend.opcode.generate(ir)
     yield
       val rt = Machine(ins.dump, info = false, prompt = false)
 
@@ -252,5 +253,6 @@ def main(args: Array[String]) =
       println("==================")
       rt.printInfo
       println("==================")
+      ins2.foreach { i => println(i) }
 
   println(res)
