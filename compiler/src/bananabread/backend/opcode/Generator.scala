@@ -20,7 +20,7 @@ import utils.ListOfEitherImplicits
 import scala.util.Random
 
 
-type Output = List[Grouped | Value]
+type Output = List[Grouped | Value | Label]
 type Result = Either[GeneratorError, Output]
 
 case class Grouped(section: String, data: Instruction | Label)
@@ -177,7 +177,7 @@ def generateDef(scope: Scope, name: String, value: Ir): Result = value match
       }
 
       generateLambda(subscope, lam.params, lam.body)
-        .map(Value(Ptr, name, lam.ptr) +: _)
+        .map(Label(lam.ptr) +: _ :+ Value(Ptr, name, lam.ptr))
     }
 
 def generateLambda(scope: Scope, params: List[Ir], body: Ir): Result =

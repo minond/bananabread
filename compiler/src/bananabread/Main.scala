@@ -253,6 +253,13 @@ def main(args: Array[String]) =
       println("==================")
       rt.printInfo
       println("==================")
-      ins2.foreach { i => println(i) }
+      ins2.foreach {
+        case g : bananabread.backend.opcode.Grouped =>
+          println(runtime.instruction.pp(g.data))
+        case v : bananabread.runtime.instruction.Value =>
+          println(runtime.instruction.pp(v))
+        case v : bananabread.runtime.instruction.Label =>
+          println(runtime.instruction.pp(v))
+      }
 
   println(res)
