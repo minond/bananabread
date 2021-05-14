@@ -233,7 +233,7 @@ def opcodes(instruction: parsing.opcode.Expr, e: Emitter, s: Scope): Emitter = i
     e.emit(inst(Add(I32)))
   case parsing.opcode.Instruction("sub", Some("I32"), Nil, _) =>
     e.emit(inst(Sub(I32)))
-  case parsing.opcode.Instruction("concat", Some("Str"), Nil, _) =>
+  case parsing.opcode.Instruction("concat", None, Nil, _) =>
     e.emit(inst(Concat(Str)))
   case parsing.opcode.Instruction("load", Some("I32"), List(label), _) =>
     e.emit(inst(Load(I32), name(s"${s.container(label).module}.$label")))

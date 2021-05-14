@@ -217,7 +217,7 @@ def main(args: Array[String]) =
       opcode %{
         load [Str] a
         load [Str] b
-        concat [Str]
+        concat
       }
 
     def println(x) =
