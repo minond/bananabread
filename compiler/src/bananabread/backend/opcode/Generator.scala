@@ -18,6 +18,7 @@ import runtime.instruction.{Type, I32, Str, Symbol}
 import utils.ListOfEitherImplicits
 
 import scala.util.Random
+import scala.collection.mutable.{Map, Queue}
 
 
 type Output = List[Grouped | Value | Label]
@@ -37,7 +38,8 @@ case class UnknownUserOpcodeErr(expr: OpcodeExpr) extends GeneratorError
 def generate(nodes: List[Ir]): Result =
   generate(backend.opcode.Scope.empty, nodes)
 def generate(scope: Scope, nodes: List[Ir]): Result =
-  nodes.map { node => generate(scope, node) }.squished.map(_.flatten)
+  nodes.map { node => generate(scope, node) }.squished
+       .map { inst => inst.flatten }
 def generate(scope: Scope, node: Ir): Result = node match
   case num: typeless.Num    => generatePush(scope, num, I32)
   case str: typeless.Str    => generatePush(scope, str, Str)
@@ -177,7 +179,7 @@ def generateDef(scope: Scope, name: String, value: Ir): Result = value match
       }
 
       generateLambda(subscope, lam.params, lam.body)
-        .map(Label(lam.ptr) +: _ :+ Value(Ptr, name, lam.ptr))
+        .map(Label(lam.ptr) +: _ :+ Value(Ptr, scope.qualified(name), lam.ptr))
     }
 
 def generateLambda(scope: Scope, params: List[Ir], body: Ir): Result =
@@ -215,3 +217,26 @@ def group(scope: Scope, insts: (Instruction | Label)*): Output =
 
 def uniqueString(scope: Scope, label: String): String =
   s"$label-${Random.alphanumeric.take(4).mkString}"
+
+
+extension (output: Output)
+  def ordered: List[Code] =
+    val sections = Map[String, Queue[Code]]()
+    val values = Queue[Value]()
+
+    output.foreach {
+      case Grouped(section, inst: Instruction) =>
+        sections.get(section) match
+          case Some(q) => q.addOne(inst)
+          case None    => sections.update(section, Queue(inst))
+      case Grouped(section, label: Label) =>
+      case value: Value => values.addOne(value)
+      case label: Label =>
+    }
+
+    (for (section, instructions) <- sections if section == "main"
+     yield Label(section) +: instructions).flatten.toList ++
+    List(Halt) ++
+    (for (section, instructions) <- sections if section != "main"
+     yield Label(section) +: instructions).flatten ++
+    values

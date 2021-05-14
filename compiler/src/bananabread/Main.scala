@@ -4,6 +4,9 @@ import parsing.language.{Syntax, tokenize, parse}
 import ir.typeless
 import opcode.{Opcode, Instruction}
 import runtime.vm.Machine
+import runtime.instruction.pp
+import backend.opcode.ordered
+import backend.opcode.generate
 
 
 def main(args: Array[String]) =
@@ -242,7 +245,7 @@ def main(args: Array[String]) =
       ir = typeless.lift(ast)
       _=println(s"IR: ${ir}\n\n")
       ins = opcode.compile(ir)
-      ins2 <- backend.opcode.generate(ir)
+      ins2 <- generate(ir)
     yield
       val rt = Machine(ins.dump, info = false, prompt = false)
 
@@ -253,13 +256,6 @@ def main(args: Array[String]) =
       println("==================")
       rt.printInfo
       println("==================")
-      ins2.foreach {
-        case g : bananabread.backend.opcode.Grouped =>
-          println(runtime.instruction.pp(g.data))
-        case v : bananabread.runtime.instruction.Value =>
-          println(runtime.instruction.pp(v))
-        case v : bananabread.runtime.instruction.Label =>
-          println(runtime.instruction.pp(v))
-      }
+      ins2.ordered.foreach { x => println(pp(x)) }
 
   println(res)
