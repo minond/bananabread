@@ -10,8 +10,8 @@ import scala.collection.mutable.Map
 
 
 object Scope:
-  def empty(module: String) =
-    Scope(module, Map.empty, None)
+  def empty =
+    Scope("main", Map.empty, None)
 
 class Scope(val module: String, env: Map[String, Ir], parent: Option[Scope]):
   def contains(id: ast.Id): Boolean = contains(id.lexeme)

@@ -29,6 +29,10 @@ case class UndeclaredIdentifierErr(id: typeless.Id) extends GeneratorError
 case class CannotStoreDefErr(definition: Ir) extends GeneratorError
 
 
+def generate(nodes: List[Ir]): Result =
+  generate(backend.opcode.Scope.empty, nodes)
+def generate(scope: Scope, nodes: List[Ir]): Result =
+  nodes.map { node => generate(scope, node) }.squished.map(_.flatten)
 def generate(scope: Scope, node: Ir): Result = node match
   case num: typeless.Num    => generatePush(scope, num, I32)
   case str: typeless.Str    => generatePush(scope, str, Str)
@@ -156,7 +160,8 @@ def generateDef(scope: Scope, name: String, value: Ir): Result = value match
         subscope.define(param, param)
       }
 
-      Right(List(Value(Ptr, name, lam.ptr)))
+      generateLambda(subscope, lam.params, lam.body)
+        .map(Value(Ptr, name, lam.ptr) +: _)
     }
 
 def generateLambda(scope: Scope, params: List[Ir], body: Ir): Result =
