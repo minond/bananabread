@@ -3,10 +3,11 @@ package parsing.opcode
 
 import parsing.{Parsed, takeWhile, not, isWhitespace, and, oneof, eat}
 import parsing.location.{Location, Located, At}
-import parsing.error.{SyntaxErr, UnexpectedTokenErr, UnexpectedEofErr}
-import utils.EitherImplicits
+import parsing.error.{SyntaxErr, UnexpectedTokenErr, UnexpectedEofErr, BadNumErr}
+import utils.{BaseImplicits, ComparisonImplicits, EitherImplicits}
 
 import scala.reflect.ClassTag
+import scala.util.{Try, Success, Failure}
 
 
 case class Tree(nodes: List[Expr])
@@ -19,6 +20,8 @@ sealed trait Expr extends Located
 case class OpenSquareBraket(loc: Location) extends Token, At(loc)
 case class CloseSquareBraket(loc: Location) extends Token, At(loc)
 case class Word(lexeme: String, loc: Location) extends Token, At(loc)
+case class Comma(loc: Location) extends Token, At(loc)
+case class Eof(loc: Location) extends Token, At(loc)
 
 
 case class Label(label: String, loc: Location) extends Expr, At(loc)
@@ -43,10 +46,20 @@ def parse(sourceName: String, tokens: Tokens): Parsed[Tree] =
 def parseTop(head: Token, tail: Tokens): Parsed[Expr] = head match
   case op @ Word("add", _)     => parseOpcodeWithType(op, tail)
   case op @ Word("sub", _)     => parseOpcodeWithType(op, tail)
+  case op @ Word("push", _)    => parseOpcodeWithTypeAndArg1(op, tail)
   case op @ Word("load", _)    => parseOpcodeWithTypeAndArg1(op, tail)
+  case op @ Word("store", _)   => parseOpcodeWithTypeAndArg1(op, tail)
+  case op @ Word("jz", _)      => parseOpcodeWithArg1(op, tail)
+  case op @ Word("jmp", _)     => parseOpcodeWithArg1(op, tail)
+  case op @ Word("call", _)    => parseOpcodeWithArg1(op, tail)
+  case op @ Word("mov", _)     => parseMov(op, tail)
   case op @ Word("concat", _)  => parseOpcode(op, tail)
   case op @ Word("println", _) => parseOpcode(op, tail)
+  case op @ Word("halt", _)    => parseOpcode(op, tail)
+  case op @ Word("call0", _)   => parseOpcode(op, tail)
   case op @ Word("ret", _)     => parseOpcode(op, tail)
+  case op @ Word("swap", _)    => parseOpcode(op, tail)
+  case _: Eof                  => Left(UnexpectedEofErr(head))
   case _                       => Left(UnexpectedTokenErr(head))
 
 def parseOpcode(op: Word, tail: Tokens): Parsed[Expr] =
@@ -60,6 +73,12 @@ def parseOpcodeWithType(op: Word, tail: Tokens): Parsed[Expr] =
     yield
       Instruction(op.lexeme, Some(ty.lexeme), List.empty, op.location)
 
+def parseOpcodeWithArg1(op: Word, tail: Tokens): Parsed[Expr] =
+    for
+      arg1 <- eat[Word](op, tail)
+    yield
+      Instruction(op.lexeme, None, List(arg1.lexeme), op.location)
+
 def parseOpcodeWithTypeAndArg1(op: Word, tail: Tokens): Parsed[Expr] =
     for
       _    <- eat[OpenSquareBraket](op, tail)
@@ -69,13 +88,20 @@ def parseOpcodeWithTypeAndArg1(op: Word, tail: Tokens): Parsed[Expr] =
     yield
       Instruction(op.lexeme, Some(ty.lexeme), List(name.lexeme), op.location)
 
-def eat[T: ClassTag](head: Token, tail: Tokens): Parsed[T] = tail.headOption match
-  case Some(token: T) =>
-    tail.next
-    Right(token)
+def parseMov(op: Word, tail: Tokens): Parsed[Expr] =
+    for
+      reg  <- eat[Word](op, tail)
+      args <- if lookahead(op, tail).is[Comma]
+              then eat[Word](tail.next, tail).flatMap(parseNum).map(_.asList)
+              else Right(List.empty)
+    yield
+      Instruction(op.lexeme, Some(reg.lexeme), args, op.location)
 
-  case Some(bad) => Left(UnexpectedTokenErr(bad))
-  case None      => Left(UnexpectedEofErr(head))
+
+def parseNum(word: Word): Parsed[String] =
+  Try { word.lexeme.toInt } match
+    case Failure(_) => Left(BadNumErr(word.lexeme, word.loc))
+    case Success(_) => Right(word.lexeme)
 
 
 def tokenize(sourceName: String, sourceString: String): Parsed[List[Token]] =
@@ -89,4 +115,20 @@ def tokenize(sourceName: String, sourceStream: BufferedIterator[(Char, Int)]): P
 def nextToken(head: Char, tail: BufferedIterator[(Char, Int)], loc: Location): Parsed[Token] = head match
   case '[' => Right(OpenSquareBraket(loc))
   case ']' => Right(CloseSquareBraket(loc))
-  case _   => Right(Word(head +: takeWhile(tail, and(not(isWhitespace), not(oneof('[', ']')))).mkString, loc))
+  case ',' => Right(Comma(loc))
+  case _   => Right(Word(head +: takeWhile(tail, and(not(isWhitespace),
+                                                     not(oneof('[', ']')))).mkString, loc))
+
+
+def lookahead(head: Token, tail: Tokens): Token =
+  tail.headOption match
+    case Some(token) => token
+    case None        => Eof(head.location)
+
+def eat[T: ClassTag](head: Token, tail: Tokens): Parsed[T] = tail.headOption match
+  case Some(token: T) =>
+    tail.next
+    Right(token)
+
+  case Some(bad) => Left(UnexpectedTokenErr(bad))
+  case None      => Left(UnexpectedEofErr(head))

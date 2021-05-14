@@ -32,6 +32,10 @@ implicit class EitherImplicits[L, R](val eithers: Iterator[Either[L, R]]):
     }
 
 
+implicit class BaseImplicits[T <: Any](x: T):
+  def asList: List[T] = List(x)
+
+
 implicit class ComparisonImplicits(val obj: Any):
   def is[T : ClassTag] = obj match
     case _ : T => true
