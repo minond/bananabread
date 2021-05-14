@@ -256,6 +256,6 @@ def main(args: Array[String]) =
       println("==================")
       rt.printInfo
       println("==================")
-      ins2.ordered.foreach { x => println(pp(x)) }
+      println(pp(ins2.ordered))
 
   println(res)

@@ -44,6 +44,10 @@ case class Sub(typ: Type) extends Instruction with Print(s"sub [$typ]")
 case object Concat extends Instruction with Print("concat")
 
 
+def pp(codes: List[Code]): String =
+  codes.zipWithIndex.map { (code, i) =>
+    f"${i}%05d    ${pp(code)}"
+  }.mkString("\n")
 def pp(code: Code): String = code match
   case _ : Label       => code.toString
   case _ : Value       => code.toString
