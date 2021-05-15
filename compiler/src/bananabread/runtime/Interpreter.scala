@@ -63,17 +63,44 @@ def handle(code: Code, machine: Machine): Dispatch = code match
   case op: Add   => handleAdd(op, machine)
   case op: Sub   => handleSub(op, machine)
 
-def handleJz(op: Jz, machine: Machine): Dispatch = ???
-def handleJmp(op: Jmp, machine: Machine): Dispatch = ???
-def handlePush(op: Push, machine: Machine): Dispatch = ???
-def handleCall(op: Call, machine: Machine): Dispatch = ???
-def handleCall0(machine: Machine): Dispatch = ???
-def handleRet(machine: Machine): Dispatch = ???
-def handleSwap(machine: Machine): Dispatch = ???
-def handleMov(op: Mov, machine: Machine): Dispatch = ???
-def handleLoad(op: Load, machine: Machine): Dispatch = ???
-def handleStore(op: Store, machine: Machine): Dispatch = ???
-def handlePrintln(machine: Machine): Dispatch = ???
-def handleConcat(machine: Machine): Dispatch = ???
-def handleAdd(op: Add, machine: Machine): Dispatch = ???
-def handleSub(op: Sub, machine: Machine): Dispatch = ???
+def handleJz(op: Jz, machine: Machine): Dispatch =
+  ???
+
+def handleJmp(op: Jmp, machine: Machine): Dispatch =
+  ???
+
+def handlePush(op: Push, machine: Machine): Dispatch =
+  ???
+
+def handleCall(op: Call, machine: Machine): Dispatch =
+  ???
+
+def handleCall0(machine: Machine): Dispatch =
+  ???
+
+def handleRet(machine: Machine): Dispatch =
+  ???
+
+def handleSwap(machine: Machine): Dispatch =
+  ???
+
+def handleMov(op: Mov, machine: Machine): Dispatch =
+  ???
+
+def handleLoad(op: Load, machine: Machine): Dispatch =
+  ???
+
+def handleStore(op: Store, machine: Machine): Dispatch =
+  ???
+
+def handlePrintln(machine: Machine): Dispatch =
+  ???
+
+def handleConcat(machine: Machine): Dispatch =
+  ???
+
+def handleAdd(op: Add, machine: Machine): Dispatch =
+  ???
+
+def handleSub(op: Sub, machine: Machine): Dispatch =
+  ???
