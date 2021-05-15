@@ -9,7 +9,7 @@ import parsing.location.Location
 import parsing.ast._
 import parsing.error._
 
-import bananabread.utils.{isAn, squished, without}
+import utils.{isAn, squished, without}
 
 import scala.util.{Try, Success, Failure}
 import scala.reflect.ClassTag

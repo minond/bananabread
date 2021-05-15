@@ -4,7 +4,7 @@ package parsing.opcode
 import parsing.{Parsed, takeWhile, not, isWhitespace, and, oneof, eat}
 import parsing.location.{Location, Located, At}
 import parsing.error.{SyntaxErr, UnexpectedTokenErr, UnexpectedEofErr, BadNumErr}
-import bananabread.utils.{isA, asList, squished}
+import utils.{isA, asList, squished}
 
 import scala.reflect.ClassTag
 import scala.util.{Try, Success, Failure}
