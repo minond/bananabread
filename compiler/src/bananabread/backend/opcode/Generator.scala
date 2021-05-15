@@ -209,7 +209,7 @@ def generateDef(scope: Scope, name: String, value: Ir): Result = value match
     generate(scope, value)
       .map(_ ++ group(scope, Store(I32, scope.qualified(name))))
 
-def generateLambda(scope: Scope, params: List[Ir], body: Ir): Result =
+def generateLambda(scope: Scope, params: List[typeless.Id], body: Ir): Result =
   val header = params.reverse.flatMap { case param @ typeless.Id(label) =>
     scope.define(param, param)
     group(scope, Swap, Store(I32, scope.qualified(label)))

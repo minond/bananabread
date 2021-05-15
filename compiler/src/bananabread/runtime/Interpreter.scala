@@ -45,8 +45,8 @@ class Interpreter(codes: List[Code]):
 
 
 def handle(code: Code, machine: Machine): Dispatch = code match
-  case instruction.Value => Cont
-  case instruction.Label => Cont
+  case _: instruction.Value => Cont
+  case _: instruction.Label => Cont
   case instruction.Halt  => Halt
   case op: Jz    => handleJz(op, machine)
   case op: Jmp   => handleJmp(op, machine)
