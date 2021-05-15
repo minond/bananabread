@@ -3,6 +3,7 @@ package bananabread
 import parsing.language.{Syntax, tokenize, parse}
 import ir.typeless
 import opcode.{Opcode, Instruction}
+import runtime.Interpreter
 import runtime.vm.Machine
 import runtime.instruction.pp
 import backend.opcode.ordered
@@ -273,5 +274,7 @@ def main(args: Array[String]) =
       rt.printInfo
       println("==================")
       println(pp(ins2.ordered))
+
+      val interpreter = Interpreter(ins2.ordered)
 
   println(res)
