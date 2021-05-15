@@ -226,10 +226,22 @@ def main(args: Array[String]) =
         println
       }
 
+    begin
     println(123)
     println(1 + 4)
     println(4 - 1)
     println(%{one} ++ %{ two})
+    end
+
+    def x = (func (a) = a + a)(123)
+    def y = x + x
+    def z = func (a) = a + y + x
+
+    def aaa =
+      func (a) =
+        func (b) =
+          func (c) =
+            a + b + c
     """
 
   // parsing.opcode.parse(

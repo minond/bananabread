@@ -36,6 +36,7 @@ def generate(scope: Scope, node: Ir): Result = node match
   case str: typeless.Str    => generatePush(scope, str, Str)
   case sym: typeless.Symbol => generatePush(scope, sym, Symbol)
   case id: typeless.Id      => generateLoad(scope, id)
+  case lam: typeless.Lambda => generateAnnonLambda(scope, lam)
   case typeless.App(lambda, args, _)      => generateCall(scope, lambda, args)
   case typeless.Cond(cond, pass, fail, _) => generateCond(scope, cond, pass, fail)
   case typeless.Let(bindings, body, _)    => generateLet(scope, bindings, body)
@@ -59,12 +60,20 @@ def generateLoad(scope: Scope, id: typeless.Id): Result = scope.get(id) match
   case Some(_)                    => Right(group(scope, Load(I32, scope.qualified(id))))
   case None                       => Left(UndeclaredIdentifierErr(id))
 
+def generateAnnonLambda(scope: Scope, lambda: typeless.Lambda): Result =
+  scope.forked(lambda.ptr) { subscope =>
+    generateLambda(subscope, lambda.params, lambda.body)
+      .map(Label(lambda.ptr) +: _)
+      .map(_ ++ group(scope, Push(Scope, lambda.ptr)))
+      .map(_ :+ Value(Ptr, lambda.ptr, lambda.ptr))
+  }
+
 def generateCall(scope: Scope, lambda: Ir, args: List[Ir]): Result = lambda match
   case id: typeless.Id if scope.contains(id) =>
     scope.get(id) match
       case Some(id: typeless.Id)      => generateCallId(scope, args, id)
       case Some(app: typeless.App)    => generateCallApp(scope, args, app)
-      case Some(lam: typeless.Lambda) => generateCallLambda(scope, args, lam)
+      case Some(lam: typeless.Lambda) => generateCallId(scope, args, id)
       case Some(_)                    => Left(BadCallErr(lambda))
       case None                       => Left(UndeclaredIdentifierErr(id))
 
@@ -185,16 +194,18 @@ def generateDef(scope: Scope, name: String, value: Ir): Result = value match
   case lam: typeless.Lambda =>
     scope.define(name, value)
     scope.scoped(name) { subscope =>
-      lam.params.foreach { param =>
-        subscope.define(param, param)
-      }
-
       generateLambda(subscope, lam.params, lam.body)
         .map(Label(lam.ptr) +: _ :+ Value(Ptr, scope.qualified(name), lam.ptr))
     }
 
+  case _ =>
+    scope.define(name, value)
+    generate(scope, value)
+      .map(_ ++ group(scope, Store(I32, scope.qualified(name))))
+
 def generateLambda(scope: Scope, params: List[Ir], body: Ir): Result =
-  val header = params.reverse.flatMap { case typeless.Id(label) =>
+  val header = params.reverse.flatMap { case param @ typeless.Id(label) =>
+    scope.define(param, param)
     group(scope, Swap, Store(I32, scope.qualified(label)))
   }
 
