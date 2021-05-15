@@ -52,3 +52,6 @@ class Scope(val module: String, env: Map[String, Ir], parent: Option[Scope]):
 
   def unique[R](fn: Scope => R) =
     fn(subscope(Random.alphanumeric.take(4).mkString))
+
+  def isToplevel: Boolean =
+    parent.isEmpty

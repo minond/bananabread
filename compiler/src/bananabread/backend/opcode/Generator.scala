@@ -62,9 +62,14 @@ def generateLoad(scope: Scope, id: typeless.Id): Result = scope.get(id) match
 
 def generateAnnonLambda(scope: Scope, lambda: typeless.Lambda): Result =
   scope.forked(lambda.ptr) { subscope =>
+    val exposure =
+      if scope.isToplevel
+      then List.empty
+      else group(scope, Push(Scope, lambda.ptr))
+
     generateLambda(subscope, lambda.params, lambda.body)
       .map(Label(lambda.ptr) +: _)
-      .map(_ ++ group(scope, Push(Scope, lambda.ptr)))
+      .map(_ ++ exposure)
       .map(_ :+ Value(Ptr, lambda.ptr, lambda.ptr))
   }
 

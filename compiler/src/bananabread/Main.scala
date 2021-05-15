@@ -242,6 +242,10 @@ def main(args: Array[String]) =
         func (b) =
           func (c) =
             a + b + c
+
+    def bbb = aaa(1)(2)
+
+    println(bbb(3))
     """
 
   // parsing.opcode.parse(
