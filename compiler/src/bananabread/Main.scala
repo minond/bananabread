@@ -277,4 +277,7 @@ def main(args: Array[String]) =
 
       val interpreter = Interpreter(ins2.ordered)
 
+      println(interpreter.labels)
+      println(interpreter.constants)
+
   println(res)

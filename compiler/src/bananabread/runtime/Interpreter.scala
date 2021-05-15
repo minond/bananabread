@@ -19,3 +19,6 @@ class Interpreter(codes: List[Code]):
   val stack = Stack[Value]()
   val frames = Frames()
   val registers = Registers()
+
+  val labels = codes.labels
+  val constants = codes.constants

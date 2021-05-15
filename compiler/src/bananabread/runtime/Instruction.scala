@@ -17,11 +17,6 @@ case object Scope extends Type
 case object Const extends Type
 
 
-type Code = Label
-          | Value
-          | Instruction
-
-
 case class Label(label: String) extends Print(s"$label:")
 case class Value(typ: Type, label: String, _value: value.Value) extends Print(s"$label [$typ]: $_value")
 
@@ -42,6 +37,22 @@ case object Println extends Instruction with Print("println")
 case class Add(typ: Type) extends Instruction with Print(s"add [$typ]")
 case class Sub(typ: Type) extends Instruction with Print(s"sub [$typ]")
 case object Concat extends Instruction with Print("concat")
+
+
+type Code = Label
+          | Value
+          | Instruction
+
+extension (codes: List[Code])
+  def labels: Map[String, Int] =
+    codes.zipWithIndex.collect {
+      case (Label(label), index) => (label, index)
+    }.toMap
+
+  def constants: Map[String, value.Value] =
+    codes.collect {
+      case Value(_, label, value) => (label, value)
+    }.toMap
 
 
 def pp(codes: List[Code]): String =
