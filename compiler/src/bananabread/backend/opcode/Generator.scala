@@ -130,7 +130,7 @@ def generateOpcode(scope: Scope, expr: OpcodeExpr): Result = expr match
   case InstructionExpr("call0",   None,        Nil,         _) => Right(group(scope, Call0))
   case InstructionExpr("ret",     None,        Nil,         _) => Right(group(scope, Ret))
   case InstructionExpr("swap",    None,        Nil,         _) => Right(group(scope, Swap))
-  case _ => Left(UnknownUserOpcodeErr(expr))
+  case _                                                       => Left(UnknownUserOpcodeErr(expr))
 
 def generateCallId(scope: Scope, args: List[Ir], id: typeless.Id): Result =
   generateCallWithArgs(scope, args, Call(scope.qualified(id)))
