@@ -23,7 +23,7 @@ type Code = Label
 
 
 case class Label(label: String) extends Print(s"$label:")
-case class Value(typ: Type, label: String, value: String) extends Print(s"$label [$typ]: $value")
+case class Value(typ: Type, label: String, _value: value.Value) extends Print(s"$label [$typ]: $_value")
 
 
 sealed trait Instruction

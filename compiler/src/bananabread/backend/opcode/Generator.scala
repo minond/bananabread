@@ -9,6 +9,7 @@ import parsing.opcode.Expr => OpcodeExpr
 import parsing.opcode.Instruction => InstructionExpr
 
 import runtime.value
+import runtime.value.Id
 import runtime.register._
 import runtime.instruction
 import runtime.instruction._
@@ -47,10 +48,10 @@ def generatePush(scope: Scope, node: Ir, ty: Type): Result = (ty, node) match
   case (I32, num: typeless.Num) =>
     Right(group(scope, Push(I32, num.num.lexeme)))
   case (Str, str: typeless.Str) =>
-    Right(Value(Str, str.ptr, str.str.lexeme) +:
+    Right(Value(Str, str.ptr, value.Str(str.str.lexeme)) +:
           group(scope, Push(Const, str.ptr)))
   case (Symbol, sym: typeless.Symbol) =>
-    Right(Value(Symbol, sym.ptr, sym.symbol.lexeme) +:
+    Right(Value(Symbol, sym.ptr, value.Symbol(sym.symbol.lexeme)) +:
           group(scope, Push(Str, sym.ptr)))
   case _ =>
     Left(BadPushErr(ty, node))
@@ -70,7 +71,7 @@ def generateAnnonLambda(scope: Scope, lambda: typeless.Lambda): Result =
     generateLambda(subscope, lambda.params, lambda.body)
       .map(Label(lambda.ptr) +: _)
       .map(_ ++ exposure)
-      .map(_ :+ Value(Ptr, lambda.ptr, lambda.ptr))
+      .map(_ :+ Value(Ptr, lambda.ptr, Id(lambda.ptr)))
   }
 
 def generateCall(scope: Scope, lambda: Ir, args: List[Ir]): Result = lambda match
@@ -200,7 +201,7 @@ def generateDef(scope: Scope, name: String, value: Ir): Result = value match
     scope.define(name, value)
     scope.scoped(name) { subscope =>
       generateLambda(subscope, lam.params, lam.body)
-        .map(Label(lam.ptr) +: _ :+ Value(Ptr, scope.qualified(name), lam.ptr))
+        .map(Label(lam.ptr) +: _ :+ Value(Ptr, scope.qualified(name), Id(lam.ptr)))
     }
 
   case _ =>
