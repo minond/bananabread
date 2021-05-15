@@ -4,7 +4,8 @@ package ir.typeless
 import parsing.ast
 import ast.{Tree, Expr, Stmt}
 import show.{Ptr, Print}
-import utils.ListImplicits
+
+import utils.onlys
 
 
 sealed trait Ir

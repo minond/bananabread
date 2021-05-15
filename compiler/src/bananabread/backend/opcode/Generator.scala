@@ -16,7 +16,7 @@ import runtime.instruction._
 import runtime.instruction.{Value, Label, Instruction}
 import runtime.instruction.{Type, I32, Str, Symbol}
 
-import utils.ListOfEitherImplicits
+import utils.squished
 
 import scala.util.Random
 import scala.collection.mutable.{Map, Queue}

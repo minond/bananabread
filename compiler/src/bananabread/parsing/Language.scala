@@ -9,7 +9,7 @@ import parsing.location.Location
 import parsing.ast._
 import parsing.error._
 
-import utils.{ListImplicits, EitherImplicits, ComparisonImplicits}
+import bananabread.utils.{isAn, squished, without}
 
 import scala.util.{Try, Success, Failure}
 import scala.reflect.ClassTag
@@ -86,7 +86,7 @@ def parseDef(start: Token, tail: Tokens, syntax: Syntax): Parsed[Def] =
   for
     name  <- eat[Id](start, tail)
     next  = lookahead(start, tail)
-    value <- if next.is[OpenParen]
+    value <- if next.isAn[OpenParen]
              then parseLambda(start, tail, syntax)
              else parseDefValue(start, tail, syntax)
   yield

@@ -4,7 +4,7 @@ package utils
 import scala.reflect.ClassTag
 
 
-implicit class ListImplicits[T](xs: List[T]):
+extension [T](xs: List[T])
   def onlys[X : ClassTag]: Either[List[T], List[X]] =
     xs.foldLeft[Either[List[T], List[X]]](Right(List())) {
       case (acc, x : X) => acc.flatMap(xs => Right(xs :+ x))
@@ -18,13 +18,12 @@ implicit class ListImplicits[T](xs: List[T]):
     }
 
 
-implicit class ListOfEitherImplicits[L, R](val eithers: List[Either[L, R]]):
+extension [L, R](eithers: List[Either[L, R]])
   def squished: Either[L, List[R]] =
-    EitherImplicits(eithers.iterator).squished
+    eithers.iterator.squished
 
-implicit class EitherImplicits[L, R](val eithers: Iterator[Either[L, R]]):
-  /** Converts an [[Iterator[Either[L, R]]]] into an [[Either[L, List[R]]]].
-   */
+
+extension [L, R](eithers: Iterator[Either[L, R]])
   def squished: Either[L, List[R]] =
     eithers.foldLeft[Either[L, List[R]]](Right(List())) {
       (acc, x) =>
@@ -32,11 +31,11 @@ implicit class EitherImplicits[L, R](val eithers: Iterator[Either[L, R]]):
     }
 
 
-implicit class BaseImplicits[T <: Any](x: T):
-  def asList: List[T] = List(x)
-
-
-implicit class ComparisonImplicits(val obj: Any):
-  def is[T : ClassTag] = obj match
-    case _ : T => true
+extension [T <: Any](obj: T)
+  def isAn[X : ClassTag]: Boolean = isA[X]
+  def isA[X : ClassTag]: Boolean = obj match
+    case _ : X => true
     case _     => false
+
+  def asList: List[T] =
+    List(obj)

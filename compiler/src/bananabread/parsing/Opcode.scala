@@ -4,7 +4,7 @@ package parsing.opcode
 import parsing.{Parsed, takeWhile, not, isWhitespace, and, oneof, eat}
 import parsing.location.{Location, Located, At}
 import parsing.error.{SyntaxErr, UnexpectedTokenErr, UnexpectedEofErr, BadNumErr}
-import utils.{BaseImplicits, ComparisonImplicits, EitherImplicits}
+import bananabread.utils.{isA, asList, squished}
 
 import scala.reflect.ClassTag
 import scala.util.{Try, Success, Failure}
@@ -91,7 +91,7 @@ def parseOpcodeWithTypeAndArg1(op: Word, tail: Tokens): Parsed[Expr] =
 def parseMov(op: Word, tail: Tokens): Parsed[Expr] =
     for
       reg  <- eat[Word](op, tail)
-      args <- if lookahead(op, tail).is[Comma]
+      args <- if lookahead(op, tail).isA[Comma]
               then eat[Word](tail.next, tail).flatMap(parseNum).map(_.asList)
               else Right(List.empty)
     yield
