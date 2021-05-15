@@ -34,9 +34,9 @@ case class Mov(reg: Register, data: Option[String]) extends Instruction with Pri
 case class Load(typ: Type, label: String) extends Instruction with Print(s"load [$typ] $label")
 case class Store(typ: Type, label: String) extends Instruction with Print(s"store [$typ] $label")
 case object Println extends Instruction with Print("println")
+case object Concat extends Instruction with Print("concat")
 case class Add(typ: Type) extends Instruction with Print(s"add [$typ]")
 case class Sub(typ: Type) extends Instruction with Print(s"sub [$typ]")
-case object Concat extends Instruction with Print("concat")
 
 
 type Code = Label
