@@ -1,13 +1,13 @@
 package bananabread
 package runtime
 
-import instruction._
+import instruction.{Value => Value_, Label => Label_, _}
 
 
 def handle(code: Code, state: State): Dispatch = code match
-  case _: instruction.Value => Cont
-  case _: instruction.Label => Cont
-  case instruction.Halt     => Stop
+  case _: Value_ => Cont
+  case _: Label_ => Cont
+  case Halt      => Stop
   case op: Jz    => handleJz(op, state)
   case op: Jmp   => handleJmp(op, state)
   case op: Push  => handlePush(op, state)
