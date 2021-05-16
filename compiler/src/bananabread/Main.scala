@@ -58,116 +58,116 @@ def main(args: Array[String]) =
       opcode %{
         load [Str] x
         println
+        load [Str] x
       }
 
-    // // let
-    // //   ++ = func (a, b) = a + b
-    // //   cond = func (a, b) = a ++ b
-    // //   count_down = func (x) =
-    // //     if x
-    // //     then count_down(x - 1)
-    // //     else x
-    // //   something = (func (a) = println(a + a))(232)
-    // //   something_else =
-    // //     begin
-    // //       123
-    // //       321
-    // //       begin
-    // //         111
-    // //         111
-    // //       end
-    // //       begin
-    // //         111
-    // //         27
-    // //       end
-    // //     end
-    // //   a = 1+3
-    // //   b = func (x) = x
-    // //   c = func (x) = x+x
-    // //   d = if 0
-    // //       then 123
-    // //       else a
-    // //   e = func (x) =
-    // //         if x
-    // //         then x
-    // //         else x + 1
-    // //   f = func () =
-    // //         func () =
-    // //           func () =
-    // //             func () =
-    // //               func (x) = x + x
-    // // in begin
-    // //   begin
-    // //     if cond(0, 1)
-    // //     then 123
-    // //     else 1
-    // //   end
-    // //   begin
-    // //     println(f()()()()(4))
-    // //   end
-    // //   count_down(1000)
-    // //   count_down(1000)
-    // //   count_down(1000)
-    // //   // println(123)
-    // //   // println(321)
-    // //   1 + 3
-    // //   // println(22 + 20)
-    // //   println(something_else)
-    // // end
+    // let
+    //   ++ = func (a, b) = a + b
+    //   cond = func (a, b) = a ++ b
+    //   count_down = func (x) =
+    //     if x
+    //     then count_down(x - 1)
+    //     else x
+    //   something = (func (a) = println(a + a))(232)
+    //   something_else =
+    //     begin
+    //       123
+    //       321
+    //       begin
+    //         111
+    //         111
+    //       end
+    //       begin
+    //         111
+    //         27
+    //       end
+    //     end
+    //   a = 1+3
+    //   b = func (x) = x
+    //   c = func (x) = x+x
+    //   d = if 0
+    //       then 123
+    //       else a
+    //   e = func (x) =
+    //         if x
+    //         then x
+    //         else x + 1
+    //   f = func () =
+    //         func () =
+    //           func () =
+    //             func () =
+    //               func (x) = x + x
+    // in begin
+    //   begin
+    //     if cond(0, 1)
+    //     then 123
+    //     else 1
+    //   end
+    //   begin
+    //     println(f()()()()(4))
+    //   end
+    //   count_down(1000)
+    //   count_down(1000)
+    //   count_down(1000)
+    //   // println(123)
+    //   // println(321)
+    //   1 + 3
+    //   // println(22 + 20)
+    //   println(something_else)
+    // end
+
+    // def print_something = func (a) =
+    //   let b = a + 1 in println(b)
+
+    // def x = 2
+    // println(777)
+    // println(x + x)
+    // let y = x + x + x in println(y)
     //
-    // // def print_something = func (a) =
-    // //   let b = a + 1 in println(b)
+    // def add (a, b) = a + b
+
+    // def add2 (a, b) =
+    //   %{
+    //     add [I32]
+    //   }
     //
-    // // def x = 2
-    // // println(777)
-    // // println(x + x)
-    // // let y = x + x + x in println(y)
-    // //
-    // // def add (a, b) = a + b
+    // println(add2(1, 2))
+    // println('testing)
+    // println(%{testing 1 2 3})
     //
-    // // def add2 (a, b) =
-    // //   %{
-    // //     add [I32]
-    // //   }
-    // //
-    // // println(add2(1, 2))
-    // // println('testing)
-    // // println(%{testing 1 2 3})
-    // //
-    // // 'north
-    // // 'south
-    // // 'east
-    // // 'west
-    //
+    // 'north
+    // 'south
+    // 'east
+    // 'west
+
     // let
     //   testtesttest = func (a) = println(a)
     //   internalprintln = func (str) = println(str)
     //   puts = internalprintln
     // in
     //   puts(123)
-    //
-    // //def puts(str) = println(str)
+
+    //def puts(str) = println(str)
     // def globalprintln(str) = println(str)
     // def puts = globalprintln
     // def puts2 = puts
-    // // def xxx = 123
-    //
+    // def xxx = 123
+
     // puts(%{from puts})
     // puts2(%{from puts2})
     // globalprintln(%{from internalprintln})
     // println(%{from println})
     // puts2(23 + 19)
-    //
-    // // def res = add(1, x)
-    // // println(res)
-    //
-    // // def to_s (n : I32) = dispatch('i32_to_str, n)
-    // // def to_s (n : I64) = dispatch('i64_to_str, n)
-    // // def to_s (n : U32) = dispatch('u32_to_str, n)
-    // // def to_s (n : U64) = dispatch('u64_to_str, n)
-    // // def to_s (n : F32) = dispatch('f32_to_str, n)
-    // // def to_s (n : F64) = dispatch('f64_to_str, n)
 
+    // def res = add(1, x)
+    // println(res)
+
+    // def to_s (n : I32) = dispatch('i32_to_str, n)
+    // def to_s (n : I64) = dispatch('i64_to_str, n)
+    // def to_s (n : U32) = dispatch('u32_to_str, n)
+    // def to_s (n : U64) = dispatch('u64_to_str, n)
+    // def to_s (n : F32) = dispatch('f32_to_str, n)
+    // def to_s (n : F64) = dispatch('f64_to_str, n)
 
     // TODO variable lookup is wrong and invalid namespacing is set when
     // generating instructions.
@@ -188,76 +188,92 @@ def main(args: Array[String]) =
     //   in
     //     a + b
 
-    def x = 1
+    // def x = 1
+    //
+    // def y = (
+    //   func (a) =
+    //     func (b) =
+    //       func () =
+    //         a + x + b)(3)(2)()
+    //
+    // println(y)
+    //
+    // let
+    //   add = func (a, b) = a + b
+    //   add2 = add
+    // in
+    //   println(add2(1, 9))
+    //
+    // def base = 1
+    //
+    // def start =
+    //   func (a) =
+    //     func (b) =
+    //       func (c) =
+    //         a + b + c + base
+    //
+    // def a = start(2)
+    // def a_b = a(5)
+    // def a_b_c = a_b(7) // 2 + 5 + 7 + 1 = 15
+    //
+    // def ab = start(2)(3)
+    // def ab_c = ab(6) // 2 + 5 + 6 + 1 = 12
+    //
+    // def abc = start(2)(3)(4) // 2 + 3 + 4 + 1 = 10
+    //
+    // def res = a_b_c + ab_c + abc // 15 + 12 + 10 = 37
+    //
+    // println(res)
 
-    def y = (
-      func (a) =
-        func (b) =
-          func () =
-            a + x + b)(3)(2)()
+    // begin
+    // println(123)
+    // println(1 + 4)
+    // println(4 - 1)
+    // println(%{one} ++ %{ two})
+    // end
+    //
+    // def x = (func (a) = a + a)(123)
+    // def y = x + x
+    // def z = func (a) = a + y + x
+    //
+    // def aaa =
+    //   func (a) =
+    //     func (b) =
+    //       func (c) =
+    //         a + b + c
+    //
+    // def bbb = aaa(1)(2)
+    //
+    // println(if 1 then bbb(3) else bbb(10))
+    //
+    // begin
+    //   let
+    //     f = func () =
+    //           func () =
+    //             func () =
+    //               func () =
+    //                 func (x) = x + x
+    //   in
+    //     println(f()()()()(4))
+    // end
 
-    println(y)
+    // def x = 321
+    //
+    // println(x)
+    //
+    // let x = 123 in
+    //   begin
+    //     println(x)
+    //
+    //     let x = 456 in
+    //       println(x)
+    //
+    //     println(x)
+    //   end
+    //
+    // println(x)
 
-    let
-      add = func (a, b) = a + b
-      add2 = add
-    in
-      println(add2(1, 9))
-
-    def base = 1
-
-    def start =
-      func (a) =
-        func (b) =
-          func (c) =
-            a + b + c + base
-
-    def a = start(2)
-    def a_b = a(5)
-    def a_b_c = a_b(7) // 2 + 5 + 7 + 1 = 15
-
-    def ab = start(2)(3)
-    def ab_c = ab(6) // 2 + 5 + 6 + 1 = 12
-
-    def abc = start(2)(3)(4) // 2 + 3 + 4 + 1 = 10
-
-    def res = a_b_c + ab_c + abc // 15 + 12 + 10 = 37
-
-    println(res)
-
-
-
-    begin
     println(123)
-    println(1 + 4)
-    println(4 - 1)
-    println(%{one} ++ %{ two})
-    end
-
-    def x = (func (a) = a + a)(123)
-    def y = x + x
-    def z = func (a) = a + y + x
-
-    def aaa =
-      func (a) =
-        func (b) =
-          func (c) =
-            a + b + c
-
-    def bbb = aaa(1)(2)
-
-    println(if 1 then bbb(3) else bbb(10))
-
-    begin
-      let
-        f = func () =
-              func () =
-                func () =
-                  func () =
-                    func (x) = x + x
-      in
-        println(f()()()()(4))
-    end
     """
 
   // parsing.opcode.parse(

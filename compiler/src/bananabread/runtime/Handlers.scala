@@ -125,7 +125,7 @@ def handleStore(op: Store, state: State): Dispatch =
   Cont
 
 def handlePrintln(state: State): Dispatch =
-  println(state.stack.head)
+  println(state.stack.pop)
   Cont
 
 def handleConcat(state: State): Dispatch =
