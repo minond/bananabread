@@ -64,7 +64,7 @@ def handleCall(op: Call, state: State): Dispatch = state.frames.curr.get(op.labe
     state.frames.from(frame)
     Goto(label)
   case Some(_) =>
-    Fatal("bad call")
+    Fatal(s"bad call: ${op.label}")
 
 def handleCall0(state: State): Dispatch =
   Jump(state.registers.jm.value)
@@ -113,7 +113,6 @@ def handleMov(op: Mov, state: State): Dispatch = op match
 
 def handleLoad(op: Load, state: State): Dispatch = state.frames.curr.get(op.label) match
   case None =>
-    println(s"loading ${op}")
     val value = state.constants(op.label)
     state.stack.push(value)
     Cont

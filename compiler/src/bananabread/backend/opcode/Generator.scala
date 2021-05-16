@@ -81,7 +81,7 @@ def generateCall(scope: Scope, lambda: Ir, args: List[Ir]): Result = lambda matc
     scope.get(id) match
       case Some(id: typeless.Id)      => generateCallId(scope, args, id)
       case Some(app: typeless.App)    => generateCallApp(scope, args, app)
-      case Some(lam: typeless.Lambda) => generateCallId(scope, args, id)
+      case Some(lam: typeless.Lambda) => generateCallLambda(scope, args, lam)
       case Some(_)                    => Left(BadCallErr(lambda))
       case None                       => Left(UndeclaredIdentifierErr(id))
 
@@ -183,8 +183,8 @@ def generateCond(scope: Scope, cond: Ir, pass: Ir, fail: Ir): Result =
     doneLabel                             // rest
 
 def generateLet(scope: Scope, bindings: List[typeless.Binding], body: Ir): Result =
-  val header = bindings.map { case binding @ typeless.Binding(label, value, _) =>
-    scope.define(binding)
+  val header = bindings.map { case typeless.Binding(label, value, _) =>
+    scope.define(label, value)
     for
       valueCode <- generate(scope, value)
       storeCode <- generateStore(scope, label.lexeme, value)
@@ -200,8 +200,8 @@ def generateLet(scope: Scope, bindings: List[typeless.Binding], body: Ir): Resul
 
 def generateDef(scope: Scope, name: String, value: Ir): Result = value match
   case lam: typeless.Lambda =>
-    scope.define(name, value)
-    scope.scoped(name) { subscope =>
+    scope.define(name, lam)
+    scope.forked(lam.ptr) { subscope =>
       generateLambda(subscope, lam.params, lam.body)
         .map(Label(lam.ptr) +: _ :+ Value(Ptr, scope.qualified(name), Id(lam.ptr)))
     }
