@@ -41,13 +41,10 @@ class Interpreter(codes: List[Code], debug: Boolean = false):
     Interpreter(codes, true)
 
   def run =
-    while running do
+    while registers.pc.value != -1 do
       debugBefore
       next
       debugAfter
-
-  def running =
-    registers.pc.value != -1
 
   def next =
     handle(codes(registers.pc.value), State.from(this)) match
@@ -57,14 +54,14 @@ class Interpreter(codes: List[Code], debug: Boolean = false):
       case Jump(index) => registers.pc(index)
       case Fatal(msg)  => throw Exception(msg) /* XXX */
 
-  def debugBefore =
-    if debug then
-      println(s"========= START ${codes(registers.pc.value)}")
-      println(s"STACK: $stack")
-      println(s"REGISTERS: $registers")
+  def debugBefore: Unit =
+    if debug then return
+    println(s"========= START ${codes(registers.pc.value)}")
+    println(s"STACK: $stack")
+    println(s"REGISTERS: $registers")
 
-  def debugAfter =
-    if debug then
-      println(s"STACK: $stack")
-      println(s"REGISTERS: $registers")
-      println(s"========= FINISH")
+  def debugAfter: Unit =
+    if debug then return
+    println(s"STACK: $stack")
+    println(s"REGISTERS: $registers")
+    println(s"========= FINISH")
