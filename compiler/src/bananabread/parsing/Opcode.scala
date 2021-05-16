@@ -4,10 +4,9 @@ package parsing.opcode
 import parsing.{Parsed, takeWhile, not, isWhitespace, and, oneof, eat}
 import parsing.location.{Location, Located, At}
 import parsing.error.{SyntaxErr, UnexpectedTokenErr, UnexpectedEofErr, BadNumErr}
-import utils.{isA, asList, squished}
+import utils.{isA, asList, squished, safeToInt}
 
 import scala.reflect.ClassTag
-import scala.util.{Try, Success, Failure}
 
 
 case class Tree(nodes: List[Expr])
@@ -99,9 +98,9 @@ def parseMov(op: Word, tail: Tokens): Parsed[Expr] =
 
 
 def parseNum(word: Word): Parsed[String] =
-  Try { word.lexeme.toInt } match
-    case Failure(_) => Left(BadNumErr(word.lexeme, word.loc))
-    case Success(_) => Right(word.lexeme)
+  word.lexeme.safeToInt match
+    case Left(_)  => Left(BadNumErr(word.lexeme, word.loc))
+    case Right(_) => Right(word.lexeme)
 
 
 def tokenize(sourceName: String, sourceString: String): Parsed[List[Token]] =

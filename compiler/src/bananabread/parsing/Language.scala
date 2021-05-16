@@ -9,9 +9,8 @@ import parsing.location.Location
 import parsing.ast._
 import parsing.error._
 
-import utils.{isAn, squished, without}
+import utils.{isAn, squished, safeToFloat, without}
 
-import scala.util.{Try, Success, Failure}
 import scala.reflect.ClassTag
 
 
@@ -254,9 +253,9 @@ def nextToken(
     val rest = takeWhile(tail, isNumTail).mkString
     val lexeme = head +: rest
 
-    Try { lexeme.toFloat } match
-      case Failure(_) => Left(BadNumErr(lexeme, loc))
-      case Success(_) => Right(Num(lexeme, loc))
+    lexeme.safeToFloat match
+      case Left(_)  => Left(BadNumErr(lexeme, loc))
+      case Right(_) => Right(Num(lexeme, loc))
 
   case head if isIdHead(head) =>
     val rest = takeWhile(tail, isIdTail).mkString

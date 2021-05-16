@@ -2,6 +2,7 @@ package bananabread
 package utils
 
 import scala.reflect.ClassTag
+import scala.util.{Try, Success, Failure}
 
 
 extension [T](xs: List[T])
@@ -39,3 +40,15 @@ extension [T <: Any](obj: T)
 
   def asList: List[T] =
     List(obj)
+
+
+extension (str: String)
+  def safeToInt: Either[Throwable, Int] =
+    Try { str.toInt } match
+      case Failure(err) => Left(err)
+      case Success(int) => Right(int)
+
+  def safeToFloat: Either[Throwable, Float] =
+    Try { str.toFloat } match
+      case Failure(err) => Left(err)
+      case Success(flt) => Right(flt)
