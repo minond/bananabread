@@ -29,7 +29,7 @@ object State:
     State(i.stack, i.frames, i.registers, i.constants, i.labels)
 
 
-class Interpreter(codes: List[Code], debug: Boolean = false):
+class Interpreter(codes: List[Code], private val debug: Boolean = false):
   val stack = Stack[Value]()
   val frames = Frames()
   val registers = Registers()
@@ -54,14 +54,14 @@ class Interpreter(codes: List[Code], debug: Boolean = false):
       case Jump(index) => registers.pc(index)
       case Fatal(msg)  => throw Exception(msg) /* XXX */
 
-  def debugBefore: Unit =
-    if debug then return
-    println(s"========= START ${codes(registers.pc.value)}")
-    println(s"STACK: $stack")
-    println(s"REGISTERS: $registers")
+  def debugBefore =
+    if debug then
+      println(s"========= START ${codes(registers.pc.value)}")
+      println(s"STACK: $stack")
+      println(s"REGISTERS: $registers")
 
-  def debugAfter: Unit =
-    if debug then return
-    println(s"STACK: $stack")
-    println(s"REGISTERS: $registers")
-    println(s"========= FINISH")
+  def debugAfter =
+    if debug then
+      println(s"STACK: $stack")
+      println(s"REGISTERS: $registers")
+      println(s"========= FINISH")
