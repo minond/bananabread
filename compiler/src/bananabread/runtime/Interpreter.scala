@@ -21,6 +21,7 @@ case class Machine(
   val frames: Frames,
   val registers: Registers,
   val constants: Map[String, Value],
+  val labels: Map[String, Int],
 )
 
 
@@ -36,7 +37,7 @@ class Interpreter(codes: List[Code]):
     registers.pc.value != -1
 
   def machine =
-    Machine(stack, frames, registers, constants)
+    Machine(stack, frames, registers, constants, labels)
 
   def next =
     handle(codes(registers.pc.value), machine) match
@@ -85,11 +86,11 @@ def handlePush(op: Push, machine: Machine): Dispatch = op match
     Cont
   case Push(Const, value.Id(label)) =>
     machine.constants.get(label) match
-      case None =>
-        Fatal(s"missing const: $label")
       case Some(v) =>
         machine.stack.push(v)
         Cont
+      case None =>
+        Fatal(s"missing const: $label")
   case _ =>
     Fatal("bad push")
 
@@ -123,16 +124,27 @@ def handleSwap(machine: Machine): Dispatch =
   machine.stack.push(b)
   Cont
 
-def handleMov(op: Mov, machine: Machine): Dispatch = op match
-  case Mov(reg, Some(offset)) =>
-    val curr = machine.registers.get(reg)
-    val next = value.I32(curr.value + offset.value)
-    machine.registers.set(reg, next)
+def handleMov(op: Mov, machine: Machine): Dispatch = machine.stack.pop match
+  case addr: value.I32 =>
+    machine.registers.set(op.reg, addr)
     Cont
-  case Mov(reg, None) =>
-    val curr = machine.registers.get(reg)
-    machine.stack.push(curr)
-    Cont
+  case value.Id(label) =>
+    machine.labels.get(label) match
+      case Some(i) =>
+        machine.registers.set(op.reg, i)
+        Cont
+      case None =>
+        Fatal(s"bad mov: missing label $label")
+  case value.Scope(label, frame) =>
+    machine.labels.get(label) match
+      case Some(i) =>
+        machine.frames.from(frame)
+        machine.registers.set(op.reg, value.I32(i))
+        Cont
+      case None =>
+        Fatal(s"bad mov: missing scope $label")
+  case _ =>
+    Fatal("bad mov: invalid stack entry")
 
 def handleLoad(op: Load, machine: Machine): Dispatch = machine.frames.curr.get(op.label) match
   case None =>
