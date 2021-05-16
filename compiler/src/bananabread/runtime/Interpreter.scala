@@ -134,7 +134,8 @@ def handleLoad(op: Load, machine: Machine): Dispatch =
   ???
 
 def handleStore(op: Store, machine: Machine): Dispatch =
-  ???
+  machine.frames.curr.put(op.label, machine.stack.pop)
+  Cont
 
 def handlePrintln(machine: Machine): Dispatch =
   ???
