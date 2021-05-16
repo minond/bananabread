@@ -93,8 +93,18 @@ def handlePush(op: Push, machine: Machine): Dispatch = op match
   case _ =>
     Fatal("bad push")
 
-def handleCall(op: Call, machine: Machine): Dispatch =
-  ???
+def handleCall(op: Call, machine: Machine): Dispatch = machine.frames.curr.get(op.label) match
+  case None =>
+    machine.frames.next
+    Goto(op.label)
+  case Some(ptr: value.Id) =>
+    machine.frames.next
+    Goto(ptr.label)
+  case Some(value.Scope(label, frame)) =>
+    machine.frames.from(frame)
+    Goto(label)
+  case Some(_) =>
+    Fatal("bad call")
 
 def handleCall0(machine: Machine): Dispatch =
   ???

@@ -280,4 +280,6 @@ def main(args: Array[String]) =
       println(interpreter.labels)
       println(interpreter.constants)
 
+      for (_ <- 1 to 7) interpreter.next
+
   println(res)
