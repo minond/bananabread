@@ -26,3 +26,14 @@ class Registers:
   def jm         = jmVal
   def jm(v: I32) = jmVal = v
   def jm(i: Int) = jmVal = I32(i)
+
+  def get(reg: Register) = reg match
+    case Pc => pc
+    case Lr => lr
+    case Jm => jm
+
+  def set(reg: Register, v: Int): Unit = set(reg, I32(v))
+  def set(reg: Register, v: I32): Unit = reg match
+    case Pc => pc(v)
+    case Lr => lr(v)
+    case Jm => jm(v)
