@@ -105,8 +105,16 @@ def handleRet(machine: Machine): Dispatch =
 def handleSwap(machine: Machine): Dispatch =
   ???
 
-def handleMov(op: Mov, machine: Machine): Dispatch =
-  ???
+def handleMov(op: Mov, machine: Machine): Dispatch = op match
+  case Mov(reg, Some(offset)) =>
+    val curr = machine.registers.get(reg)
+    val next = value.I32(curr.value + offset.value)
+    machine.registers.set(reg, next)
+    Cont
+  case Mov(reg, None) =>
+    val curr = machine.registers.get(reg)
+    machine.stack.push(curr)
+    Cont
 
 def handleLoad(op: Load, machine: Machine): Dispatch =
   ???
