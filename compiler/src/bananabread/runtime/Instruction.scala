@@ -25,7 +25,7 @@ sealed trait Instruction
 case object Halt extends Instruction with Print("halt")
 case class Jz(label: String) extends Instruction with Print(s"jz $label")
 case class Jmp(label: String) extends Instruction with Print(s"jmp $label")
-case class Push(typ: Type, value: String) extends Instruction with Print(s"push [$typ] $value")
+case class Push(typ: Type, _value: value.Value) extends Instruction with Print(s"push [$typ] $_value")
 case class Call(label: String) extends Instruction with Print(s"call $label")
 case object Call0 extends Instruction with Print("call0")
 case object Ret extends Instruction with Print("ret")

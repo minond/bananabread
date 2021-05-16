@@ -16,7 +16,7 @@ import runtime.instruction._
 import runtime.instruction.{Value, Label, Instruction}
 import runtime.instruction.{Type, I32, Str, Symbol}
 
-import utils.squished
+import utils.{safeToInt, squished}
 
 import scala.util.Random
 import scala.collection.mutable.{Map, Queue}
@@ -46,13 +46,15 @@ def generate(scope: Scope, node: Ir): Result = node match
 
 def generatePush(scope: Scope, node: Ir, ty: Type): Result = (ty, node) match
   case (I32, num: typeless.Num) =>
-    Right(group(scope, Push(I32, num.num.lexeme)))
+    num.num.lexeme.safeToInt match
+      case Left(_)  => Left(BadPushErr(ty, node))
+      case Right(i) => Right(group(scope, Push(I32, value.I32(i))))
   case (Str, str: typeless.Str) =>
     Right(Value(Str, str.ptr, value.Str(str.str.lexeme)) +:
-          group(scope, Push(Const, str.ptr)))
+          group(scope, Push(Const, value.Id(str.ptr))))
   case (Symbol, sym: typeless.Symbol) =>
     Right(Value(Symbol, sym.ptr, value.Symbol(sym.symbol.lexeme)) +:
-          group(scope, Push(Str, sym.ptr)))
+          group(scope, Push(Const, value.Id(sym.ptr))))
   case _ =>
     Left(BadPushErr(ty, node))
 
@@ -66,7 +68,7 @@ def generateAnnonLambda(scope: Scope, lambda: typeless.Lambda): Result =
     val exposure =
       if scope.isToplevel
       then List.empty
-      else group(scope, Push(Scope, lambda.ptr))
+      else group(scope, Push(Scope, value.Id(lambda.ptr)))
 
     generateLambda(subscope, lambda.params, lambda.body)
       .map(Label(lambda.ptr) +: _)
@@ -106,9 +108,12 @@ def generateOpcode(scope: Scope, tree: OpcodeTree): Result =
 def generateOpcode(scope: Scope, expr: OpcodeExpr): Result = expr match
   case InstructionExpr("add",     Some("I32"), Nil,         _) => Right(group(scope, Add(I32)))
   case InstructionExpr("sub",     Some("I32"), Nil,         _) => Right(group(scope, Sub(I32)))
-  case InstructionExpr("push",    Some("I32"), List(value), _) => Right(group(scope, Push(I32, value)))
-  case InstructionExpr("push",    Some("Str"), List(label), _) => Right(group(scope, Push(Str, scope.qualified(label))))
-  case InstructionExpr("push",    Some("Ptr"), List(label), _) => Right(group(scope, Push(Ptr, scope.qualified(label))))
+  case InstructionExpr("push",    Some("I32"), List(str), _)   =>
+    str.safeToInt match
+      case Left(_)  => Left(InvalidI32Err(expr))
+      case Right(i) => Right(group(scope, Push(I32, value.I32(i))))
+  case InstructionExpr("push",    Some("Str"), List(label), _) => Right(group(scope, Push(Str, value.Id(scope.qualified(label)))))
+  case InstructionExpr("push",    Some("Ptr"), List(label), _) => Right(group(scope, Push(Ptr, value.Id(scope.qualified(label)))))
   case InstructionExpr("load",    Some("I32"), List(label), _) => Right(group(scope, Load(I32, scope.qualified(label))))
   case InstructionExpr("load",    Some("Str"), List(label), _) => Right(group(scope, Load(Str, scope.qualified(label))))
   case InstructionExpr("load",    Some("Ptr"), List(label), _) => Right(group(scope, Load(Ptr, scope.qualified(label))))
