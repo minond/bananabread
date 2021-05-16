@@ -84,7 +84,7 @@ def handleMov(op: Mov, state: State): Dispatch = op match
   case Mov(reg, Some(offset)) =>
     val curr = state.registers.get(reg)
     val next = value.I32(curr.value + offset.value)
-    state.registers.set(reg, next)
+    state.stack.push(next)
     Cont
   case Mov(reg, None) => state.stack.pop match
     case addr: value.I32 =>
