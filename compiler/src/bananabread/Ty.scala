@@ -18,7 +18,6 @@ type Scope = Map[String, Type]
 
 def infer(nodes: List[Ir], scope: Scope): List[Type] =
   nodes.map(node => infer(node, scope))
-
 def infer(node: Ir, scope: Scope): Type = node match
   case typeless.Num(_) => ty.I32
   case typeless.Str(_) => ty.Str
@@ -36,7 +35,6 @@ def lookup(label: String, scope: Scope): Type =
     case None => fresh()
     case Some(ty) => ty
 
-val freshIds = LazyList.from(1).sliding(1)
-
+val ids = LazyList.from(1).sliding(1)
 def fresh() =
-  Var(freshIds.next.head)
+  Var(ids.next.head)
