@@ -42,9 +42,9 @@ class Interpreter(codes: List[Code], debug: Boolean = false):
 
   def run =
     while running do
-      debugPrefix
+      debugBefore
       next
-      debugSuffix
+      debugAfter
 
   def running =
     registers.pc.value != -1
@@ -57,13 +57,13 @@ class Interpreter(codes: List[Code], debug: Boolean = false):
       case Jump(index) => registers.pc(index)
       case Fatal(msg)  => throw Exception(msg) /* XXX */
 
-  def debugPrefix =
+  def debugBefore =
     if debug then
       println(s"========= START ${codes(registers.pc.value)}")
       println(s"STACK: $stack")
       println(s"REGISTERS: $registers")
 
-  def debugSuffix =
+  def debugAfter =
     if debug then
       println(s"STACK: $stack")
       println(s"REGISTERS: $registers")
