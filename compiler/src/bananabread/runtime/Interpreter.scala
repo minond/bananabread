@@ -130,8 +130,14 @@ def handleMov(op: Mov, machine: Machine): Dispatch = op match
     machine.stack.push(curr)
     Cont
 
-def handleLoad(op: Load, machine: Machine): Dispatch =
-  ???
+def handleLoad(op: Load, machine: Machine): Dispatch = machine.frames.curr.get(op.label) match
+  case None =>
+    val value = machine.constants(op.label)
+    machine.stack.push(value)
+    Cont
+  case Some(v) =>
+    machine.stack.push(v)
+    Cont
 
 def handleStore(op: Store, machine: Machine): Dispatch =
   machine.frames.curr.put(op.label, machine.stack.pop)
