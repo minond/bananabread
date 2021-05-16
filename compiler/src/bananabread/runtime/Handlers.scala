@@ -30,7 +30,7 @@ def handleJz(op: Jz, state: State): Dispatch = state.stack.pop match
     Cont
 
 def handleJmp(op: Jmp, state: State): Dispatch =
-  ???
+  Goto(op.label)
 
 def handlePush(op: Push, state: State): Dispatch = op match
   case Push(I32, v: value.I32) =>
