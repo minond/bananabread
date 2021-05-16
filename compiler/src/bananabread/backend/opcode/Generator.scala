@@ -188,7 +188,11 @@ def generateLet(scope: Scope, bindings: List[typeless.Binding], body: Ir): Resul
       valueCode <- generate(scope, value)
       storeCode <- generateStore(scope, label.lexeme, value)
     yield
-      valueCode ++ storeCode
+      value match
+        case lam: typeless.Lambda =>
+          valueCode ++ group(scope, Push(Ptr, runtime.value.Id(lam.ptr))) ++ storeCode
+        case _ =>
+          valueCode ++ storeCode
   }
 
   for
