@@ -62,7 +62,7 @@ def handle(code: Code, machine: Machine): Dispatch = code match
   case op: Load  => handleLoad(op, machine)
   case op: Store => handleStore(op, machine)
   case Println   => handlePrintln(machine)
-  case Concat    => handlePrintln(machine)
+  case Concat    => handleConcat(machine)
   case op: Add   => handleAdd(op, machine)
   case op: Sub   => handleSub(op, machine)
 
@@ -144,7 +144,8 @@ def handleStore(op: Store, machine: Machine): Dispatch =
   Cont
 
 def handlePrintln(machine: Machine): Dispatch =
-  ???
+  println(machine.stack.head)
+  Cont
 
 def handleConcat(machine: Machine): Dispatch =
   ???
