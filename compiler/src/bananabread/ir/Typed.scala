@@ -3,7 +3,8 @@ package ir
 
 import parsing.ast
 import parsing.ast.Expr
-import ty.Type
+import typechecker.ty
+import typechecker.ty.Type
 
 
 sealed trait Ir(expr: Expr, ty: Type)
