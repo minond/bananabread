@@ -37,3 +37,6 @@ class Registers:
     case Pc => pc(v)
     case Lr => lr(v)
     case Jm => jm(v)
+
+  override def toString: String =
+    s"{pc => $pc, lr => $lr, jm => $jm}"

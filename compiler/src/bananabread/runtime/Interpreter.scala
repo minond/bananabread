@@ -24,8 +24,12 @@ case class Machine(
   val labels: Map[String, Int],
 )
 
+object Machine:
+  def from(i: Interpreter) =
+    Machine(i.stack, i.frames, i.registers, i.constants, i.labels)
 
-class Interpreter(codes: List[Code]):
+
+class Interpreter(codes: List[Code], debug: Boolean = false):
   val stack = Stack[Value]()
   val frames = Frames()
   val registers = Registers()
@@ -33,19 +37,37 @@ class Interpreter(codes: List[Code]):
   val labels = codes.labels
   val constants = codes.constants
 
+  def debugging =
+    Interpreter(codes, true)
+
+  def run =
+    while running do
+      debugPrefix
+      next
+      debugSuffix
+
   def running =
     registers.pc.value != -1
 
-  def machine =
-    Machine(stack, frames, registers, constants, labels)
-
   def next =
-    handle(codes(registers.pc.value), machine) match
+    handle(codes(registers.pc.value), Machine.from(this)) match
       case Halt        => registers.pc(-1)
       case Cont        => registers.pc(registers.pc.value + 1)
       case Goto(label) => registers.pc(labels(label))
       case Jump(index) => registers.pc(index)
       case Fatal(msg)  => throw Exception(msg) /* XXX */
+
+  def debugPrefix =
+    if debug then
+      println(s"========= START ${codes(registers.pc.value)}")
+      println(s"STACK: $stack")
+      println(s"REGISTERS: $registers")
+
+  def debugSuffix =
+    if debug then
+      println(s"STACK: $stack")
+      println(s"REGISTERS: $registers")
+      println(s"========= FINISH ${codes(registers.pc.value)}")
 
 
 def handle(code: Code, machine: Machine): Dispatch = code match
