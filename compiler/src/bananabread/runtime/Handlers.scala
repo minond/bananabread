@@ -127,10 +127,39 @@ def handlePrintln(state: State): Dispatch =
   Cont
 
 def handleConcat(state: State): Dispatch =
-  ???
+  binStrOp(state)(_ + _) match
+    case Some(v) =>
+      state.stack.push(v)
+      Cont
+    case None =>
+      Fatal("bad concat: missing argument")
 
 def handleAdd(op: Add, state: State): Dispatch =
-  ???
+  binI32Op(state)(_ + _) match
+    case Some(v) =>
+      state.stack.push(v)
+      Cont
+    case None =>
+      Fatal("bad add: missing argument")
 
 def handleSub(op: Sub, state: State): Dispatch =
-  ???
+  binI32Op(state)(_ - _) match
+    case Some(v) =>
+      state.stack.push(v)
+      Cont
+    case None =>
+      Fatal("bad sub: missing argument")
+
+def binI32Op(state: State)(f: (Int, Int) => Int): Option[value.I32] =
+  (state.stack.pop, state.stack.pop) match
+    case (value.I32(rhs), value.I32(lhs)) =>
+      Some(value.I32(f(lhs, rhs)))
+    case _ =>
+      None
+
+def binStrOp(state: State)(f: (String, String) => String): Option[value.Str] =
+  (state.stack.pop, state.stack.pop) match
+    case (value.Str(rhs), value.Str(lhs)) =>
+      Some(value.Str(f(lhs, rhs)))
+    case _ =>
+      None

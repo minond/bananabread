@@ -249,7 +249,7 @@ def main(args: Array[String]) =
     // println(bbb(3))
 
     begin
-      println(1)
+      println(1 + 3)
     end
     """
 
@@ -278,12 +278,10 @@ def main(args: Array[String]) =
       rt.printInfo
       println("==================")
       println(pp(ins2.ordered))
+      println("==================")
 
       val interpreter = Interpreter(ins2.ordered)
 
-      println(interpreter.labels)
-      println(interpreter.constants)
-
-      interpreter.debugging.run
+      interpreter.run
 
   println(res)
