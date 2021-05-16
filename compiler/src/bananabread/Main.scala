@@ -247,6 +247,17 @@ def main(args: Array[String]) =
     def bbb = aaa(1)(2)
 
     println(if 1 then bbb(3) else bbb(10))
+
+    begin
+      let
+        f = func () =
+              func () =
+                func () =
+                  func () =
+                    func (x) = x + x
+      in
+        println(f()()()()(4))
+    end
     """
 
   // parsing.opcode.parse(
@@ -279,5 +290,6 @@ def main(args: Array[String]) =
       val interpreter = Interpreter(ins2.ordered)
 
       interpreter.run
+      interpreter.stack
 
   println(res)
