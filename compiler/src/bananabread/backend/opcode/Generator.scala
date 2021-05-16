@@ -265,6 +265,9 @@ extension (output: Output)
           case Some(q) => q.addOne(inst)
           case None    => sections.update(section, Queue(inst))
       case Grouped(section, label: Label) =>
+        sections.get(section) match
+          case Some(q) => q.addOne(label)
+          case None    => sections.update(section, Queue(label))
       case value: Value => values.addOne(value)
       case label: Label =>
     }
