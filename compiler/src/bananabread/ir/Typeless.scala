@@ -3,7 +3,7 @@ package ir.typeless
 
 import parsing.ast
 import ast.{Tree, Expr, Stmt}
-import show.{Ptr, Print}
+import utils.{Ptr, Print}
 
 import utils.onlys
 

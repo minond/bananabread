@@ -4,7 +4,7 @@ package runtime.instruction
 import runtime.value
 import runtime.value.Value
 import runtime.register.Register
-import show.Print
+import utils.Print
 
 
 sealed trait Type

@@ -6,7 +6,7 @@ import runtime.Frame
 
 import ir.typeless
 import ir.typeless.Ir
-import show.Print
+import utils.Print
 
 
 sealed trait Value
