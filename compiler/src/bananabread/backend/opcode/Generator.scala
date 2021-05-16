@@ -246,8 +246,10 @@ def generateBegin(scope: Scope, irs: List[Ir]): Result =
     codes.flatten
 
 def group(scope: Scope, insts: (Instruction | Label)*): Output =
+  group(scope.module, insts:_*)
+def group(section: String, insts: (Instruction | Label)*): Output =
   insts.toList.map { inst =>
-    Grouped(scope.module, inst)
+    Grouped(section, inst)
   }
 
 // TODO regroup is a total hack needed because a "scope" is used for both
@@ -275,6 +277,43 @@ def withI32(expr: OpcodeExpr, str: String)(f: Int => Output): Result =
 
 
 extension (output: Output)
+  def framed: Output =
+    println(output)
+    output.map {
+      case inst @ Grouped(section, Label(label)) =>
+        println(s"======$section")
+        List(inst)
+      case inst @ Label(label) =>
+        println(s"======$label")
+        List(inst)
+      case inst =>
+        List(inst)
+    }.flatten
+
+  def labeled: Output =
+    val sections = Map[String, Queue[Grouped | Label]]()
+    val values = Queue[Value]()
+
+    output.foreach {
+      case item @ Grouped(section, inst: Instruction) =>
+        sections.get(section) match
+          case Some(q) => q.addOne(item)
+          case None    => sections.update(section, Queue(item))
+      case Grouped(section, label: Label) =>
+        sections.get(section) match
+          case Some(q) => q.addOne(label)
+          case None    => sections.update(section, Queue(label))
+      case value: Value => values.addOne(value)
+      case label: Label =>
+    }
+
+    (for (section, instructions) <- sections if section == "main"
+     yield group(section, Label(section)) ++ instructions).flatten.toList ++
+    group("main", Halt) ++
+    (for (section, instructions) <- sections if section != "main"
+     yield group(section, Label(section)) ++ instructions).flatten ++
+    values
+
   def ordered: List[Code] =
     val sections = Map[String, Queue[Code]]()
     val values = Queue[Value]()

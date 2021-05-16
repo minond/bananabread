@@ -4,8 +4,7 @@ import parsing.language.{Syntax, tokenize, parse}
 import ir.typeless
 import runtime.Interpreter
 import runtime.instruction.pp
-import backend.opcode.ordered
-import backend.opcode.generate
+import backend.opcode.{generate, labeled, framed, ordered}
 
 
 def main(args: Array[String]) =
@@ -289,7 +288,7 @@ def main(args: Array[String]) =
       ir = typeless.lift(ast)
       _=println(s"IR: ${ir}\n\n")
       codes <- generate(ir)
-      ins = codes.ordered
+      ins = codes.labeled.framed.ordered
     yield
       println("==================")
       println(pp(ins))
