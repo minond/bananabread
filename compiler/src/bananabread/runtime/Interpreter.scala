@@ -67,4 +67,4 @@ class Interpreter(codes: List[Code], debug: Boolean = false):
     if debug then
       println(s"STACK: $stack")
       println(s"REGISTERS: $registers")
-      println(s"========= FINISH ${codes(registers.pc.value)}")
+      println(s"========= FINISH")
