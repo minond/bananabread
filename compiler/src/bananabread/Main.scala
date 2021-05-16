@@ -2,9 +2,7 @@ package bananabread
 
 import parsing.language.{Syntax, tokenize, parse}
 import ir.typeless
-import opcode.{Opcode, Instruction}
 import runtime.Interpreter
-import runtime.vm.Machine
 import runtime.instruction.pp
 import backend.opcode.ordered
 import backend.opcode.generate
@@ -272,22 +270,14 @@ def main(args: Array[String]) =
       _=println(s"AST: ${ast}\n\n")
       ir = typeless.lift(ast)
       _=println(s"IR: ${ir}\n\n")
-      ins = opcode.compile(ir)
-      ins2 <- generate(ir)
+      codes <- generate(ir)
+      ins = codes.ordered
     yield
-      val rt = Machine(ins.dump, info = false, prompt = false)
-
       println("==================")
-      rt.printInstructions
-      println("==================")
-      rt.run
-      println("==================")
-      rt.printInfo
-      println("==================")
-      println(pp(ins2.ordered))
+      println(pp(ins))
       println("==================")
 
-      val interpreter = Interpreter(ins2.ordered)
+      val interpreter = Interpreter(ins)
 
       interpreter.run
       interpreter.stack
