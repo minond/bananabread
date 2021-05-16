@@ -64,7 +64,7 @@ def handleCall(op: Call, state: State): Dispatch = state.frames.curr.get(op.labe
     Fatal("bad call")
 
 def handleCall0(state: State): Dispatch =
-  ???
+  Jump(state.registers.jm.value)
 
 def handleRet(state: State): Dispatch = state.stack.pop match
   case value.I32(addr) =>
