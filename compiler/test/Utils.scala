@@ -59,7 +59,15 @@ def astOf(code: String, syntax: Syntax = stdOps) =
 def resultOf(code: String, syntax: Syntax = stdOps) =
   val ast = parse("<stdin>", prelude + code, syntax).getOrElse(???)
   val ir = typeless.lift(ast)
-  import runtime.instruction.pp
+  // import runtime.instruction.pp
+  // backend.opcode.generate(ir) match
+  //   case Right(xs) =>
+  //     println("==========================")
+  //     println(code)
+  //     println("==========================")
+  //     println(pp(xs.ordered))
+  //     println("==========================")
+  //   case Left(err) => println(err)
   val ins = backend.opcode.generate(ir).getOrElse(???)
   val interpreter = Interpreter(ins.ordered)
   interpreter.run
