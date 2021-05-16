@@ -36,7 +36,7 @@ class Interpreter(codes: List[Code]):
     registers.pc.value != -1
 
   def machine =
-    Machine(stack, frames, registers)
+    Machine(stack, frames, registers, constants)
 
   def next =
     handle(codes(registers.pc.value), machine) match
@@ -44,6 +44,7 @@ class Interpreter(codes: List[Code]):
       case Cont        => registers.pc(registers.pc.value + 1)
       case Goto(label) => registers.pc(labels(label))
       case Jump(index) => registers.pc(index)
+      case Fatal(msg)  => throw Exception(msg) /* XXX */
 
 
 def handle(code: Code, machine: Machine): Dispatch = code match
@@ -71,8 +72,26 @@ def handleJz(op: Jz, machine: Machine): Dispatch =
 def handleJmp(op: Jmp, machine: Machine): Dispatch =
   ???
 
-def handlePush(op: Push, machine: Machine): Dispatch =
-  ???
+def handlePush(op: Push, machine: Machine): Dispatch = op match
+  case Push(I32, v: value.I32) =>
+    machine.stack.push(v)
+    Cont
+  case Push(Ptr, v: value.Id) =>
+    machine.stack.push(v)
+    Cont
+  case Push(Scope, value.Id(label)) =>
+    val scope = value.Scope(label, machine.frames.curr)
+    machine.stack.push(scope)
+    Cont
+  case Push(Const, value.Id(label)) =>
+    machine.constants.get(label) match
+      case None =>
+        Fatal(s"missing const: $label")
+      case Some(v) =>
+        machine.stack.push(v)
+        Cont
+  case _ =>
+    Fatal("bad push")
 
 def handleCall(op: Call, machine: Machine): Dispatch =
   ???
