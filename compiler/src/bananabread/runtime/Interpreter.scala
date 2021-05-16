@@ -113,7 +113,11 @@ def handleRet(machine: Machine): Dispatch =
   ???
 
 def handleSwap(machine: Machine): Dispatch =
-  ???
+  val a = machine.stack.pop
+  val b = machine.stack.pop
+  machine.stack.push(a)
+  machine.stack.push(b)
+  Cont
 
 def handleMov(op: Mov, machine: Machine): Dispatch = op match
   case Mov(reg, Some(offset)) =>
