@@ -109,8 +109,12 @@ def handleCall(op: Call, machine: Machine): Dispatch = machine.frames.curr.get(o
 def handleCall0(machine: Machine): Dispatch =
   ???
 
-def handleRet(machine: Machine): Dispatch =
-  ???
+def handleRet(machine: Machine): Dispatch = machine.stack.pop match
+  case value.I32(addr) =>
+    machine.frames.prev
+    Jump(addr)
+  case _ =>
+    Fatal("bad ret: missing return address")
 
 def handleSwap(machine: Machine): Dispatch =
   val a = machine.stack.pop
