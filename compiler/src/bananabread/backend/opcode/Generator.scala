@@ -182,24 +182,26 @@ def generateCond(scope: Scope, cond: Ir, pass: Ir, fail: Ir): Result =
     doneLabel                             // rest
 
 def generateLet(scope: Scope, bindings: List[typeless.Binding], body: Ir): Result =
-  val header = bindings.map { case typeless.Binding(label, value, _) =>
-    scope.define(label, value)
-    for
-      valueCode <- generate(scope, value)
-      storeCode <- generateStore(scope, label.lexeme, value)
-    yield
-      value match
-        case lam: typeless.Lambda =>
-          valueCode ++ group(scope, Push(Ptr, runtime.value.Id(lam.ptr))) ++ storeCode
-        case _ =>
-          valueCode ++ storeCode
-  }
+  scope.unique { subscope =>
+    val header = bindings.map { case typeless.Binding(label, value, _) =>
+      subscope.define(label, value)
+      for
+        valueCode <- generate(subscope, value)
+        storeCode <- generateStore(subscope, label.lexeme, value)
+      yield
+        value match
+          case lam: typeless.Lambda =>
+            valueCode ++ group(subscope, Push(Ptr, runtime.value.Id(lam.ptr))) ++ storeCode
+          case _ =>
+            valueCode ++ storeCode
+    }
 
-  for
-    lets <- header.squished
-    body <- generate(scope, body)
-  yield
-    lets.flatten ++ body
+    for
+      lets <- header.squished
+      body <- generate(subscope, body)
+    yield
+      regroup(subscope, scope, lets.flatten ++ body)
+  }
 
 def generateDef(scope: Scope, name: String, value: Ir): Result = value match
   case lam: typeless.Lambda =>
@@ -246,6 +248,21 @@ def generateBegin(scope: Scope, irs: List[Ir]): Result =
 def group(scope: Scope, insts: (Instruction | Label)*): Output =
   insts.toList.map { inst =>
     Grouped(scope.module, inst)
+  }
+
+// TODO regroup is a total hack needed because a "scope" is used for both
+// function/variable scoping _and_ instruction grouping. Fix this by tracking
+// blocks separate to scopes and updating Grouped to use this instead.
+//
+// The issue becomes apparent we need to create a new scope and have it stay
+// grouped with other instructions in the same block. We can't do this because
+// creating a new scope puts the instructions in another section in the code.
+// An example of this are `let` expressions which use a subscope but need to be
+// grouped in with the other instructions in the block it was defined in.
+def regroup(prevScope: Scope, newScope: Scope, output: Output): Output =
+  output.map {
+    case Grouped(prevScope.module, data) => Grouped(newScope.module, data)
+    case out                             => out
   }
 
 def uniqueString(scope: Scope, label: String): String =
