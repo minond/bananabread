@@ -13,12 +13,14 @@ case object Halt extends Dispatch
 case object Cont extends Dispatch
 case class Goto(label: String) extends Dispatch
 case class Jump(index: Int) extends Dispatch
+case class Fatal(msg: String) extends Dispatch
 
 
 case class Machine(
   val stack: Stack[Value],
   val frames: Frames,
   val registers: Registers,
+  val constants: Map[String, Value],
 )
 
 
