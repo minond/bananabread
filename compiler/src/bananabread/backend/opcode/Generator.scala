@@ -59,9 +59,8 @@ def generatePush(scope: Scope, node: Ir, ty: Type): Result = (ty, node) match
     Left(BadPushErr(ty, node))
 
 def generateLoad(scope: Scope, id: typeless.Id): Result = scope.get(id) match
-  case Some(lam: typeless.Lambda) => Right(group(scope, Load(Ptr, lam.ptr)))
-  case Some(_)                    => Right(group(scope, Load(I32, scope.qualified(id))))
-  case None                       => Left(UndeclaredIdentifierErr(id))
+  case Some(_) => Right(group(scope, Load(I32, scope.qualified(id))))
+  case None    => Left(UndeclaredIdentifierErr(id))
 
 def generateAnnonLambda(scope: Scope, lambda: typeless.Lambda): Result =
   scope.forked(lambda.ptr) { subscope =>
@@ -81,7 +80,7 @@ def generateCall(scope: Scope, lambda: Ir, args: List[Ir]): Result = lambda matc
     scope.get(id) match
       case Some(id: typeless.Id)      => generateCallId(scope, args, id)
       case Some(app: typeless.App)    => generateCallApp(scope, args, app)
-      case Some(lam: typeless.Lambda) => generateCallLambda(scope, args, lam)
+      case Some(lam: typeless.Lambda) => generateCallId(scope, args, id)
       case Some(_)                    => Left(BadCallErr(lambda))
       case None                       => Left(UndeclaredIdentifierErr(id))
 
@@ -201,9 +200,9 @@ def generateLet(scope: Scope, bindings: List[typeless.Binding], body: Ir): Resul
 def generateDef(scope: Scope, name: String, value: Ir): Result = value match
   case lam: typeless.Lambda =>
     scope.define(name, lam)
-    scope.forked(lam.ptr) { subscope =>
+    scope.scoped(name) { subscope =>
       generateLambda(subscope, lam.params, lam.body)
-        .map(Label(lam.ptr) +: _ :+ Value(Ptr, scope.qualified(name), Id(lam.ptr)))
+        .map(Label(lam.ptr) +: _ :+ Value(Ptr, scope.qualified(name), Id(scope.qualified(name))))
     }
 
   case _ =>
