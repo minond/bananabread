@@ -3,7 +3,8 @@ package test
 
 import parsing.language.{Syntax, parse}
 import ir.typeless
-import runtime.vm.Machine
+import runtime.Interpreter
+import backend.opcode.ordered
 
 val stdOps = Syntax.withPrefix(0, "-")
                    .withPrefix(0, "∀")
@@ -39,7 +40,7 @@ val prelude =
     opcode %{
       load [Str] a
       load [Str] b
-      concat [Str]
+      concat
     }
 
   def println(x) =
@@ -58,10 +59,11 @@ def astOf(code: String, syntax: Syntax = stdOps) =
 def resultOf(code: String, syntax: Syntax = stdOps) =
   val ast = parse("<stdin>", prelude + code, syntax).getOrElse(???)
   val ir = typeless.lift(ast)
-  val ins = opcode.compile(ir)
-  val machine = Machine(ins.dump)
-  machine.run
-  machine
+  import runtime.instruction.pp
+  val ins = backend.opcode.generate(ir).getOrElse(???)
+  val interpreter = Interpreter(ins.ordered)
+  interpreter.run
+  interpreter
 
 def stackHeadOf(code: String, syntax: Syntax = stdOps) =
   resultOf(code, syntax).stack.head
