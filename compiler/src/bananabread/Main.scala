@@ -246,7 +246,7 @@ def main(args: Array[String]) =
 
     def bbb = aaa(1)(2)
 
-    println(bbb(3))
+    println(if 0 then bbb(3) else bbb(10))
     """
 
   // parsing.opcode.parse(

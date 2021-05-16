@@ -23,8 +23,11 @@ def handle(code: Code, state: State): Dispatch = code match
   case op: Add   => handleAdd(op, state)
   case op: Sub   => handleSub(op, state)
 
-def handleJz(op: Jz, state: State): Dispatch =
-  ???
+def handleJz(op: Jz, state: State): Dispatch = state.stack.pop match
+  case value.I32(0) =>
+    Goto(op.label)
+  case _ =>
+    Cont
 
 def handleJmp(op: Jmp, state: State): Dispatch =
   ???
