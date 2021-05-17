@@ -278,13 +278,10 @@ def withI32(expr: OpcodeExpr, str: String)(f: Int => Output): Result =
 
 extension (output: Output)
   def framed: Output =
-    println(output)
     output.map {
       case inst @ Grouped(section, Label(label)) =>
-        println(s"======$section")
         List(inst)
       case inst @ Label(label) =>
-        println(s"======$label")
         List(inst)
       case inst =>
         List(inst)
@@ -299,10 +296,10 @@ extension (output: Output)
         sections.get(section) match
           case Some(q) => q.addOne(item)
           case None    => sections.update(section, Queue(item))
-      case Grouped(section, label: Label) =>
+      case item @ Grouped(section, label: Label) =>
         sections.get(section) match
-          case Some(q) => q.addOne(label)
-          case None    => sections.update(section, Queue(label))
+          case Some(q) => q.addOne(item)
+          case None    => sections.update(section, Queue(item))
       case value: Value => values.addOne(value)
       case label: Label =>
     }
