@@ -217,13 +217,15 @@ def generateDef(scope: Scope, name: String, value: Ir): Result = value match
       .map(_ ++ group(scope, Store(I32, scope.qualified(name))))
 
 def generateLambda(scope: Scope, params: List[typeless.Id], body: Ir): Result =
+  val setup = group(scope, FrameInit)
+
   val header = params.reverse.flatMap { case param @ typeless.Id(label) =>
     scope.define(param, param)
     group(scope, Swap, Store(I32, scope.qualified(label)))
   }
 
   val footer = group(scope, Swap, Ret)
-  generate(scope, body).map(header ++ _ ++ footer)
+  generate(scope, body).map(setup ++ header ++ _ ++ footer)
 
 def generateStore(scope: Scope, label: String, value: Ir): Result = value match
   case _: typeless.Lambda => Right(group(scope, Store(Ptr, scope.qualified(label))))
@@ -278,14 +280,23 @@ def withI32(expr: OpcodeExpr, str: String)(f: Int => Output): Result =
 
 extension (output: Output)
   def framed: Output =
+    val sections = Map[String, Queue[Grouped | Label]]()
+
+    output.foreach {
+      case item @ Grouped(section, _) =>
+        sections.get(section) match
+          case Some(q) => q.addOne(item)
+          case None    => sections.update(section, Queue(item))
+      case value: Value =>
+      case label: Label =>
+    }
+
     output.map {
-      case inst @ Grouped(section, Label(label)) =>
-        List(inst)
-      case inst @ Label(label) =>
-        List(inst)
+      case inst @ Grouped(section, FrameInit) =>
+        Grouped(section, Frame(0, 0))
       case inst =>
-        List(inst)
-    }.flatten
+        inst
+    }
 
   def labeled: Output =
     val sections = Map[String, Queue[Grouped | Label]]()
@@ -300,14 +311,13 @@ extension (output: Output)
       case label: Label =>
     }
 
-    (for (section, instructions) <- sections if section == "main"
-     yield group(section, Label(section)) ++ instructions).flatten.toList ++
-    group("main", Halt) ++
+    group("main", Label("main")) ++
+    sections("main").toList ++
     (for (section, instructions) <- sections if section != "main"
      yield group(section, Label(section)) ++ instructions).flatten ++
     values
 
-  def flattened: List[Code] =
+  def sectioned: List[Code] =
     val sections = Map[String, Queue[Code]]()
     val values = Queue[Value]()
 
@@ -324,9 +334,7 @@ extension (output: Output)
       case label: Label =>
     }
 
-    (for (section, instructions) <- sections if section == "main"
-     yield Label(section) +: instructions).flatten.toList ++
+    sections("main").toList ++
     List(Halt) ++
-    (for (section, instructions) <- sections if section != "main"
-     yield Label(section) +: instructions).flatten ++
+    sections.filter { (name, i) => name != "main" }.values.flatten.toList ++
     values

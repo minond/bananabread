@@ -8,6 +8,7 @@ def handle(code: Code, state: State): Dispatch = code match
   case _: Value_ => Cont
   case _: Label_ => Cont
   case Halt      => Stop
+  case FrameInit => Fatal("unknown operator")
   case op: Jz    => handleJz(op, state)
   case op: Jmp   => handleJmp(op, state)
   case op: Push  => handlePush(op, state)
@@ -154,7 +155,7 @@ def handleSub(op: Sub, state: State): Dispatch =
       Fatal("bad sub: missing argument")
 
 def handleFrame(op: Frame, state: State): Dispatch =
-  ???
+  Cont
 
 def binI32Op(state: State)(f: (Int, Int) => Int): Option[value.I32] =
   (state.stack.pop, state.stack.pop) match

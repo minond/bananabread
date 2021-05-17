@@ -38,6 +38,7 @@ case object Concat extends Instruction with Print("concat")
 case class Add(typ: Type) extends Instruction with Print(s"add [$typ]")
 case class Sub(typ: Type) extends Instruction with Print(s"sub [$typ]")
 case class Frame(stack: Int, locals: Int) extends Instruction with Print(s"frame $stack $locals")
+case object FrameInit extends Instruction with Print(s"frame_init")
 
 
 type Code = Label
