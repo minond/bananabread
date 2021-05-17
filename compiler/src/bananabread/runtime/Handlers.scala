@@ -22,6 +22,7 @@ def handle(code: Code, state: State): Dispatch = code match
   case Concat    => handleConcat(state)
   case op: Add   => handleAdd(op, state)
   case op: Sub   => handleSub(op, state)
+  case op: Frame => handleFrame(op, state)
 
 def handleJz(op: Jz, state: State): Dispatch = state.stack.pop match
   case value.I32(0) =>
@@ -151,6 +152,9 @@ def handleSub(op: Sub, state: State): Dispatch =
       Cont
     case None =>
       Fatal("bad sub: missing argument")
+
+def handleFrame(op: Frame, state: State): Dispatch =
+  ???
 
 def binI32Op(state: State)(f: (Int, Int) => Int): Option[value.I32] =
   (state.stack.pop, state.stack.pop) match
