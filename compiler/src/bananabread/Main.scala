@@ -284,19 +284,19 @@ def main(args: Array[String]) =
   val res =
     for
       ast <- parse("<stdin>", code, syntax)
-      _=println(s"AST: ${ast}\n\n")
+      // _=println(s"AST: ${ast}\n\n")
       ir = typeless.lift(ast)
-      _=println(s"IR: ${ir}\n\n")
+      // _=println(s"IR: ${ir}\n\n")
       codes <- generate(ir)
       ins = codes.labeled.framed.sectioned
     yield
-      println("==================")
-      println(pp(ins))
-      println("==================")
+      // println("==================")
+      // println(pp(ins))
+      // println("==================")
 
       val interpreter = Interpreter(ins)
 
       interpreter.run
-      interpreter.stack
+      interpreter
 
-  println(res)
+  // println(res)

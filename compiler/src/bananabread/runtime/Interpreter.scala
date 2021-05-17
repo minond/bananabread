@@ -56,12 +56,12 @@ class Interpreter(codes: List[Code], private val debug: Boolean = false):
 
   def debugBefore =
     if debug then
-      println(s"========= START ${codes(registers.pc.value)}")
-      println(s"STACK: $stack")
-      println(s"REGISTERS: $registers")
+      println(s"INSTRUCTION ${codes(registers.pc.value)}")
+      println(s"\t\t\tSTACK: $stack")
+      println(s"\t\t\tREGISTERS: $registers")
 
   def debugAfter =
     if debug then
-      println(s"STACK: $stack")
-      println(s"REGISTERS: $registers")
-      println(s"========= FINISH")
+      println(s"\t\t\tSTACK: $stack")
+      println(s"\t\t\tREGISTERS: $registers")
+      println(s"\t\t\tFINISH")
