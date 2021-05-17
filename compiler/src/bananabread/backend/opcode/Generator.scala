@@ -307,7 +307,7 @@ extension (output: Output)
      yield group(section, Label(section)) ++ instructions).flatten ++
     values
 
-  def ordered: List[Code] =
+  def flattened: List[Code] =
     val sections = Map[String, Queue[Code]]()
     val values = Queue[Value]()
 
