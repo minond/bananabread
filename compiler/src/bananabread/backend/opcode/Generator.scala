@@ -292,11 +292,7 @@ extension (output: Output)
     val values = Queue[Value]()
 
     output.foreach {
-      case item @ Grouped(section, inst: Instruction) =>
-        sections.get(section) match
-          case Some(q) => q.addOne(item)
-          case None    => sections.update(section, Queue(item))
-      case item @ Grouped(section, label: Label) =>
+      case item @ Grouped(section, _) =>
         sections.get(section) match
           case Some(q) => q.addOne(item)
           case None    => sections.update(section, Queue(item))
