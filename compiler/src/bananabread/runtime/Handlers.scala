@@ -26,13 +26,11 @@ def handle(code: Code, state: State): Dispatch = code match
   case op: Frame => handleFrame(op, state)
 
 def handleJz(op: Jz, state: State): Dispatch = state.stack.pop match
-  case value.I32(0) =>
-    Goto(op.label)
-  case _ =>
-    Cont
+  case value.I32(0) => goto(op.label, state)
+  case _            => Cont
 
 def handleJmp(op: Jmp, state: State): Dispatch =
-  Goto(op.label)
+  goto(op.label, state)
 
 def handlePush(op: Push, state: State): Dispatch = op match
   case Push(I32, v: value.I32) =>
@@ -58,13 +56,13 @@ def handlePush(op: Push, state: State): Dispatch = op match
 def handleCall(op: Call, state: State): Dispatch = state.frames.curr.get(op.label) match
   case None =>
     state.frames.next
-    Goto(op.label)
+    goto(op.label, state)
   case Some(ptr: value.Id) =>
     state.frames.next
-    Goto(ptr.label)
+    goto(ptr.label, state)
   case Some(value.Scope(label, frame)) =>
     state.frames.from(frame)
-    Goto(label)
+    goto(label, state)
   case Some(_) =>
     Fatal(s"bad call: ${op.label}")
 
@@ -156,6 +154,10 @@ def handleSub(op: Sub, state: State): Dispatch =
 
 def handleFrame(op: Frame, state: State): Dispatch =
   Cont
+
+def goto(label: String, state: State): Dispatch = state.constants.get(label) match
+  case None => Fatal(s"bad jump: missing label: ${label}")
+  case _ => Goto(label)
 
 def binI32Op(state: State)(f: (Int, Int) => Int): Option[value.I32] =
   (state.stack.pop, state.stack.pop) match
