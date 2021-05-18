@@ -274,17 +274,24 @@ def main(args: Array[String]) =
     // println(123)
     // println(%{testing 123 })
 
-    def x = %{testing 1 2 3}
+    def err_message = %{should not see this}
+    def ok_message = %{it's ok to see this}
 
     def jump_test_1() =
-      opcode %{
-        jmp jump_test_2_entry
-      }
+      begin
+        opcode %{
+          jmp jump_test_2_entry
+        }
+        println(err_message)
+      end
 
     def jump_test_2() =
       opcode %{
+        load [Ptr] err_message
+        println
+        halt
       jump_test_2_entry:
-        load [Ptr] x
+        load [Ptr] ok_message
         println
       }
 
