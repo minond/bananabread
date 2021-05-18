@@ -168,3 +168,25 @@ class VmTests extends AnyFlatSpec with should.Matchers:
       """
     ) shouldEqual I32(64)
   }
+
+  it should "handle user opcode jumps" in {
+    stackHeadOf(
+      """
+      def x = 123
+
+      def jump_test_1() =
+        opcode %{
+          jmp jump_test_2_entry
+        }
+
+      def jump_test_2() =
+        opcode %{
+          halt
+        jump_test_2_entry:
+          load [Ptr] x
+        }
+
+      jump_test_1()
+      """
+    ) shouldEqual I32(123)
+  }

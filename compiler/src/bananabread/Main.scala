@@ -282,13 +282,11 @@ def main(args: Array[String]) =
       }
 
     def jump_test_2() =
-      begin
-        opcode %{
-        jump_test_2_entry:
-          load [Ptr] x
-          println
-        }
-      end
+      opcode %{
+      jump_test_2_entry:
+        load [Ptr] x
+        println
+      }
 
     jump_test_1()
     """
