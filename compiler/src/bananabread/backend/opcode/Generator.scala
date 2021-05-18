@@ -27,6 +27,9 @@ type Output = List[Grouped | Value | Label]
 type Result = Either[GeneratorError, Output]
 
 
+def compile(nodes: List[Ir]): Either[GeneratorError, List[Code]] =
+  generate(nodes).map(_.labeled.framed.sectioned)
+
 def generate(nodes: List[Ir]): Result =
   generate(backend.opcode.Scope.empty, nodes)
 def generate(scope: Scope, nodes: List[Ir]): Result =

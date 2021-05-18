@@ -4,7 +4,6 @@ package test
 import parsing.language.{Syntax, parse}
 import ir.typeless
 import runtime.Interpreter
-import backend.opcode.{labeled, framed, sectioned}
 
 val stdOps = Syntax.withPrefix(0, "-")
                    .withPrefix(0, "∀")
@@ -60,16 +59,16 @@ def resultOf(code: String, syntax: Syntax = stdOps) =
   val ast = parse("<stdin>", prelude + code, syntax).getOrElse(???)
   val ir = typeless.lift(ast)
   // import runtime.instruction.pp
-  // backend.opcode.generate(ir) match
+  // backend.opcode.compile(ir) match
   //   case Right(xs) =>
   //     println("==========================")
   //     println(code)
   //     println("==========================")
-  //     println(pp(xs.labeled.framed.sectioned))
+  //     println(pp(xs))
   //     println("==========================")
   //   case Left(err) => println(err)
-  val ins = backend.opcode.generate(ir).getOrElse(???)
-  val interpreter = Interpreter(ins.labeled.framed.sectioned)
+  val ins = backend.opcode.compile(ir).getOrElse(???)
+  val interpreter = Interpreter(ins)
   interpreter.run
   interpreter
 
