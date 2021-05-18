@@ -1,6 +1,7 @@
 package bananabread
 package runtime
 
+import value.Value
 import instruction.{Value => Value_, Label => Label_, _}
 
 
@@ -73,15 +74,18 @@ def handleRet(state: State): Dispatch = state.stack.pop match
   case value.I32(addr) =>
     state.frames.prev
     Jump(addr)
-  case _ =>
-    Fatal("bad ret: missing return address")
+  case bad =>
+    Fatal(s"bad ret: missing return address: $bad")
 
 def handleSwap(state: State): Dispatch =
-  val a = state.stack.pop
-  val b = state.stack.pop
-  state.stack.push(a)
-  state.stack.push(b)
-  Cont
+  if state.stack.size == 1
+  then Cont
+  else
+    val a = state.stack.pop
+    val b = state.stack.pop
+    state.stack.push(a)
+    state.stack.push(b)
+    Cont
 
 def handleMov(op: Mov, state: State): Dispatch = op match
   case Mov(reg, Some(offset)) =>
@@ -113,9 +117,10 @@ def handleMov(op: Mov, state: State): Dispatch = op match
 
 def handleLoad(op: Load, state: State): Dispatch = state.frames.curr.get(op.label) match
   case None =>
-    val value = state.constants(op.label)
-    state.stack.push(value)
-    Cont
+    const(op.label, state) { value =>
+      state.stack.push(value)
+      Cont
+    }
   case Some(v) =>
     state.stack.push(v)
     Cont
@@ -158,6 +163,11 @@ def handleFrame(op: Frame, state: State): Dispatch =
 def goto(label: String, state: State): Dispatch = state.labels.get(label) match
   case None => Fatal(s"bad jump: missing label: ${label}")
   case _ => Goto(label)
+
+def const(label: String, state: State)(f: Value => Dispatch): Dispatch =
+  state.constants.get(label) match
+    case None => Fatal(s"missing const: ${label}")
+    case Some(value) => f(value)
 
 def binI32Op(state: State)(f: (Int, Int) => Int): Option[value.I32] =
   (state.stack.pop, state.stack.pop) match
