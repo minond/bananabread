@@ -58,6 +58,7 @@ def parseTop(head: Token, tail: Tokens): Parsed[Expr] = head match
   case op @ Word("call0", _)   => parseOpcode(op, tail)
   case op @ Word("ret", _)     => parseOpcode(op, tail)
   case op @ Word("swap", _)    => parseOpcode(op, tail)
+  case w: Word                 => parseLabel(w)
   case _: Eof                  => Left(UnexpectedEofErr(head))
   case _                       => Left(UnexpectedTokenErr(head))
 
@@ -96,6 +97,8 @@ def parseMov(op: Word, tail: Tokens): Parsed[Expr] =
     yield
       Instruction(op.lexeme, Some(reg.lexeme), args, op.location)
 
+def parseLabel(label: Word): Parsed[Expr] =
+  Right(Label(label.lexeme.dropRight(1), label.location))
 
 def parseNum(word: Word): Parsed[String] =
   word.lexeme.safeToInt match

@@ -6,7 +6,7 @@ import ir.typeless.Ir
 
 import parsing.opcode.Tree => OpcodeTree
 import parsing.opcode.Expr => OpcodeExpr
-import parsing.opcode.Instruction => InstructionExpr
+import parsing.opcode.{Instruction => InstructionExpr, Label => LabelExpr}
 
 import runtime.value
 import runtime.value.Id
@@ -120,7 +120,7 @@ def generateOpcode(scope: Scope, expr: OpcodeExpr): Result = expr match
   case InstructionExpr("store",   Some("Str"), List(label), _) => Right(group(scope, Store(Str, scope.qualified(label))))
   case InstructionExpr("store",   Some("Ptr"), List(label), _) => Right(group(scope, Store(Ptr, scope.qualified(label))))
   case InstructionExpr("jz",      None,        List(label), _) => Right(group(scope, Jz(scope.qualified(label))))
-  case InstructionExpr("jmp",     None,        List(label), _) => Right(group(scope, Jmp(scope.qualified(label))))
+  case InstructionExpr("jmp",     None,        List(label), _) => Right(group(scope, Jmp(label)))
   case InstructionExpr("call",    None,        List(label), _) => Right(group(scope, Call(scope.qualified(label))))
   case InstructionExpr("mov",     Some("Pc"),  Nil,         _) => Right(group(scope, Mov(Pc, None)))
   case InstructionExpr("mov",     Some("Lr"),  Nil,         _) => Right(group(scope, Mov(Lr, None)))
@@ -134,6 +134,7 @@ def generateOpcode(scope: Scope, expr: OpcodeExpr): Result = expr match
   case InstructionExpr("call0",   None,        Nil,         _) => Right(group(scope, Call0))
   case InstructionExpr("ret",     None,        Nil,         _) => Right(group(scope, Ret))
   case InstructionExpr("swap",    None,        Nil,         _) => Right(group(scope, Swap))
+  case LabelExpr(label, _)                                     => Right(group(scope, Label(label)))
   case _                                                       => Left(UnknownUserOpcodeErr(expr))
 
 def generateCallId(scope: Scope, args: List[Ir], id: typeless.Id): Result =
