@@ -271,8 +271,26 @@ def main(args: Array[String]) =
     //
     // println(x)
 
-    println(123)
-    println(%{testing 123 })
+    // println(123)
+    // println(%{testing 123 })
+
+    def x = %{testing 1 2 3}
+
+    def jump_test_1() =
+      opcode %{
+        jmp jump_test_2_entry
+      }
+
+    def jump_test_2() =
+      begin
+        opcode %{
+        jump_test_2_entry:
+          load [Ptr] x
+          println
+        }
+      end
+
+    jump_test_1()
     """
 
   // parsing.opcode.parse(
@@ -296,6 +314,7 @@ def main(args: Array[String]) =
       val interpreter = Interpreter(ins)
 
       interpreter.run
-      interpreter
 
-  // println(res)
+      "ok"
+
+  println(res)
