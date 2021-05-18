@@ -4,7 +4,6 @@ package runtime.instruction
 import runtime.value
 import runtime.value.Value
 import runtime.register.Register
-import utils.Print
 
 
 sealed trait Type
@@ -22,23 +21,23 @@ case class Value(typ: Type, label: String, _value: value.Value)
 
 
 sealed trait Instruction
-case object Halt extends Instruction with Print("halt")
-case class Jz(label: String) extends Instruction with Print(s"jz        $label")
-case class Jmp(label: String) extends Instruction with Print(s"jmp       $label")
-case class Push(typ: Type, _value: value.Value) extends Instruction with Print(s"push      $typ, $_value")
-case class Call(label: String) extends Instruction with Print(s"call      $label")
-case object Call0 extends Instruction with Print("call0")
-case object Ret extends Instruction with Print("ret")
-case object Swap extends Instruction with Print("swap")
-case class Mov(reg: Register, data: Option[value.I32]) extends Instruction with Print(s"mov       ${reg.toString + data.map(", " + _).getOrElse("")}")
-case class Load(typ: Type, label: String) extends Instruction with Print(s"load      $typ, $label")
-case class Store(typ: Type, label: String) extends Instruction with Print(s"store     $typ, $label")
-case object Println extends Instruction with Print("println")
-case object Concat extends Instruction with Print("concat")
-case class Add(typ: Type) extends Instruction with Print(s"add       $typ")
-case class Sub(typ: Type) extends Instruction with Print(s"sub       $typ")
-case class Frame(stack: Int, locals: Int) extends Instruction with Print(s"frame     $stack, $locals")
-case object FrameInit extends Instruction with Print(s"frame_init")
+case object Halt extends Instruction
+case class Jz(label: String) extends Instruction
+case class Jmp(label: String) extends Instruction
+case class Push(typ: Type, _value: value.Value) extends Instruction
+case class Call(label: String) extends Instruction
+case object Call0 extends Instruction
+case object Ret extends Instruction
+case object Swap extends Instruction
+case class Mov(reg: Register, data: Option[value.I32]) extends Instruction
+case class Load(typ: Type, label: String) extends Instruction
+case class Store(typ: Type, label: String) extends Instruction
+case object Println extends Instruction
+case object Concat extends Instruction
+case class Add(typ: Type) extends Instruction
+case class Sub(typ: Type) extends Instruction
+case class Frame(stack: Int, locals: Int) extends Instruction
+case object FrameInit extends Instruction
 
 
 type Code = Label
@@ -59,7 +58,28 @@ extension (codes: List[Code])
 
 def pp(codes: List[Code]): String =
   codes.zipWithIndex.map {
-    case (Label(label), i) => s"$label:"
-    case (Value(typ, label, value), i) => s"$label [$typ]: $value"
-    case (op : Instruction, i) => f"${i}%016d          ${op}"
+    case (op: Value, _) => pp(op)
+    case (op: Label, _) => pp(op)
+    case (op: Instruction, i) => f"${i}%016d          ${pp(op)}"
   }.mkString("\n")
+def pp(code: Code): String = code match
+  case Label(l)          => s"$l:"
+  case Value(t, l, v)    => s".$t $l:\n                          $v"
+  case Halt              => "halt"
+  case Call0             => "call0"
+  case Ret               => "ret"
+  case Swap              => "swap"
+  case Println           => "println"
+  case Concat            => "concat"
+  case FrameInit         => "frame_init"
+  case Jz(l)             => s"jz        $l"
+  case Jmp(l)            => s"jmp       $l"
+  case Push(t, v)        => s"push      $t, $v"
+  case Call(l)           => s"call      $l"
+  case Mov(reg, None)    => s"mov       $reg"
+  case Mov(reg, Some(v)) => s"mov       $reg, $v"
+  case Load(t, l)        => s"load      $t, $l"
+  case Store(t, l)       => s"store     $t, $l"
+  case Add(t)            => s"add       $t"
+  case Sub(t)            => s"sub       $t"
+  case Frame(stack, locals) => s"frame     $stack, $locals"

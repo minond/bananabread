@@ -272,6 +272,7 @@ def main(args: Array[String]) =
     // println(x)
 
     println(123)
+    println(%{testing 123 })
     """
 
   // parsing.opcode.parse(
