@@ -288,9 +288,9 @@ def main(args: Array[String]) =
       // _=println(s"IR: ${ir}\n\n")
       ins <- backend.opcode.compile(ir)
     yield
-      // println("==================")
-      // println(pp(ins))
-      // println("==================")
+      println("==================")
+      println(pp(ins))
+      println("==================")
 
       val interpreter = Interpreter(ins)
 
