@@ -155,7 +155,7 @@ def handleSub(op: Sub, state: State): Dispatch =
 def handleFrame(op: Frame, state: State): Dispatch =
   Cont
 
-def goto(label: String, state: State): Dispatch = state.constants.get(label) match
+def goto(label: String, state: State): Dispatch = state.labels.get(label) match
   case None => Fatal(s"bad jump: missing label: ${label}")
   case _ => Goto(label)
 
