@@ -158,9 +158,7 @@ def generateCallWithArgs(scope: Scope, args: List[Ir], call: Instruction): Resul
   }
 
 def generateCallArgsLoad(scope: Scope, args: List[Ir]): Result =
-  args.map(generate(scope, _)).squished.map { instructions =>
-    instructions.flatten ++ group(scope, Mov(Pc, Some(value.I32(2))))
-  }
+  args.map(generate(scope, _)).squished.map(_.flatten)
 
 def generateCond(scope: Scope, cond: Ir, pass: Ir, fail: Ir): Result =
   val condString = uniqueString(scope, "cond")

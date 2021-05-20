@@ -56,18 +56,22 @@ def handlePush(op: Push, state: State): Dispatch = op match
 
 def handleCall(op: Call, state: State): Dispatch = state.frames.curr.get(op.label) match
   case None =>
+    state.stack.push(value.I32(state.registers.pc.value + 1))
     state.frames.next
     goto(op.label, state)
   case Some(ptr: value.Id) =>
+    state.stack.push(value.I32(state.registers.pc.value + 1))
     state.frames.next
     goto(ptr.label, state)
   case Some(value.Scope(label, frame)) =>
+    state.stack.push(value.I32(state.registers.pc.value + 1))
     state.frames.from(frame)
     goto(label, state)
   case Some(_) =>
     Fatal(s"bad call: ${op.label}")
 
 def handleCall0(state: State): Dispatch =
+  state.stack.push(value.I32(state.registers.pc.value + 1))
   Jump(state.registers.jm.value)
 
 def handleRet(state: State): Dispatch = state.stack.pop match
