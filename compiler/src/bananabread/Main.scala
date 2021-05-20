@@ -56,7 +56,7 @@ def main(args: Array[String]) =
       opcode %{
         load [Str] x
         println
-        load [Str] x
+        ret
       }
 
     // let
@@ -274,28 +274,46 @@ def main(args: Array[String]) =
     // println(123)
     // println(%{testing 123 })
 
-    def err_message = %{should not see this}
-    def ok_message = %{it's ok to see this}
+    // def err_message = %{should not see this}
+    // def ok_message = %{it's ok to see this}
+    //
+    // def jump_test_1() =
+    //   begin
+    //     opcode %{
+    //       jmp jump_test_2_entry
+    //     }
+    //     println(err_message)
+    //   end
+    //
+    // def jump_test_2() =
+    //   opcode %{
+    //     load [Ptr] err_message
+    //     println
+    //     halt
+    //   jump_test_2_entry:
+    //     load [Ptr] ok_message
+    //     println
+    //   }
+    //
+    // jump_test_1()
 
-    def jump_test_1() =
-      begin
-        opcode %{
-          jmp jump_test_2_entry
-        }
-        println(err_message)
-      end
+    def loop(times, fn) =
+      if times
+      then
+        begin
+          fn(times)
+          loop(times - 1, fn)
+        end
+      else fn
 
-    def jump_test_2() =
+    def f(i) =
       opcode %{
-        load [Ptr] err_message
+        load [Str] i
         println
-        halt
-      jump_test_2_entry:
-        load [Ptr] ok_message
-        println
+        ret
       }
 
-    jump_test_1()
+    loop(7, f)
     """
 
   // parsing.opcode.parse(
@@ -316,10 +334,13 @@ def main(args: Array[String]) =
       println(pp(ins))
       println("==================")
 
-      val interpreter = Interpreter(ins)
+      val interpreter = Interpreter(ins)//.debugging//.stepping
 
       interpreter.run
 
       "ok"
 
   println(res)
+
+  // import runtime.instruction._
+  // println(backend.bytecode.generateLabel(Label("testing")))
