@@ -68,7 +68,7 @@ def resultOf(code: String, syntax: Syntax = stdOps) =
   //     println("==========================")
   //   case Left(err) => println(err)
   val ins = backend.opcode.compile(ir).getOrElse(???)
-  val interpreter = Interpreter(ins)
+  val interpreter = Interpreter(ins, false, false)
   interpreter.run
   interpreter
 

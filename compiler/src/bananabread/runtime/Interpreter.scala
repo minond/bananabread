@@ -29,7 +29,7 @@ object State:
     State(i.stack, i.frames, i.registers, i.constants, i.labels)
 
 
-class Interpreter(codes: List[Code], private val debug: Boolean = false):
+class Interpreter(codes: List[Code], private val debug: Boolean = false, private val step: Boolean = false):
   val stack = Stack[Value]()
   val frames = Frames()
   val registers = Registers()
@@ -37,14 +37,15 @@ class Interpreter(codes: List[Code], private val debug: Boolean = false):
   val labels = codes.labels
   val constants = codes.constants
 
-  def debugging =
-    Interpreter(codes, true)
+  def debugging = Interpreter(codes, true, step)
+  def stepping  = Interpreter(codes, debug, true)
 
   def run =
     while registers.pc.value != -1 do
       debugBefore
       next
       debugAfter
+      waitForUser
 
   def next =
     handle(codes(registers.pc.value), State.from(this)) match
@@ -65,3 +66,7 @@ class Interpreter(codes: List[Code], private val debug: Boolean = false):
       println(s"\t\t\tSTACK: $stack")
       println(s"\t\t\tREGISTERS: $registers")
       println(s"\t\t\tFINISH")
+
+  def waitForUser =
+    if step then
+      scala.io.StdIn.readLine()
