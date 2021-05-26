@@ -37,7 +37,7 @@ def handlePush(op: Push, state: State): Dispatch = op match
   case Push(I32, v: value.I32) =>
     state.stack.push(v)
     Cont
-  case Push(Ptr, v: value.Id) =>
+  case Push(Ref, v: value.Id) =>
     state.stack.push(v)
     Cont
   case Push(Scope, value.Id(label)) =>

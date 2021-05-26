@@ -10,7 +10,7 @@ sealed trait Type
 case object I32 extends Type
 case object Str extends Type
 case object Reg extends Type
-case object Ptr extends Type
+case object Ref extends Type
 case object Symbol extends Type
 case object Scope extends Type
 case object Const extends Type

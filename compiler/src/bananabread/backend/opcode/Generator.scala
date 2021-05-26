@@ -75,7 +75,7 @@ def generateAnnonLambda(scope: Scope, lambda: typeless.Lambda): Result =
     generateLambda(subscope, lambda.params, lambda.body)
       .map(Label(lambda.ptr) +: _)
       .map(_ ++ exposure)
-      .map(_ :+ Value(Ptr, lambda.ptr, Id(lambda.ptr)))
+      .map(_ :+ Value(Ref, lambda.ptr, Id(lambda.ptr)))
   }
 
 def generateCall(scope: Scope, lambda: Ir, args: List[Ir]): Result = lambda match
@@ -112,13 +112,13 @@ def generateOpcode(scope: Scope, expr: OpcodeExpr): Result = expr match
   case InstructionExpr("sub",     Some("I32"), Nil,         _) => Right(group(scope, Sub(I32)))
   case InstructionExpr("push",    Some("I32"), List(str), _)   => withI32(expr, str) { i => group(scope, Push(I32, value.I32(i))) }
   case InstructionExpr("push",    Some("Str"), List(label), _) => Right(group(scope, Push(Str, value.Id(scope.qualified(label)))))
-  case InstructionExpr("push",    Some("Ptr"), List(label), _) => Right(group(scope, Push(Ptr, value.Id(scope.qualified(label)))))
+  case InstructionExpr("push",    Some("Ref"), List(label), _) => Right(group(scope, Push(Ref, value.Id(scope.qualified(label)))))
   case InstructionExpr("load",    Some("I32"), List(label), _) => Right(group(scope, Load(I32, scope.qualified(label))))
   case InstructionExpr("load",    Some("Str"), List(label), _) => Right(group(scope, Load(Str, scope.qualified(label))))
-  case InstructionExpr("load",    Some("Ptr"), List(label), _) => Right(group(scope, Load(Ptr, scope.qualified(label))))
+  case InstructionExpr("load",    Some("Ref"), List(label), _) => Right(group(scope, Load(Ref, scope.qualified(label))))
   case InstructionExpr("store",   Some("I32"), List(label), _) => Right(group(scope, Store(I32, scope.qualified(label))))
   case InstructionExpr("store",   Some("Str"), List(label), _) => Right(group(scope, Store(Str, scope.qualified(label))))
-  case InstructionExpr("store",   Some("Ptr"), List(label), _) => Right(group(scope, Store(Ptr, scope.qualified(label))))
+  case InstructionExpr("store",   Some("Ref"), List(label), _) => Right(group(scope, Store(Ref, scope.qualified(label))))
   case InstructionExpr("jz",      None,        List(label), _) => Right(group(scope, Jz(scope.qualified(label))))
   case InstructionExpr("jmp",     None,        List(label), _) => Right(group(scope, Jmp(label)))
   case InstructionExpr("call",    None,        List(label), _) => Right(group(scope, Call(scope.qualified(label))))
@@ -193,7 +193,7 @@ def generateLet(scope: Scope, bindings: List[typeless.Binding], body: Ir): Resul
       yield
         value match
           case lam: typeless.Lambda =>
-            valueCode ++ group(subscope, Push(Ptr, runtime.value.Id(lam.ptr))) ++ storeCode
+            valueCode ++ group(subscope, Push(Ref, runtime.value.Id(lam.ptr))) ++ storeCode
           case _ =>
             valueCode ++ storeCode
     }
@@ -210,7 +210,7 @@ def generateDef(scope: Scope, name: String, value: Ir): Result = value match
     scope.define(name, lam)
     scope.scoped(name) { subscope =>
       generateLambda(subscope, lam.params, lam.body)
-        .map(Label(lam.ptr) +: _ :+ Value(Ptr, scope.qualified(name), Id(scope.qualified(name))))
+        .map(Label(lam.ptr) +: _ :+ Value(Ref, scope.qualified(name), Id(scope.qualified(name))))
     }
 
   case _ =>
@@ -230,7 +230,7 @@ def generateLambda(scope: Scope, params: List[typeless.Id], body: Ir): Result =
   generate(scope, body).map(setup ++ header ++ _ ++ footer)
 
 def generateStore(scope: Scope, label: String, value: Ir): Result = value match
-  case _: typeless.Lambda => Right(group(scope, Store(Ptr, scope.qualified(label))))
+  case _: typeless.Lambda => Right(group(scope, Store(Ref, scope.qualified(label))))
   case _: typeless.Num    => Right(group(scope, Store(I32, scope.qualified(label))))
   case _: typeless.Str    => Right(group(scope, Store(Str, scope.qualified(label))))
   case _: typeless.Begin  => Right(group(scope, Store(I32, scope.qualified(label)))) /* XXX May not be an I32 */

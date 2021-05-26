@@ -183,7 +183,7 @@ class VmTests extends AnyFlatSpec with should.Matchers:
         opcode %{
           halt
         jump_test_2_entry:
-          load [Ptr] x
+          load [Ref] x
         }
 
       jump_test_1()
