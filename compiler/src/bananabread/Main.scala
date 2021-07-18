@@ -31,28 +31,28 @@ def main(args: Array[String]) =
 
   val code =
     """
-    def +(a, b) =
+    def + (a, b) =
       opcode %{
         load [I32] a
         load [I32] b
         add [I32]
       }
 
-    def -(a, b) =
+    def - (a, b) =
       opcode %{
         load [I32] a
         load [I32] b
         sub [I32]
       }
 
-    def ++(a, b) =
+    def ++ (a, b) =
       opcode %{
         load [Str] a
         load [Str] b
         concat
       }
 
-    def println(x) =
+    def println (x) =
       opcode %{
         load [Str] x
         println
@@ -145,7 +145,7 @@ def main(args: Array[String]) =
     // in
     //   puts(123)
     //
-    //def puts(str) = println(str)
+    // def puts(str) = println(str)
     // def globalprintln(str) = println(str)
     // def puts = globalprintln
     // def puts2 = puts
@@ -297,7 +297,7 @@ def main(args: Array[String]) =
     //
     // jump_test_1()
 
-    def loop(times, fn) =
+    def loop (times, fn) =
       if times
       then
         begin
@@ -306,7 +306,7 @@ def main(args: Array[String]) =
         end
       else fn
 
-    def f(i) =
+    def f (i) =
       opcode %{
         load [Str] i
         println
@@ -314,9 +314,9 @@ def main(args: Array[String]) =
       }
 
     println(%{loop(10, f)})
-    loop(10, f)
+    loop(4 + 6, f)
     println(%{loop(10, println)})
-    loop(10, println)
+    loop(3 + 7, println)
     """
 
   // parsing.opcode.parse(
