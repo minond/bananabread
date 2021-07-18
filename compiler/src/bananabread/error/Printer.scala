@@ -4,18 +4,21 @@ package error
 import parsing.error => parse
 import parsing.location.Location
 
+import scala.io.AnsiColor.{BOLD, RESET}
+
 
 def pp(err: parse.SyntaxErr, source: String) = err match
   case parse.UnexpectedTokenErr(token) =>
-    val name = token.getClass.getSimpleName
-    val message = s"syntax error, unexpected ${name} found in ${generateCoordinations(token.location, source)}:"
     List(
-      message,
+      generateSyntaxErrorLine(s"unexpected ${token.getClass.getSimpleName} found", token.location, source),
       isolateBadLine(token.location, source),
     ).mkString("\n")
 
   case _ =>
-    ???
+    err.toString
+
+def generateSyntaxErrorLine(message: String, loc: Location, source: String) =
+  s"${BOLD}syntax error, ${message} in ${generateCoordinations(loc, source)}${RESET}"
 
 def generateCoordinations(loc: Location, source: String) =
   val (col, row) = offsetToColAndRow(loc.offset, source)
