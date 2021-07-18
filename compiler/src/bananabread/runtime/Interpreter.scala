@@ -41,10 +41,11 @@ class Interpreter(codes: List[Code], private val debug: Boolean = false, private
   def stepping  = Interpreter(codes, debug, true)
 
   def run =
+    showState
     while registers.pc.value != -1 do
-      debugBefore
+      showInstruction
       next
-      debugAfter
+      showState
       waitForUser
 
   def next =
@@ -55,17 +56,14 @@ class Interpreter(codes: List[Code], private val debug: Boolean = false, private
       case Jump(index) => registers.pc(index)
       case Fatal(msg)  => throw Exception(msg) /* XXX */
 
-  def debugBefore =
+  def showInstruction =
     if debug then
-      println(s"INSTRUCTION ${codes(registers.pc.value)}")
-      println(s"\t\t\tSTACK: $stack")
-      println(s"\t\t\tREGISTERS: $registers")
+      println(s"- Instruction --- ${codes(registers.pc.value)}")
 
-  def debugAfter =
+  def showState =
     if debug then
-      println(s"\t\t\tSTACK: $stack")
-      println(s"\t\t\tREGISTERS: $registers")
-      println(s"\t\t\tFINISH")
+      println(s"  Stack --------- [${stack.mkString(", ")}]")
+      println(s"  Registers ----- {$registers}")
 
   def waitForUser =
     if step then

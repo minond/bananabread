@@ -113,17 +113,17 @@ def main(args: Array[String]) =
     //   // println(22 + 20)
     //   println(something_else)
     // end
-
+    //
     // def print_something = func (a) =
     //   let b = a + 1 in println(b)
-
+    //
     // def x = 2
     // println(777)
     // println(x + x)
     // let y = x + x + x in println(y)
     //
     // def add (a, b) = a + b
-
+    //
     // def add2 (a, b) =
     //   %{
     //     add [I32]
@@ -137,36 +137,36 @@ def main(args: Array[String]) =
     // 'south
     // 'east
     // 'west
-
+    //
     // let
     //   testtesttest = func (a) = println(a)
     //   internalprintln = func (str) = println(str)
     //   puts = internalprintln
     // in
     //   puts(123)
-
+    //
     //def puts(str) = println(str)
     // def globalprintln(str) = println(str)
     // def puts = globalprintln
     // def puts2 = puts
     // def xxx = 123
-
+    //
     // puts(%{from puts})
     // puts2(%{from puts2})
     // globalprintln(%{from internalprintln})
     // println(%{from println})
     // puts2(23 + 19)
-
+    //
     // def res = add(1, x)
     // println(res)
-
+    //
     // def to_s (n : I32) = dispatch('i32_to_str, n)
     // def to_s (n : I64) = dispatch('i64_to_str, n)
     // def to_s (n : U32) = dispatch('u32_to_str, n)
     // def to_s (n : U64) = dispatch('u64_to_str, n)
     // def to_s (n : F32) = dispatch('f32_to_str, n)
     // def to_s (n : F64) = dispatch('f64_to_str, n)
-
+    //
     // TODO variable lookup is wrong and invalid namespacing is set when
     // generating instructions.
     // def global_add_em(a, b) = a + b
@@ -185,7 +185,7 @@ def main(args: Array[String]) =
     //     b = 2
     //   in
     //     a + b
-
+    //
     // def x = 1
     //
     // def y = (
@@ -222,7 +222,7 @@ def main(args: Array[String]) =
     // def res = a_b_c + ab_c + abc // 15 + 12 + 10 = 37
     //
     // println(res)
-
+    //
     // begin
     // println(123)
     // println(1 + 4)
@@ -254,7 +254,7 @@ def main(args: Array[String]) =
     //   in
     //     println(f()()()()(4))
     // end
-
+    //
     // def x = 321
     //
     // println(x)
@@ -270,10 +270,10 @@ def main(args: Array[String]) =
     //   end
     //
     // println(x)
-
+    //
     // println(123)
     // println(%{testing 123 })
-
+    //
     // def err_message = %{should not see this}
     // def ok_message = %{it's ok to see this}
     //
@@ -313,7 +313,7 @@ def main(args: Array[String]) =
         ret
       }
 
-    loop(7, f)
+    loop(10, println)
     """
 
   // parsing.opcode.parse(
