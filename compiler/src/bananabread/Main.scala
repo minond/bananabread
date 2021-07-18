@@ -2,6 +2,7 @@ package bananabread
 
 import parsing.language.{Syntax, tokenize, parse}
 import ir.typeless
+import error.pp => errpp
 import runtime.Interpreter
 import runtime.instruction.pp
 
@@ -30,8 +31,7 @@ def main(args: Array[String]) =
                      .withPostfix(1, "!")
 
   val code =
-    """
-    def + (a, b) =
+    """    def (a) + (b) =
       opcode %{
         load [I32] a
         load [I32] b
@@ -343,7 +343,10 @@ def main(args: Array[String]) =
 
       "ok"
 
-  println(res)
+  if res.isRight
+  then println(res)
+  else res.swap.getOrElse(???) match
+    case err: parsing.error.SyntaxErr => println(errpp(err, code))
 
   // import runtime.instruction._
   // println(backend.bytecode.generateLabel(Label("testing")))
