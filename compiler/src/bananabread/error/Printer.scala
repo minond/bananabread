@@ -18,22 +18,22 @@ def pp(err: parse.SyntaxErr, source: String) = err match
     err.toString
 
 def generateSyntaxErrorLine(message: String, loc: Location, source: String) =
-  s"${BOLD}syntax error, ${message} in ${generateCoordinations(loc, source)}${RESET}"
+  s"${BOLD}syntax error, ${message} in ${generateCoordinates(loc, source)}${RESET}"
 
-def generateCoordinations(loc: Location, source: String) =
-  val (col, row) = offsetToColAndRow(loc.offset, source)
+def generateCoordinates(loc: Location, source: String) =
+  val (row, col) = offsetToRowAndCol(loc.offset, source)
   s"${loc.source}:${col + 1}:${row + 1}"
 
-def offsetToColAndRow(offset: Int, source: String): (Int, Int) =
-  source.split("\n").foldLeft[(Int, Int)]((offset, 0)) {
-    case ((rem, col), line) =>
+def offsetToRowAndCol(offset: Int, source: String): (Int, Int) =
+  source.split("\n").foldLeft[(Int, Int)]((0, offset)) {
+    case ((row, rem), line) =>
       if rem - line.size <= 0
-      then return (rem, col)
-      else (rem - line.size, col + 1)
+      then return (row, rem)
+      else (row + 1, rem - line.size - 1)
   }
 
 def isolateBadLine(loc: Location, source: String) =
-  val (col, row) = offsetToColAndRow(loc.offset, source)
+  val (row, col) = offsetToRowAndCol(loc.offset, source)
   val lines = source.split("\n")
   val max = lines.size
   val pointer = generatePointer(col)

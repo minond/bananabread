@@ -31,7 +31,7 @@ def main(args: Array[String]) =
                      .withPostfix(1, "!")
 
   val code =
-    """    def (a) + (b) =
+    """    def + (a, b) =
       opcode %{
         load [I32] a
         load [I32] b
