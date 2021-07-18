@@ -1,6 +1,3 @@
-**wip**
-
-```ebnf
 expr = prefix-op primary
      | primary infix-op primary
      | primary postfix-op
@@ -78,4 +75,3 @@ digit = "0" | ... | "9"
 
 reserved-token = "," | "." | "(" | ")" | "{" | "}" | "[" | "]"
                ;
-```
