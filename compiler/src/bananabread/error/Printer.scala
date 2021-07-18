@@ -22,7 +22,7 @@ def generateSyntaxErrorLine(message: String, loc: Location, source: String) =
 
 def generateCoordinates(loc: Location, source: String) =
   val (row, col) = offsetToRowAndCol(loc.offset, source)
-  s"${loc.source}:${col + 1}:${row + 1}"
+  s"${loc.source}:${row + 1}:${col + 1}"
 
 def offsetToRowAndCol(offset: Int, source: String): (Int, Int) =
   source.split("\n").foldLeft[(Int, Int)]((0, offset)) {
