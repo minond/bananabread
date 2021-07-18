@@ -313,6 +313,9 @@ def main(args: Array[String]) =
         ret
       }
 
+    println(%{loop(10, f)})
+    loop(10, f)
+    println(%{loop(10, println)})
     loop(10, println)
     """
 
