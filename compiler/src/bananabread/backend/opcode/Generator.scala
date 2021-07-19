@@ -1,6 +1,8 @@
 package bananabread
 package backend.opcode
 
+import error._
+
 import ir.typeless
 import ir.typeless.Ir
 

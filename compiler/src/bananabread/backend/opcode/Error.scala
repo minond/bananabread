@@ -1,5 +1,5 @@
 package bananabread
-package backend.opcode
+package backend.opcode.error
 
 import ir.typeless.{Ir, Id}
 import parsing.ast.Str

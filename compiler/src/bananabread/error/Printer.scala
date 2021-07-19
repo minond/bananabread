@@ -1,11 +1,25 @@
 package bananabread
 package error
 
+import backend.opcode.error => genop
 import parsing.error => parse
+import runtime.error => runtime
+
+import ir.typeless => tl
 import parsing.location.Location
+import bananabread.runtime.instruction.{Instruction, Code, pp => inspp}
 
 import scala.io.AnsiColor.{BOLD, RESET}
 
+val GRAY = String("\u001B[37m")
+
+val SourcePadding = 5
+val OpcodePadding = 10
+
+
+type Errors = parse.SyntaxErr
+            | genop.GeneratorError
+            | runtime.RuntimeErr
 
 def pp(err: parse.SyntaxErr, source: String) = err match
   case parse.UnexpectedTokenErr(token) =>

@@ -2,6 +2,7 @@ package bananabread
 
 import parsing.language.{tokenize, parse}
 import ir.typeless
+import error.Errors
 import error.pp => errpp
 import runtime.Interpreter
 import runtime.instruction.pp
@@ -319,6 +320,38 @@ def main(args: Array[String]) =
     loop(4 + 6, f)
     println(%{loop(10, println)})
     loop(17 - 7, println)
+
+    def adder1 (a, b) =
+      let res = a + b in res
+
+    def adder2 (a, b) =
+      let adder = adder1 in adder(a, b)
+
+    def adder3 (a, b) =
+      let
+        x = a
+        y = b
+        z = x + y
+      in z
+
+    println(adder1(12, 3))
+    println(adder2(12, 4))
+    println(adder3(12, 5))
+
+    let
+      f = func () =
+            func () =
+              func () =
+                func () =
+                  func (x) =
+                    func (y) =
+                      x + y
+      call_with = func (f, arg) =
+        f(arg)
+    in
+      println(call_with(f()()()()(3), 2))
+      // println(call_with(3, 2))
+
     """
 
   // parsing.opcode.parse(
@@ -330,9 +363,9 @@ def main(args: Array[String]) =
   val res =
     for
       ast <- parse("<stdin>", code)
-      // _=println(s"AST: ${ast}\n\n")
+      // _ = println(s"AST: ${ast}\n\n")
       ir = typeless.lift(ast)
-      // _=println(s"IR: ${ir}\n\n")
+      // _ = println(s"IR: ${ir}\n\n")
       ins <- backend.opcode.compile(ir)
     yield
       println("==================")
@@ -348,7 +381,8 @@ def main(args: Array[String]) =
   if res.isRight
   then println(res)
   else res.swap.getOrElse(???) match
-    case err: parsing.error.SyntaxErr => println(errpp(err, code))
+    case err: Errors => println(errpp(err, code))
+    case err => println(s"unhandled error: $err")
 
   // import runtime.instruction._
   // println(backend.bytecode.generateLabel(Label("testing")))

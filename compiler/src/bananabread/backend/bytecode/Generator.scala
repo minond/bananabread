@@ -1,7 +1,7 @@
 package bananabread
 package backend.bytecode
 
-import backend.opcode.GeneratorError
+import backend.opcode.error.GeneratorError
 import runtime.instruction._
 import ir.typeless.Ir
 
