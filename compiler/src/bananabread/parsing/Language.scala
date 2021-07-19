@@ -16,6 +16,8 @@ import scala.reflect.ClassTag
 
 type Tokens = BufferedIterator[Token]
 
+def parse(sourceName: String, sourceString: String): Parsed[Tree] =
+  parse(sourceName, sourceString, Syntax())
 def parse(sourceName: String, sourceString: String, syntax: Syntax): Parsed[Tree] =
   tokenize(sourceName, sourceString, syntax).flatMap { tokens =>
     parse(sourceName, tokens.without[Comment].iterator.buffered, syntax)

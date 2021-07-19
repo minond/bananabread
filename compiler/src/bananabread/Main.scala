@@ -1,6 +1,6 @@
 package bananabread
 
-import parsing.language.{Syntax, tokenize, parse}
+import parsing.language.{tokenize, parse}
 import ir.typeless
 import error.pp => errpp
 import runtime.Interpreter
@@ -8,33 +8,37 @@ import runtime.instruction.pp
 
 
 def main(args: Array[String]) =
-  val syntax = Syntax.withPrefix(1, "*")
-                     .withPrefix(1, "∀")
-                     .withPrefix(1, "!")
-                     .withPrefix(1, "opcode")
-                     .withInfix(4, "^")
-                     .withInfix(3, "*")
-                     .withInfix(3, "/")
-                     .withInfix(3, "%")
-                     .withInfix(0, "|>")
-                     .withInfix(0, "_o_")
-                     .withInfix(10, "∈")
-                     .withInfix(99, "^")
-                     .withInfix(2, ":")
-                     .withInfix(3, ">")
-                     .withInfix(3, "==")
-                     .withInfix(0, ":=")
-                     .withPostfix(1, "!")
-
   val code =
-    """    def + (a, b) =
+    """
+    operator('prefix, 1, 'opcode)
+    operator('prefix, 1, '!)
+    operator('prefix, 1, '∀)
+
+    operator('infix, 0, ':=)
+    operator('infix, 0, '_o_)
+    operator('infix, 0, '|>)
+    operator('infix, 2, '+)
+    operator('infix, 2, '++)
+    operator('infix, 2, '-)
+    operator('infix, 2, ':)
+    operator('infix, 3, '%)
+    operator('infix, 3, '*)
+    operator('infix, 3, '/)
+    operator('infix, 3, '==)
+    operator('infix, 3, '>)
+    operator('infix, 4, '^)
+    operator('infix, 10, '∈)
+    operator('infix, 99, '^)
+
+    operator('postfix, 1, '!)
+
+
+    def + (a, b) =
       opcode %{
         load [I32] a
         load [I32] b
         add [I32]
       }
-
-    operator('infix, 2, '+)
 
     def - (a, b) =
       opcode %{
@@ -43,16 +47,12 @@ def main(args: Array[String]) =
         sub [I32]
       }
 
-    operator('infix, 2, '-)
-
     def ++ (a, b) =
       opcode %{
         load [Str] a
         load [Str] b
         concat
       }
-
-    operator('infix, 2, '++)
 
     def println (x) =
       opcode %{
@@ -329,7 +329,7 @@ def main(args: Array[String]) =
 
   val res =
     for
-      ast <- parse("<stdin>", code, syntax)
+      ast <- parse("<stdin>", code)
       // _=println(s"AST: ${ast}\n\n")
       ir = typeless.lift(ast)
       // _=println(s"IR: ${ir}\n\n")
