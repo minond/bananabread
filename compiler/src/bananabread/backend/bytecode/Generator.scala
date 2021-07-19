@@ -1,7 +1,7 @@
 package bananabread
 package backend.bytecode
 
-import backend.opcode.error.GeneratorError
+import backend.opcode.error.GeneratorErr
 import runtime.instruction._
 import ir.typeless.Ir
 
@@ -9,7 +9,7 @@ import ir.typeless.Ir
 type Bytes = List[Byte]
 
 
-def compile(nodes: List[Ir]): Either[GeneratorError, Bytes] =
+def compile(nodes: List[Ir]): Either[GeneratorErr, Bytes] =
   for
     codes <- backend.opcode.compile(nodes)
     bytes  = codes.map(generate)

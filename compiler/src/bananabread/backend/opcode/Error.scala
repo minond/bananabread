@@ -8,12 +8,12 @@ import parsing.opcode.Expr => OpcodeExpr
 import runtime.instruction.Type
 
 
-sealed trait GeneratorError
-case class BadPushErr(ty: Type, node: Ir) extends GeneratorError
-case class BadCallErr(lambda: Ir) extends GeneratorError
-case class OpcodeSyntaxErr(source: Str, err: SyntaxErr) extends GeneratorError
-case class UndeclaredIdentifierErr(id: Id) extends GeneratorError
-case class CannotStoreDefErr(definition: Ir) extends GeneratorError
-case class UnknownUserOpcodeErr(expr: OpcodeExpr) extends GeneratorError
-case class InvalidI32Err(expr: OpcodeExpr) extends GeneratorError
-case class LookupError(id: Id) extends GeneratorError
+sealed trait GeneratorErr
+case class BadPushErr(ty: Type, node: Ir) extends GeneratorErr
+case class BadCallErr(lambda: Ir) extends GeneratorErr
+case class OpcodeSyntaxErr(source: Str, err: SyntaxErr) extends GeneratorErr
+case class UndeclaredIdentifierErr(id: Id) extends GeneratorErr
+case class CannotStoreDefErr(definition: Ir) extends GeneratorErr
+case class UnknownUserOpcodeErr(expr: OpcodeExpr) extends GeneratorErr
+case class InvalidI32Err(expr: OpcodeExpr) extends GeneratorErr
+case class LookupErr(id: Id) extends GeneratorErr

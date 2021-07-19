@@ -26,10 +26,10 @@ import scala.collection.mutable.{Map, Queue}
 
 case class Grouped(section: String, data: Instruction | Label)
 type Output = List[Grouped | Value | Label]
-type Result = Either[GeneratorError, Output]
+type Result = Either[GeneratorErr, Output]
 
 
-def compile(nodes: List[Ir]): Either[GeneratorError, List[Code]] =
+def compile(nodes: List[Ir]): Either[GeneratorErr, List[Code]] =
   generate(nodes).map(_.labeled.framed.sectioned)
 
 def generate(nodes: List[Ir]): Result =
@@ -142,7 +142,7 @@ def generateOpcode(scope: Scope, expr: OpcodeExpr): Result = expr match
 def generateCallId(scope: Scope, args: List[Ir], id: typeless.Id): Result =
   scope.qualified2(id) match
     case Some(name) => generateCallWithArgs(scope, args, Call(name))
-    case None => Left(LookupError(id))
+    case None => Left(LookupErr(id))
 
 def generateCallLambda(scope: Scope, args: List[Ir], lambda: typeless.Lambda): Result =
   generateCallWithArgs(scope, args, Call(lambda.ptr))
