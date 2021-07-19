@@ -138,7 +138,9 @@ def generateOpcode(scope: Scope, expr: OpcodeExpr): Result = expr match
   case _                                                       => Left(UnknownUserOpcodeErr(expr))
 
 def generateCallId(scope: Scope, args: List[Ir], id: typeless.Id): Result =
-  generateCallWithArgs(scope, args, Call(scope.qualified(id)))
+  scope.qualified2(id) match
+    case Some(name) => generateCallWithArgs(scope, args, Call(name))
+    case None => Left(LookupError(id))
 
 def generateCallLambda(scope: Scope, args: List[Ir], lambda: typeless.Lambda): Result =
   generateCallWithArgs(scope, args, Call(lambda.ptr))

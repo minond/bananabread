@@ -35,6 +35,13 @@ class Scope(val module: String, env: Map[String, Ir], parent: Option[Scope]):
     case (_, Some(scope)) => scope.qualified(label)
     case _ => ???
 
+  def qualified2(id: ast.Id): Option[String] = qualified2(id.lexeme)
+  def qualified2(id: typeless.Id): Option[String] = qualified2(id.id.lexeme)
+  def qualified2(label: String): Option[String] = (env.get(label), parent) match
+    case (Some(_), _) => Some(s"$module.$label")
+    case (_, Some(scope)) => scope.qualified2(label)
+    case _ => None
+
   def define(bi: Binding): Unit = define(bi.label.lexeme, bi.value)
   def define(id: ast.Id, ir: Ir): Unit = define(id.lexeme, ir)
   def define(id: typeless.Id, ir: Ir): Unit = define(id.id.lexeme, ir)
