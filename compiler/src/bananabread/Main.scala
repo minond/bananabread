@@ -367,15 +367,12 @@ def main(args: Array[String]) =
       ir = typeless.lift(ast)
       // _ = println(s"IR: ${ir}\n\n")
       ins <- backend.opcode.compile(ir)
+      _ = println("==================")
+      _ = println(pp(ins))
+      _ = println("==================")
+      interpreter = Interpreter(ins)//.debugging//.stepping
+      _ <- interpreter.run
     yield
-      println("==================")
-      println(pp(ins))
-      println("==================")
-
-      val interpreter = Interpreter(ins)//.debugging//.stepping
-
-      interpreter.run
-
       "ok"
 
   if res.isRight
