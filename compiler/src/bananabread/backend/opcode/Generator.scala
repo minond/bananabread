@@ -244,6 +244,8 @@ def generateStore(scope: Scope, label: String, value: Ir): Result = value match
   case _: typeless.Symbol => Right(group(scope, Store(Symbol, scope.qualified(label))))
   case _: typeless.Def    => Left(CannotStoreDefErr(value))
   case id: typeless.Id => scope.get(id) match
+    case Some(v: typeless.Id) if v.id.lexeme == id.id.lexeme =>
+      Right(group(scope, Store(I32, scope.qualified(label)))) /* XXX May not be an I32 */
     case Some(v) => generateStore(scope, label, v)
     case None    => Left(UndeclaredIdentifierErr(id))
 
