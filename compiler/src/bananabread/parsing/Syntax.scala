@@ -4,6 +4,12 @@ package parsing.language
 import parsing.ast.{Token, Id}
 
 
+sealed trait OpPosition
+case object Prefix extends OpPosition
+case object Infix extends OpPosition
+case object Postfix extends OpPosition
+
+
 case class Syntax(
   prefix: Map[String, Int] = Map.empty,
   infix: Map[String, Int] = Map.empty,
@@ -29,6 +35,11 @@ case class Syntax(
   def withInfix(precedence: Int, id: Id) = Syntax(prefix, infix + (id.lexeme -> precedence), postfix)
   def withPostfix(precedence: Int, lexeme: String) = Syntax(prefix, infix, postfix + (lexeme -> precedence))
   def withPostfix(precedence: Int, id: Id) = Syntax(prefix, infix, postfix + (id.lexeme -> precedence))
+  def withOp(pos: OpPosition, precedence: Int, id: Id): Syntax = withOp(pos, precedence, id.lexeme)
+  def withOp(pos: OpPosition, precedence: Int, lexeme: String): Syntax = pos match
+    case Prefix  => withPrefix(precedence, lexeme)
+    case Infix   => withInfix(precedence, lexeme)
+    case Postfix => withPostfix(precedence, lexeme)
 
 object Syntax:
   def withPrefix(precedence: Int, lexeme: String) = Syntax().withPrefix(precedence, lexeme)

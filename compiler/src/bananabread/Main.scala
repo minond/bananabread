@@ -8,8 +8,7 @@ import runtime.instruction.pp
 
 
 def main(args: Array[String]) =
-  val syntax = Syntax.withPrefix(1, "-")
-                     .withPrefix(1, "*")
+  val syntax = Syntax.withPrefix(1, "*")
                      .withPrefix(1, "∀")
                      .withPrefix(1, "!")
                      .withPrefix(1, "opcode")
@@ -17,8 +16,6 @@ def main(args: Array[String]) =
                      .withInfix(3, "*")
                      .withInfix(3, "/")
                      .withInfix(3, "%")
-                     .withInfix(2, "+")
-                     .withInfix(2, "-")
                      .withInfix(0, "|>")
                      .withInfix(0, "_o_")
                      .withInfix(10, "∈")
@@ -27,7 +24,6 @@ def main(args: Array[String]) =
                      .withInfix(3, ">")
                      .withInfix(3, "==")
                      .withInfix(0, ":=")
-                     .withInfix(0, "++")
                      .withPostfix(1, "!")
 
   val code =
@@ -38,6 +34,8 @@ def main(args: Array[String]) =
         add [I32]
       }
 
+    operator('infix, 2, '+)
+
     def - (a, b) =
       opcode %{
         load [I32] a
@@ -45,12 +43,16 @@ def main(args: Array[String]) =
         sub [I32]
       }
 
+    operator('infix, 2, '-)
+
     def ++ (a, b) =
       opcode %{
         load [Str] a
         load [Str] b
         concat
       }
+
+    operator('infix, 2, '++)
 
     def println (x) =
       opcode %{
@@ -316,7 +318,7 @@ def main(args: Array[String]) =
     println(%{loop(10, f)})
     loop(4 + 6, f)
     println(%{loop(10, println)})
-    loop(3 + 7, println)
+    loop(17 - 7, println)
     """
 
   // parsing.opcode.parse(

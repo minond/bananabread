@@ -10,3 +10,4 @@ case class EmptyBeginNotAllowedErr(start: Located) extends SyntaxErr(start.locat
 case class UnexpectedTokenErr[Expected](found: Located) extends SyntaxErr(found.location)
 case class UnexpectedEofErr(prev: Located) extends SyntaxErr(prev.location)
 case class UnclosedStringErr(loc: Location) extends SyntaxErr(loc)
+case class BadOperatorDefinitionErr(loc: Location) extends SyntaxErr(loc)

@@ -23,7 +23,18 @@ def parse(sourceName: String, sourceString: String, syntax: Syntax): Parsed[Tree
 def parse(sourceName: String, tokens: Tokens, syntax: Syntax): Parsed[Tree] =
   for
     nodes <- tokens
-      .map { (token) => parseTop(token, tokens, syntax) }
+      .foldLeft[(List[Parsed[Stmt | Expr]], Syntax)](List.empty, syntax) {
+        case ((acc, syntax), token) =>
+          val expr = parseTop(token, tokens, syntax)
+          if ! isOperatorDefinition(expr)
+          then (acc :+ expr, syntax)
+          else operatorDefinition(expr) match
+            case Some(pos, prec, name) =>
+              (acc, syntax.withOp(pos, prec, name))
+            case None =>
+              (acc :+ Left(BadOperatorDefinitionErr(token.location)), syntax)
+      }
+      ._1
       .squished
   yield
     Tree(nodes)
