@@ -18,6 +18,7 @@ def compile(nodes: List[Ir]): Either[GeneratorErr, Bytes] =
 
 def generate(code: Code): Bytes = code match
   case op: Label => generateLabel(op)
+  case _ => ???
 
 def generateLabel(op: Label): Bytes =
   ???
