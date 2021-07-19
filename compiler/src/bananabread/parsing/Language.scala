@@ -283,4 +283,14 @@ val isUnknownTail = and(not(isIdTail),
                         not(isWhitespace),
                         not(oneof(',', '.', '(', ')', '{', '}', '[', ']')))
 val isSymbolTail = and(not(isWhitespace),
-                       not(oneof('(', ')', '{', '}', '[', ']')))
+                       not(oneof(',', '(', ')', '{', '}', '[', ']')))
+
+def isOperatorDefinition(expr: Parsed[Expr | Stmt]) = expr match
+  case Right(App(Id("operator", _), _)) => true
+  case _ => false
+
+def operatorDefinition(expr: Parsed[Expr | Stmt]): Option[(OpPosition, Int, String)] = expr match
+  case Right(App(Id("operator", _), Symbol("prefix",  _) :: Num(prec, _) :: Symbol(name, _) :: Nil)) => Some((Prefix, prec.toInt, name))
+  case Right(App(Id("operator", _), Symbol("infix",   _) :: Num(prec, _) :: Symbol(name, _) :: Nil)) => Some((Infix, prec.toInt, name))
+  case Right(App(Id("operator", _), Symbol("postfix", _) :: Num(prec, _) :: Symbol(name, _) :: Nil)) => Some((Postfix, prec.toInt, name))
+  case _ => None
