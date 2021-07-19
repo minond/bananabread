@@ -21,18 +21,43 @@ type Errors = parse.SyntaxErr
             | genop.GeneratorError
             | runtime.RuntimeErr
 
-def pp(err: parse.SyntaxErr, source: String) = err match
+
+def pp(err: Errors, source: String) = err match
   case parse.UnexpectedTokenErr(token) =>
-    List(
+    lines(
       generateSyntaxErrorLine(s"unexpected ${token.getClass.getSimpleName} found", token.location, source),
       isolateBadLine(token.location, source),
-    ).mkString("\n")
+    )
+
+  case genop.LookupError(id) =>
+    lines(
+      generateRuntimeErrorLine(s"${id.id.lexeme} was referenced but not found", id.id.location, source),
+      isolateBadLine(id.id.location, source),
+    )
+
+  case genop.BadCallErr(tl.Id(id)) =>
+    lines(
+      generateRuntimeErrorLine(s"bad call to ${id.lexeme}", id.location, source),
+      isolateBadLine(id.location, source),
+    )
+
+  case runtime.FatalErr(msg, ins, codes, registers) =>
+    lines(
+      generateOpcodeErrorLine(msg),
+      isolateBadOpcode(registers.pc.value, codes),
+    )
 
   case _ =>
     err.toString
 
 def generateSyntaxErrorLine(message: String, loc: Location, source: String) =
-  s"${BOLD}syntax error, ${message} in ${generateCoordinates(loc, source)}${RESET}"
+  s"${BOLD}syntax error: ${message} in ${generateCoordinates(loc, source)}${RESET}"
+
+def generateRuntimeErrorLine(message: String, loc: Location, source: String) =
+  s"${BOLD}runtime error: ${message} in ${generateCoordinates(loc, source)}${RESET}"
+
+def generateOpcodeErrorLine(message: String) =
+  s"${BOLD}opcode runtime error: ${message}${RESET}"
 
 def generateCoordinates(loc: Location, source: String) =
   val (row, col) = offsetToRowAndCol(loc.offset, source)
@@ -51,8 +76,7 @@ def isolateBadLine(loc: Location, source: String) =
   val lines = source.split("\n")
   val max = lines.size
   val pointer = generatePointer(col)
-  val sourcePadding = 3
-  val bads = lines.zipWithIndex.slice(row - sourcePadding, row + sourcePadding)
+  val bads = lines.zipWithIndex.slice(row - SourcePadding, row + SourcePadding)
   bads.foldLeft[List[String]](List.empty) {
     case (acc, (line, index)) =>
       if index == row
@@ -60,13 +84,24 @@ def isolateBadLine(loc: Location, source: String) =
       else acc :+ withLineNumber(max, index, line)
   }.mkString("\n")
 
+def isolateBadOpcode(pc: Int, codes: List[Code]) =
+  val max = codes.size
+  val bads = codes.zipWithIndex.slice(pc - OpcodePadding, pc + OpcodePadding)
+  val pointer = generatePointer(0)
+  bads.foldLeft[List[String]](List.empty) {
+    case (acc, (line, index)) =>
+      if index == pc
+      then acc :+ withLineNumber(max, index, inspp(line)) :+ withLineNumber(max, -1, pointer)
+      else acc :+ withLineNumber(max, index, inspp(line))
+  }.mkString("\n")
+
 def generatePointer(col: Int) =
-  " " * col + "^"
+  " " * col + s"${BOLD}^${RESET}"
 
 def withLineNumber(max: Int, row: Int, line: String) =
   if row == -1
-  then s"${pad(max, "-", "-")}|$line"
-  else s"${pad(max, (row + 1).toString, "0")}|$line"
+  then s"${GRAY}${pad(max, " ", " ")}|${RESET} $line"
+  else s"${GRAY}${pad(max, (row + 1).toString, "0")}|${RESET} $line"
 
 def pad(max: Int, str: String, using: String) =
   val currSize = str.size
@@ -74,3 +109,6 @@ def pad(max: Int, str: String, using: String) =
   if currSize < maxSize
   then (using * (maxSize - currSize)) + str
   else str
+
+def lines(args: String*): String =
+  args.mkString("\n")
