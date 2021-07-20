@@ -4,6 +4,7 @@ package test
 import parsing.language.{Syntax, parse}
 import ir.typeless
 import runtime.Interpreter
+import error.pp => errpp
 
 val stdOps = Syntax.withPrefix(0, "-")
                    .withPrefix(0, "∀")
@@ -14,7 +15,7 @@ val stdOps = Syntax.withPrefix(0, "-")
                    .withInfix(3, "/")
                    .withInfix(2, "+")
                    .withInfix(2, "-")
-                   .withInfix(1, ":")
+                   .withInfix(1, "->")
                    .withInfix(2, "∈")
                    .withInfix(1, ">")
                    .withPostfix(10, "!")
@@ -50,7 +51,9 @@ val prelude =
   """
 
 def exprsOf(code: String, syntax: Syntax = stdOps) =
-  parse("<test>", code, syntax).getOrElse(???).nodes.map(_.toString)
+  parse("<test>", code, syntax) match
+    case Left(err) => throw Exception(errpp(err, code))
+    case Right(expr) => expr.nodes.map(_.toString)
 
 def astOf(code: String, syntax: Syntax = stdOps) =
   exprsOf(code, syntax).head

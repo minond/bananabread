@@ -31,7 +31,7 @@ class ParserTests extends AnyFlatSpec with should.Matchers:
   }
 
   it should "parse complex expressions with binary operators of different precedence" in {
-    astOf("∀(n ∈ N : n^2 > n)") shouldEqual "(∀ (: (∈ n N) (> (^ n 2) n)))"
+    astOf("∀(n ∈ N -> n^2 > n)") shouldEqual "(∀ (-> (∈ n N) (> (^ n 2) n)))"
   }
 
   it should "parse lambdas" in {

@@ -367,19 +367,15 @@ def main(args: Array[String]) =
       ir = typeless.lift(ast)
       // _ = println(s"IR: ${ir}\n\n")
       ins <- backend.opcode.compile(ir)
-      _ = println("==================")
-      _ = println(pp(ins))
-      _ = println("==================")
+      // _ = println("==================")
+      // _ = println(pp(ins))
+      // _ = println("==================")
       interpreter = Interpreter(ins)//.debugging//.stepping
       _ <- interpreter.run
     yield
       "ok"
 
-  if res.isRight
-  then println(res)
-  else res.swap.getOrElse(???) match
-    case err: Errors => println(errpp(err, code))
-    case err => println(s"unhandled error: $err")
-
-  // import runtime.instruction._
-  // println(backend.bytecode.generateLabel(Label("testing")))
+  res match
+    case Right(msg) => println(msg)
+    case Left(err: Errors) => println(errpp(err, code))
+    case Left(err) => println(s"unhandled error: $err")
