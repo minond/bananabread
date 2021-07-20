@@ -16,6 +16,10 @@ case class Id(label: String) extends Value with Print(label)
 case class Scope(label: String, frame: Frame) extends Value with Print(s"<$label>")
 case class Symbol(value: String) extends Value with Print(value)
 
+sealed trait Boolean extends Value
+case object True extends Boolean with Print("true")
+case object False extends Boolean with Print("false")
+
 
 def lift(nodes: List[Ir]): List[Value] =
   nodes.map(lift)

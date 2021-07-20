@@ -33,7 +33,7 @@ def lift(node: Stmt | Expr): Ir = node match
   case expr: ast.Symbol => Symbol(expr)
   case expr @ ast.App(lambda, args) => App(lift(lambda), args.map(lift), expr)
   case expr @ ast.Lambda(params, body) =>
-    params.map(lift).onlys[Id] match
+    params.map(_.name).map(lift).onlys[Id] match
       case Left(_) => ???
       case Right(ids) => Lambda(ids, lift(body), expr)
   case expr @ ast.Uniop(op, operand) => App(lift(op), List(operand).map(lift), expr)

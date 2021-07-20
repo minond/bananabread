@@ -70,11 +70,47 @@ def parsePrimary(head: Token, tail: Tokens, syntax: Syntax): Parsed[Expr] =
 
 def parseLambda(start: Token, tail: Tokens, syntax: Syntax): Parsed[Lambda] =
   for
-    args <- parseNextExprsByUntil[Comma, CloseParen](start, skip(tail), syntax)
-    eq   <- eat("=", start, tail)
-    body <- parseNextExpr(eq, tail, syntax)
+    params <- parseParams(start, skip(tail), syntax)
+    eq     <- eat("=", start, tail)
+    body   <- parseNextExpr(eq, tail, syntax)
   yield
-    Lambda(args, body)
+    Lambda(params, body)
+
+def parseParams(
+  head: Token,
+  tail: Tokens,
+  syntax: Syntax,
+  acc: List[Param] = List.empty
+): Parsed[List[Param]] =
+  tail.headOption match
+    case Some(_: CloseParen) =>
+      tail.next
+      Right(acc)
+
+    case Some(by: Comma) =>
+      eat[Id](tail.next, tail).flatMap { name =>
+        parseParamTy(name, tail, syntax).flatMap { ty =>
+          parseParams(head, tail, syntax, acc :+ Param(name, ty))
+        }
+      }
+
+    case Some(_) =>
+      eat[Id](head, tail).flatMap { name =>
+        parseParamTy(name, tail, syntax).flatMap { ty =>
+          parseParams(head, tail, syntax, acc :+ Param(name, ty))
+        }
+      }
+
+    case None =>
+      Left(UnexpectedEofErr(head))
+
+def parseParamTy(head: Token, tail: Tokens, syntax: Syntax): Parsed[Option[Id]] =
+  tail.headOption match
+    case Some(_: Colon) =>
+      eat[Id](tail.next, tail).map(Some(_))
+
+    case _ =>
+      Right(None)
 
 def parseCond(start: Token, tail: Tokens, syntax: Syntax): Parsed[Cond] =
   for
@@ -233,6 +269,7 @@ def nextToken(
 ): Parsed[Token] = head match
   case ',' => Right(Comma(loc))
   case '.' => Right(Dot(loc))
+  case ':' => Right(Colon(loc))
   case '(' => Right(OpenParen(loc))
   case ')' => Right(CloseParen(loc))
   case '{' => Right(OpenCurlyParen(loc))

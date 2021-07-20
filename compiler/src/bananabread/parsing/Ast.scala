@@ -16,6 +16,7 @@ sealed trait Stmt extends Located
 case class Eof(loc: Location) extends Token, At(loc) with Print()
 case class Comma(loc: Location) extends Token, At(loc) with Print()
 case class Dot(loc: Location) extends Token, At(loc) with Print()
+case class Colon(loc: Location) extends Token, At(loc) with Print()
 case class OpenParen(loc: Location) extends Token, At(loc) with Print()
 case class CloseParen(loc: Location) extends Token, At(loc) with Print()
 case class OpenCurlyParen(loc: Location) extends Token, At(loc) with Print()
@@ -33,10 +34,12 @@ case class Symbol(lexeme: String, loc: Location) extends Token, At(loc) with Exp
 case class Binop(op: Id, lhs: Expr, rhs: Expr) extends Expr with At(op.location), Print(s"($op $lhs $rhs)")
 case class Uniop(op: Id, operand: Expr) extends Expr with At(op.location), Print(s"($op $operand)")
 case class App(lambda: Expr, args: List[Expr]) extends Expr with At(lambda.location), Print(s"(${(lambda +: args).mkString(" ")})")
-case class Lambda(params: List[Expr], body: Expr) extends Expr with At(body.location), Print(s"{${params.mkString(", ")} = $body}")
 case class Cond(start: Token, cond: Expr, pass: Expr, fail: Expr) extends Expr with At(start.location), Print(s"if $cond then $pass else $fail")
 case class Let(start: Token, bindings: List[Binding], body: Expr) extends Expr with At(start.location), Print(s"let ${bindings.mkString(" ")} in $body")
 case class Begin(head: Expr, tail: List[Expr]) extends Expr with At(head.location), Print(s"begin ${(head +: tail).mkString(" ")} end")
+
+case class Lambda(params: List[Param], body: Expr) extends Expr with At(body.location), Print(s"{${params.mkString(", ")} = $body}")
+case class Param(name: Id, ty: Option[Id]) extends Token, At(name.location), Print(if ty.isEmpty then name.toString else s"$name : ${ty.getOrElse}")
 
 
 case class Comment(lexeme: String, loc: Location) extends Token, At(loc)

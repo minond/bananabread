@@ -352,6 +352,10 @@ def main(args: Array[String]) =
       println(call_with(f()()()()(3), 2))
       // println(call_with(3, 2))
 
+    def add2 (a : I32, b : I32) =
+      a + b
+
+    println(add2(4, 2))
     """
 
   // parsing.opcode.parse(
