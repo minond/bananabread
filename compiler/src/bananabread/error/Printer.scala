@@ -41,6 +41,12 @@ def pp(err: Errors, source: String) = err match
       isolateBadLine(id.id.location, source),
     )
 
+  case genop.UnknownUserOpcodeErr(code, source, loc) =>
+    lines(
+      generateSyntaxErrorLine(s"invalid opcode", loc, source),
+      isolateBadLine(code.location, source),
+    )
+
   case genop.BadCallErr(tl.Id(id)) =>
     lines(
       generateRuntimeErrorLine(s"bad call to ${id.lexeme}", id.location, source),
