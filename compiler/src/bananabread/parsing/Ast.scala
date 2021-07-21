@@ -47,3 +47,7 @@ case class Ty(ty: Id)
 case class Comment(lexeme: String, loc: Location) extends Token, At(loc)
 case class Binding(label: Id, value: Expr) extends At(label.location), Print(s"$label = $value")
 case class Def(name: Id, value: Expr) extends Stmt, At(name.location), Print(s"def $name = $value")
+
+
+def ppTy(ty: Option[Ty]): String =
+  ty.map(_.ty).map(" : " + _).getOrElse("")
