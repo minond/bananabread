@@ -88,23 +88,26 @@ def parseParams(
       Right(acc)
 
     case Some(by: Comma) =>
-      eat[Id](tail.next, tail).flatMap { name =>
-        parseParamTy(name, tail, syntax).flatMap { ty =>
-          parseParams(head, tail, syntax, acc :+ Param(name, ty))
-        }
+      parseParam(tail.next, tail, syntax).flatMap { param =>
+        parseParams(head, tail, syntax, acc :+ param)
       }
 
     case Some(_) =>
-      eat[Id](head, tail).flatMap { name =>
-        parseParamTy(name, tail, syntax).flatMap { ty =>
-          parseParams(head, tail, syntax, acc :+ Param(name, ty))
-        }
+      parseParam(head, tail, syntax).flatMap { param =>
+        parseParams(head, tail, syntax, acc :+ param)
       }
 
     case None =>
       Left(UnexpectedEofErr(head))
 
-def parseParamTy(head: Token, tail: Tokens, syntax: Syntax): Parsed[Option[Id]] =
+def parseParam(head: Token, tail: Tokens, syntax: Syntax): Parsed[Param] =
+  eat[Id](head, tail).flatMap { name =>
+    parseOptionalTy(name, tail, syntax).map { ty =>
+      Param(name, ty)
+    }
+  }
+
+def parseOptionalTy(head: Token, tail: Tokens, syntax: Syntax): Parsed[Option[Id]] =
   tail.headOption match
     case Some(_: Colon) =>
       eat[Id](tail.next, tail).map(Some(_))
