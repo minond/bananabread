@@ -67,8 +67,8 @@ def handleCall(op: Call, state: State): Dispatch = state.frames.curr.get(op.labe
     state.stack.push(value.I32(state.registers.pc.value + 1))
     state.frames.from(frame)
     goto(label, state)
-  case Some(_) =>
-    Fatal2(s"bad call: ${op.label} is not a function", op)
+  case Some(bad) =>
+    Fatal2(s"bad call: ${op.label} is instance of `${bad.getClass.getSimpleName}`, expected function", op)
 
 def handleCall0(state: State): Dispatch =
   state.stack.push(value.I32(state.registers.pc.value + 1))

@@ -7,7 +7,7 @@ import runtime.error => runtime
 
 import ir.typeless => tl
 import parsing.location.Location
-import bananabread.runtime.instruction.{Instruction, Code, pp => inspp}
+import bananabread.runtime.instruction.{Instruction, Code, Label, Value, pp => inspp}
 
 import scala.io.AnsiColor.{BOLD, RESET}
 
@@ -102,9 +102,16 @@ def isolateBadOpcode(pc: Int, codes: List[Code]) =
   val pointer = generatePointer(0)
   bads.foldLeft[List[String]](List.empty) {
     case (acc, (line, index)) =>
-      if index == pc
-      then acc :+ withLineNumber(max, index, inspp(line)) :+ withLineNumber(max, -1, pointer)
-      else acc :+ withLineNumber(max, index, inspp(line))
+      val code = line match
+        case op: Value       => inspp(op)
+        case op: Label       => s"    ${inspp(op)}"
+        case op: Instruction => s"        ${inspp(op)}"
+      val formatted =
+        if index == pc
+        then s"${BOLD}${code}${RESET}"
+        else code
+
+      acc :+ withLineNumber(max, index, formatted)
   }.mkString("\n")
 
 def generatePointer(col: Int) =
