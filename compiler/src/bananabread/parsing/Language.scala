@@ -70,12 +70,15 @@ def parsePrimary(head: Token, tail: Tokens, syntax: Syntax): Parsed[Expr] =
 
 def parseLambda(start: Token, tail: Tokens, syntax: Syntax): Parsed[Lambda] =
   for
-    params <- parseParams(start, skip(tail), syntax)
-    ty     <- parseOptionalTy(start, tail, syntax)
+    tyVars <- if lookahead(start, tail).isAn[OpenSquareBraket]
+              then parseByUntilWith[Comma, CloseSquareBraket, Ty](tail.next, tail, syntax, parseTyVar)
+              else Right(List.empty)
+    params <- parseParams(tail.next, tail, syntax)
+    tyRet  <- parseOptionalTy(start, tail, syntax)
     eq     <- eat("=", start, tail)
     body   <- parseNextExpr(eq, tail, syntax)
   yield
-    Lambda(params, body, ty)
+    Lambda(params, body, tyVars, tyRet)
 
 def parseParams(
   head: Token,
@@ -116,6 +119,11 @@ def parseOptionalTy(head: Token, tail: Tokens, syntax: Syntax): Parsed[Option[Ty
     case _ =>
       Right(None)
 
+def parseTyVar(head: Token, tail: Tokens, syntax: Syntax): Parsed[Ty] =
+  head match
+    case id: Id => Right(Ty(id))
+    case _      => Left(UnexpectedTokenErr(head))
+
 def parseCond(start: Token, tail: Tokens, syntax: Syntax): Parsed[Cond] =
   for
     cond <- parseExpr(tail.next, tail, syntax)
@@ -138,7 +146,7 @@ def parseDef(start: Token, tail: Tokens, syntax: Syntax): Parsed[Def] =
   for
     name  <- eat[Id](start, tail)
     next  = lookahead(start, tail)
-    value <- if next.isAn[OpenParen]
+    value <- if next.isAn[OpenParen] || next.isAn[OpenSquareBraket]
              then parseLambda(start, tail, syntax)
              else parseDefValue(start, tail, syntax)
   yield
@@ -218,32 +226,36 @@ def parseExprCont(curr: Expr, tail: Tokens, syntax: Syntax): Parsed[Expr] =
           case _ => Binop(op, curr, rhs)
 
     case Some(paren: OpenParen) =>
-      parseExprCont(parseNextExprsByUntil[Comma, CloseParen](paren, skip(tail), syntax).map { args =>
+      parseExprCont(parseByUntilWith[Comma, CloseParen, Expr](paren, skip(tail), syntax).map { args =>
         App(curr, args)
       }, tail, syntax)
 
     case Some(_) => Right(curr)
     case None => Right(curr)
 
-def parseNextExprsByUntil[By: ClassTag, Until: ClassTag](
+def parseByUntilWith[By: ClassTag, Until: ClassTag, T](
   head: Token,
   tail: Tokens,
   syntax: Syntax,
-  acc: List[Expr] = List.empty
-): Parsed[List[Expr]] =
+  fn: (Token, Tokens, Syntax) => Parsed[T] = parseExpr,
+  acc: List[T] = List.empty
+): Parsed[List[T]] =
   tail.headOption match
     case Some(_: Until) =>
       tail.next
       Right(acc)
 
     case Some(by: By) =>
-      parseNextExpr(tail.next, tail, syntax).flatMap { expr =>
-        parseNextExprsByUntil[By, Until](head, tail, syntax, acc :+ expr)
-      }
+      skip(tail).headOption match
+        case None    => Left(UnexpectedEofErr(head))
+        case Some(_) =>
+          fn(tail.next, tail, syntax).flatMap { t =>
+            parseByUntilWith[By, Until, T](head, tail, syntax, fn, acc :+ t)
+          }
 
     case Some(_) =>
-      parseExpr(tail.next, tail, syntax).flatMap { expr =>
-        parseNextExprsByUntil[By, Until](head, tail, syntax, acc :+ expr)
+      fn(tail.next, tail, syntax).flatMap { t =>
+        parseByUntilWith[By, Until, T](head, tail, syntax, fn, acc :+ t)
       }
 
     case None =>

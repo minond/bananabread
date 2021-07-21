@@ -39,7 +39,7 @@ case class Let(start: Token, bindings: List[Binding], body: Expr) extends Expr w
 case class Begin(head: Expr, tail: List[Expr]) extends Expr with At(head.location), Print(s"begin ${(head +: tail).mkString(" ")} end")
 
 
-case class Lambda(params: List[Param], body: Expr, ret: Option[Ty]) extends Expr with At(body.location), Print(s"{${params.mkString(", ")} = ${body}${ppTy(ret)}}")
+case class Lambda(params: List[Param], body: Expr, tyVars: List[Ty], tyRet: Option[Ty]) extends Expr with At(body.location), Print(s"{${params.mkString(", ")} = ${body}${ppTy(tyRet)}}")
 case class Param(name: Id, ty: Option[Ty]) extends Token, At(name.location), Print(name.toString + ppTy(ty))
 case class Ty(ty: Id)
 

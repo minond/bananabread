@@ -55,7 +55,7 @@ def main(args: Array[String]) =
         concat
       }
 
-    def println(x: T) =
+    def println[T](x: T) =
       opcode %{
         load [Str] x
         println
