@@ -13,16 +13,16 @@ sealed trait Expr extends Located
 sealed trait Stmt extends Located
 
 
-case class Eof(loc: Location) extends Token, At(loc) with Print()
-case class Comma(loc: Location) extends Token, At(loc) with Print()
-case class Dot(loc: Location) extends Token, At(loc) with Print()
-case class Colon(loc: Location) extends Token, At(loc) with Print()
-case class OpenParen(loc: Location) extends Token, At(loc) with Print()
-case class CloseParen(loc: Location) extends Token, At(loc) with Print()
-case class OpenCurlyParen(loc: Location) extends Token, At(loc) with Print()
-case class CloseCurlyParen(loc: Location) extends Token, At(loc) with Print()
-case class OpenSquareBraket(loc: Location) extends Token, At(loc) with Print()
-case class CloseSquareBraket(loc: Location) extends Token, At(loc) with Print()
+case class Eof(loc: Location) extends Token, At(loc) with Print("<EOF>")
+case class Comma(loc: Location) extends Token, At(loc) with Print(",")
+case class Dot(loc: Location) extends Token, At(loc) with Print(".")
+case class Colon(loc: Location) extends Token, At(loc) with Print(":")
+case class OpenParen(loc: Location) extends Token, At(loc) with Print("(")
+case class CloseParen(loc: Location) extends Token, At(loc) with Print(")")
+case class OpenCurlyParen(loc: Location) extends Token, At(loc) with Print("{")
+case class CloseCurlyParen(loc: Location) extends Token, At(loc) with Print("}")
+case class OpenSquareBraket(loc: Location) extends Token, At(loc) with Print("[")
+case class CloseSquareBraket(loc: Location) extends Token, At(loc) with Print("]")
 
 
 case class Num(lexeme: String, loc: Location) extends Token, At(loc) with Expr, Print(lexeme)
@@ -39,8 +39,8 @@ case class Let(start: Token, bindings: List[Binding], body: Expr) extends Expr w
 case class Begin(head: Expr, tail: List[Expr]) extends Expr with At(head.location), Print(s"begin ${(head +: tail).mkString(" ")} end")
 
 
-case class Lambda(params: List[Param], body: Expr, ret: Option[Ty]) extends Expr with At(body.location), Print(s"{${params.mkString(", ")} = $body}")
-case class Param(name: Id, ty: Option[Ty]) extends Token, At(name.location), Print(if ty.isEmpty then name.toString else s"$name : ${ty.getOrElse}")
+case class Lambda(params: List[Param], body: Expr, ret: Option[Ty]) extends Expr with At(body.location), Print(s"{${params.mkString(", ")} = ${body}${ppTy(ret)}}")
+case class Param(name: Id, ty: Option[Ty]) extends Token, At(name.location), Print(name.toString + ppTy(ty))
 case class Ty(ty: Id)
 
 

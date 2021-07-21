@@ -23,9 +23,15 @@ type Errors = parse.SyntaxErr
 
 
 def pp(err: Errors, source: String) = err match
+  case parse.UnexpectedEofErr(prev) =>
+    lines(
+      generateSyntaxErrorLine(s"unexpected <EOF> after `$prev`", prev.location, source),
+      isolateBadLine(prev.location, source),
+    )
+
   case parse.UnexpectedTokenErr(token) =>
     lines(
-      generateSyntaxErrorLine(s"unexpected ${token.getClass.getSimpleName} found", token.location, source),
+      generateSyntaxErrorLine(s"unexpected token `$token` found", token.location, source),
       isolateBadLine(token.location, source),
     )
 

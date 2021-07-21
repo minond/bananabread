@@ -38,6 +38,10 @@ class ParserTests extends AnyFlatSpec with should.Matchers:
     astOf("func (a, b, c) = a + b + c") shouldEqual "{a, b, c = (+ a (+ b c))}"
   }
 
+  it should "parse lambdas with type tags" in {
+    astOf("func (a : Str, b : I32, c : Symbol) : Str = a + b + c") shouldEqual "{a : Str, b : I32, c : Symbol = (+ a (+ b c)) : Str}"
+  }
+
   it should "parse function application" in {
     astOf("test(1, 2, 3 + 4)") shouldEqual "(test 1 2 (+ 3 4))"
   }
