@@ -34,28 +34,28 @@ def main(args: Array[String]) =
     operator('postfix, 1, '!)
 
 
-    def + (a, b) =
+    def +(a: I32, b: I32): I32 =
       opcode %{
         load [I32] a
         load [I32] b
         add [I32]
       }
 
-    def - (a, b) =
+    def -(a: I32, b: I32): I32 =
       opcode %{
         load [I32] a
         load [I32] b
         sub [I32]
       }
 
-    def ++ (a, b) =
+    def ++(a: Str, b: Str): Str =
       opcode %{
         load [Str] a
         load [Str] b
         concat
       }
 
-    def println (x) =
+    def println(x: T) =
       opcode %{
         load [Str] x
         println
@@ -300,7 +300,7 @@ def main(args: Array[String]) =
     //
     // jump_test_1()
 
-    def loop (times, fn) =
+    def loop(times, fn) =
       if times
       then
         begin
@@ -309,7 +309,7 @@ def main(args: Array[String]) =
         end
       else fn
 
-    def f (i) =
+    def f(i) =
       opcode %{
         load [Str] i
         println
@@ -321,13 +321,13 @@ def main(args: Array[String]) =
     println(%{loop(10, println)})
     loop(17 - 7, println)
 
-    def adder1 (a, b) =
+    def adder1(a, b) =
       let res = a + b in res
 
-    def adder2 (a, b) =
+    def adder2(a, b) =
       let adder = adder1 in adder(a, b)
 
-    def adder3 (a, b) =
+    def adder3(a, b) =
       let
         x = a
         y = b
@@ -352,7 +352,7 @@ def main(args: Array[String]) =
       println(call_with(f()()()()(3), 2))
       // println(call_with(3, 2))
 
-    def add2 (a : I32, b : I32) : I32 =
+    def add2(a: I32, b: I32): I32 =
       a + b
 
     println(add2(4, 2))
