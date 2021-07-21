@@ -38,8 +38,10 @@ case class Cond(start: Token, cond: Expr, pass: Expr, fail: Expr) extends Expr w
 case class Let(start: Token, bindings: List[Binding], body: Expr) extends Expr with At(start.location), Print(s"let ${bindings.mkString(" ")} in $body")
 case class Begin(head: Expr, tail: List[Expr]) extends Expr with At(head.location), Print(s"begin ${(head +: tail).mkString(" ")} end")
 
-case class Lambda(params: List[Param], body: Expr) extends Expr with At(body.location), Print(s"{${params.mkString(", ")} = $body}")
-case class Param(name: Id, ty: Option[Id]) extends Token, At(name.location), Print(if ty.isEmpty then name.toString else s"$name : ${ty.getOrElse}")
+
+case class Lambda(params: List[Param], body: Expr, ret: Option[Ty]) extends Expr with At(body.location), Print(s"{${params.mkString(", ")} = $body}")
+case class Param(name: Id, ty: Option[Ty]) extends Token, At(name.location), Print(if ty.isEmpty then name.toString else s"$name : ${ty.getOrElse}")
+case class Ty(ty: Id)
 
 
 case class Comment(lexeme: String, loc: Location) extends Token, At(loc)

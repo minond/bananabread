@@ -71,10 +71,11 @@ def parsePrimary(head: Token, tail: Tokens, syntax: Syntax): Parsed[Expr] =
 def parseLambda(start: Token, tail: Tokens, syntax: Syntax): Parsed[Lambda] =
   for
     params <- parseParams(start, skip(tail), syntax)
+    ty     <- parseOptionalTy(start, tail, syntax)
     eq     <- eat("=", start, tail)
     body   <- parseNextExpr(eq, tail, syntax)
   yield
-    Lambda(params, body)
+    Lambda(params, body, ty)
 
 def parseParams(
   head: Token,
@@ -107,10 +108,10 @@ def parseParam(head: Token, tail: Tokens, syntax: Syntax): Parsed[Param] =
     }
   }
 
-def parseOptionalTy(head: Token, tail: Tokens, syntax: Syntax): Parsed[Option[Id]] =
+def parseOptionalTy(head: Token, tail: Tokens, syntax: Syntax): Parsed[Option[Ty]] =
   tail.headOption match
     case Some(_: Colon) =>
-      eat[Id](tail.next, tail).map(Some(_))
+      eat[Id](tail.next, tail).map { id => Some(Ty(id)) }
 
     case _ =>
       Right(None)
