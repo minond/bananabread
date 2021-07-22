@@ -378,7 +378,7 @@ def main(args: Array[String]) =
   val res =
     for
       ast <- parse("<stdin>", code)
-      ir   = typeless.lift(ast)
+      ir  <- typeless.lift(ast)
       tys  = typechecker.infer(ir)
       _    = println(ir)
       _    = println(tys)
