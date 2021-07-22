@@ -16,12 +16,12 @@ def infer(node: Ir, scope: Scope): Type = node match
   case typeless.Str(_) => ty.Str
   case typeless.Symbol(_) => ty.Symbol
   case typeless.Id(id) => lookup(id.lexeme, scope)
+  case typeless.Begin(ins, _) => infer(ins.last, scope)
+  case typeless.Def(_, value, _) => infer(value, scope)
   case typeless.App(lambda, args, expr) => ???
   case typeless.Lambda(params, body, expr) => ???
-  case _: typeless.Cond => ???
-  case _: typeless.Let => ???
-  case _: typeless.Begin => ???
-  case typeless.Def(_, value, _) => infer(value, scope)
+  case typeless.Cond(cond, pass, fail, _) => ???
+  case typeless.Let(bindings, body, _) => ???
 
 def lookup(label: String, scope: Scope): Type =
   scope.get(label) match
