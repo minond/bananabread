@@ -9,29 +9,29 @@ def handle(code: Code, state: State): Dispatch = code match
   case _: Value_ => Cont
   case _: Label_ => Cont
   case Halt      => Stop
-  case FrameInit => Fatal("unknown operator")
+  case FrameInit => Error("unknown operator", FrameInit)
   case op: Jz    => handleJz(op, state)
   case op: Jmp   => handleJmp(op, state)
   case op: Push  => handlePush(op, state)
   case op: Call  => handleCall(op, state)
-  case Call0     => handleCall0(state)
-  case Ret       => handleRet(state)
-  case Swap      => handleSwap(state)
+  case Call0     => handleCall0(Call0, state)
+  case Ret       => handleRet(Ret, state)
+  case Swap      => handleSwap(Swap, state)
   case op: Mov   => handleMov(op, state)
   case op: Load  => handleLoad(op, state)
   case op: Store => handleStore(op, state)
-  case Println   => handlePrintln(state)
-  case Concat    => handleConcat(state)
+  case Println   => handlePrintln(Println, state)
+  case Concat    => handleConcat(Concat, state)
   case op: Add   => handleAdd(op, state)
   case op: Sub   => handleSub(op, state)
   case op: Frame => handleFrame(op, state)
 
 def handleJz(op: Jz, state: State): Dispatch = state.stack.pop match
-  case value.I32(0) => goto(op.label, state)
+  case value.I32(0) => goto(op, op.label, state)
   case _            => Cont
 
 def handleJmp(op: Jmp, state: State): Dispatch =
-  goto(op.label, state)
+  goto(op, op.label, state)
 
 def handlePush(op: Push, state: State): Dispatch = op match
   case Push(I32, v: value.I32) =>
@@ -45,43 +45,41 @@ def handlePush(op: Push, state: State): Dispatch = op match
     state.stack.push(scope)
     Cont
   case Push(Const, value.Id(label)) =>
-    state.constants.get(label) match
-      case Some(v) =>
-        state.stack.push(v)
-        Cont
-      case None =>
-        Fatal(s"missing const: $label")
+    const(op, label, state) { const =>
+      state.stack.push(const)
+      Cont
+    }
   case _ =>
-    Fatal("bad push")
+    Error("bad push", op)
 
 def handleCall(op: Call, state: State): Dispatch = state.frames.curr.get(op.label) match
   case None =>
     state.stack.push(value.I32(state.registers.pc.value + 1))
     state.frames.next
-    goto(op.label, state)
+    goto(op, op.label, state)
   case Some(ptr: value.Id) =>
     state.stack.push(value.I32(state.registers.pc.value + 1))
     state.frames.next
-    goto(ptr.label, state)
+    goto(op, ptr.label, state)
   case Some(value.Scope(label, frame)) =>
     state.stack.push(value.I32(state.registers.pc.value + 1))
     state.frames.from(frame)
-    goto(label, state)
+    goto(op, label, state)
   case Some(bad) =>
-    Fatal2(s"bad call: ${op.label} is instance of `${bad.getClass.getSimpleName}`, expected function", op)
+    Error(s"bad call: ${op.label} is instance of `${bad.getClass.getSimpleName}`, expected function", op)
 
-def handleCall0(state: State): Dispatch =
+def handleCall0(op: Instruction, state: State): Dispatch =
   state.stack.push(value.I32(state.registers.pc.value + 1))
   Jump(state.registers.jm.value)
 
-def handleRet(state: State): Dispatch = state.stack.pop match
+def handleRet(op: Instruction, state: State): Dispatch = state.stack.pop match
   case value.I32(addr) =>
     state.frames.prev
     Jump(addr)
   case bad =>
-    Fatal(s"bad ret: missing return address: $bad")
+    Error(s"bad ret: missing return address: $bad", op)
 
-def handleSwap(state: State): Dispatch =
+def handleSwap(op: Instruction, state: State): Dispatch =
   if state.stack.size == 1
   then Cont
   else
@@ -107,7 +105,7 @@ def handleMov(op: Mov, state: State): Dispatch = op match
           state.registers.set(reg, i)
           Cont
         case None =>
-          Fatal(s"bad mov: missing label $label")
+          Error(s"bad mov: missing label $label", op)
     case value.Scope(label, frame) =>
       state.labels.get(label) match
         case Some(i) =>
@@ -115,13 +113,13 @@ def handleMov(op: Mov, state: State): Dispatch = op match
           state.registers.set(reg, value.I32(i))
           Cont
         case None =>
-          Fatal(s"bad mov: missing scope $label")
+          Error(s"bad mov: missing scope $label", op)
     case _ =>
-      Fatal("bad mov: invalid stack entry")
+      Error("bad mov: invalid stack entry", op)
 
 def handleLoad(op: Load, state: State): Dispatch = state.frames.curr.get(op.label) match
   case None =>
-    const(op.label, state) { value =>
+    const(op, op.label, state) { value =>
       state.stack.push(value)
       Cont
     }
@@ -133,17 +131,17 @@ def handleStore(op: Store, state: State): Dispatch =
   state.frames.curr.put(op.label, state.stack.pop)
   Cont
 
-def handlePrintln(state: State): Dispatch =
+def handlePrintln(ins: Instruction, state: State): Dispatch =
   println(state.stack.pop)
   Cont
 
-def handleConcat(state: State): Dispatch =
+def handleConcat(op: Instruction, state: State): Dispatch =
   binStrOp(state)(_ + _) match
     case Some(v) =>
       state.stack.push(v)
       Cont
     case None =>
-      Fatal("bad concat: missing argument")
+      Error("bad concat: missing argument", op)
 
 def handleAdd(op: Add, state: State): Dispatch =
   binI32Op(state)(_ + _) match
@@ -151,7 +149,7 @@ def handleAdd(op: Add, state: State): Dispatch =
       state.stack.push(v)
       Cont
     case None =>
-      Fatal("bad add: missing argument")
+      Error("bad add: missing argument", op)
 
 def handleSub(op: Sub, state: State): Dispatch =
   binI32Op(state)(_ - _) match
@@ -159,18 +157,18 @@ def handleSub(op: Sub, state: State): Dispatch =
       state.stack.push(v)
       Cont
     case None =>
-      Fatal("bad sub: missing argument")
+      Error("bad sub: missing argument", op)
 
 def handleFrame(op: Frame, state: State): Dispatch =
   Cont
 
-def goto(label: String, state: State): Dispatch = state.labels.get(label) match
-  case None => Fatal(s"bad jump: missing label: ${label}")
+def goto(op: Instruction, label: String, state: State): Dispatch = state.labels.get(label) match
+  case None => Error(s"bad jump: missing label: ${label}", op)
   case _ => Goto(label)
 
-def const(label: String, state: State)(f: Value => Dispatch): Dispatch =
+def const(op: Instruction, label: String, state: State)(f: Value => Dispatch): Dispatch =
   state.constants.get(label) match
-    case None => Fatal(s"missing const: ${label}")
+    case None => Error(s"missing const: ${label}", op)
     case Some(value) => f(value)
 
 def binI32Op(state: State)(f: (Int, Int) => Int): Option[value.I32] =

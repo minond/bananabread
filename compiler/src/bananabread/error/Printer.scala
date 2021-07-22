@@ -53,7 +53,7 @@ def pp(err: Errors, source: String) = err match
       isolateBadLine(id.location, source),
     )
 
-  case runtime.FatalErr(msg, ins, codes, registers) =>
+  case runtime.RuntimeErr(msg, ins, codes, registers) =>
     lines(
       generateOpcodeErrorLine(msg),
       isolateBadOpcode(registers.pc.value, codes),
