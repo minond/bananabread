@@ -220,7 +220,7 @@ def parseExprCont(curr: Expr, tail: Tokens, syntax: Syntax): Parsed[Expr] =
       yield
         rhs match
           case Binop(nextOp, nextLhs, nextRhs) if syntax.isInfix(nextOp) &&
-            syntax.infixPrecedence(op) > syntax.infixPrecedence(nextOp) =>
+            syntax.infixPrecedence(op) >= syntax.infixPrecedence(nextOp) =>
               Binop(nextOp, Binop(op, curr, nextLhs), nextRhs)
 
           case _ => Binop(op, curr, rhs)
