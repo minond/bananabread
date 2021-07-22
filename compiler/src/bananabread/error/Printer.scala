@@ -23,6 +23,12 @@ type Errors = parse.SyntaxErr
 
 
 def pp(err: Errors, source: String) = err match
+  case parse.BadOperatorDefinitionErr(location) =>
+    lines(
+      generateSyntaxErrorLine(s"bad operator definition", location, source),
+      isolateBadLine(location, source),
+    )
+
   case parse.UnexpectedEofErr(prev) =>
     lines(
       generateSyntaxErrorLine(s"unexpected <EOF> after `$prev`", prev.location, source),

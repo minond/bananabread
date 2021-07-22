@@ -356,7 +356,7 @@ def isOperatorDefinition(expr: Parsed[Expr | Stmt]) = expr match
   case _ => false
 
 def operatorDefinition(expr: Parsed[Expr | Stmt]): Option[(OpPosition, Int, String)] = expr match
-  case Right(App(Id("operator", _), Symbol("prefix",  _) :: Num(prec, _) :: Symbol(name, _) :: Nil)) => Some((Prefix, prec.toInt, name))
-  case Right(App(Id("operator", _), Symbol("infix",   _) :: Num(prec, _) :: Symbol(name, _) :: Nil)) => Some((Infix, prec.toInt, name))
-  case Right(App(Id("operator", _), Symbol("postfix", _) :: Num(prec, _) :: Symbol(name, _) :: Nil)) => Some((Postfix, prec.toInt, name))
+  case Right(App(Id("operator", _), Id("prefix",  _) :: Num(prec, _) :: Id(name, _) :: Nil)) => Some((Prefix, prec.toInt, name))
+  case Right(App(Id("operator", _), Id("infix",   _) :: Num(prec, _) :: Id(name, _) :: Nil)) => Some((Infix, prec.toInt, name))
+  case Right(App(Id("operator", _), Id("postfix", _) :: Num(prec, _) :: Id(name, _) :: Nil)) => Some((Postfix, prec.toInt, name))
   case _ => None

@@ -9,29 +9,29 @@ import runtime.instruction.pp
 
 
 def main(args: Array[String]) =
-  val code =
+  var code =
     """
-    operator('prefix, 1, 'opcode)
-    operator('prefix, 1, '!)
-    operator('prefix, 1, '∀)
+    operator(prefix, 1, opcode)
+    operator(prefix, 1, !)
+    operator(prefix, 1, ∀)
 
-    operator('infix, 0, ':=)
-    operator('infix, 0, '_o_)
-    operator('infix, 0, '|>)
-    operator('infix, 2, '+)
-    operator('infix, 2, '++)
-    operator('infix, 2, '-)
-    operator('infix, 2, ':)
-    operator('infix, 3, '%)
-    operator('infix, 3, '*)
-    operator('infix, 3, '/)
-    operator('infix, 3, '==)
-    operator('infix, 3, '>)
-    operator('infix, 4, '^)
-    operator('infix, 10, '∈)
-    operator('infix, 99, '^)
+    // operator(infix, 0, :=)
+    operator(infix, 0, _o_)
+    operator(infix, 0, |>)
+    operator(infix, 2, +)
+    operator(infix, 2, ++)
+    operator(infix, 2, -)
+    // operator(infix, 2, :)
+    operator(infix, 3, %)
+    operator(infix, 3, *)
+    operator(infix, 3, /)
+    operator(infix, 3, ==)
+    operator(infix, 3, >)
+    operator(infix, 4, ^)
+    operator(infix, 10, ∈)
+    operator(infix, 99, ^)
 
-    operator('postfix, 1, '!)
+    // operator(postfix, 1, !)
 
 
     def +(a: I32, b: I32): I32 =
@@ -358,22 +358,28 @@ def main(args: Array[String]) =
     println(add2(4, 2))
     """
 
-  // parsing.opcode.parse(
-  //   """
-  //   add [I32]
-  //   """
-  // ).map { tree => println(tree.nodes.head) }
+  var code2 =
+    """
+    operator(prefix, 0, println)
+    operator(prefix, 0, opcode)
+
+    def println[T](x: T): Str =
+      opcode %{
+        load [Str] x
+        println
+        ret
+      }
+
+    def x = 1
+
+    println x
+    """
 
   val res =
     for
       ast <- parse("<stdin>", code)
-      // _ = println(s"AST: ${ast}\n\n")
       ir = typeless.lift(ast)
-      // _ = println(s"IR: ${ir}\n\n")
       ins <- backend.opcode.compile(ir)
-      // _ = println("==================")
-      // _ = println(pp(ins))
-      // _ = println("==================")
       interpreter = Interpreter(ins)//.debugging//.stepping
       _ <- interpreter.run
     yield
