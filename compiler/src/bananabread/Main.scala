@@ -358,30 +358,32 @@ def main(args: Array[String]) =
     println(add2(4, 2))
     """
 
-  var code2 =
+  code =
     """
-    operator(prefix, 0, println)
-    operator(prefix, 0, opcode)
-
-    def println[T](x: T): Str =
-      opcode %{
-        load [Str] x
-        println
-        ret
-      }
+    // operator(prefix, 0, println)
+    // operator(prefix, 0, opcode)
+    //
+    // def println[T](x: T): Str =
+    //   opcode %{
+    //     load [Str] x
+    //     println
+    //     ret
+    //   }
 
     def x = 1
 
-    println x
+    // println x
     """
 
   val res =
     for
       ast <- parse("<stdin>", code)
-      ir = typeless.lift(ast)
+      ir   = typeless.lift(ast)
+      tys  = typechecker.infer(ir)
+      _    = println(ir)
+      _    = println(tys)
       ins <- backend.opcode.compile(ir)
-      interpreter = Interpreter(ins)//.debugging//.stepping
-      _ <- interpreter.run
+      _   <- Interpreter(ins).run //.debugging//.stepping
     yield
       "ok"
 

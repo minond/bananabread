@@ -9,7 +9,7 @@ import ir.typeless.Ir
 type Scope = Map[String, Type]
 
 
-def infer(nodes: List[Ir], scope: Scope): List[Type] =
+def infer(nodes: List[Ir], scope: Scope = Map.empty): List[Type] =
   nodes.map(node => infer(node, scope))
 def infer(node: Ir, scope: Scope): Type = node match
   case typeless.Num(_) => ty.I32
