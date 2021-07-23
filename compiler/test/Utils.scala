@@ -60,7 +60,7 @@ def astOf(code: String, syntax: Syntax = stdOps) =
 
 def resultOf(code: String, syntax: Syntax = stdOps) =
   val ast = parse("<stdin>", prelude + code, syntax).getOrElse(???)
-  val ir = typeless.lift(ast)
+  val ir = typeless.lift(ast).getOrElse(???)
   // import runtime.instruction.pp
   // backend.opcode.compile(ir) match
   //   case Right(xs) =>
