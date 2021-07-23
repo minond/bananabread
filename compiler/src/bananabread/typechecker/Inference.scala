@@ -43,7 +43,14 @@ def inferLambda(lam: typeless.Lambda, scope: Scope): Inferred[Lambda] =
   ???
 
 def inferCond(cond: typeless.Cond, scope: Scope): Inferred[Type] =
-  ???
+  for
+    condTy <- infer(cond.cond, scope)
+    _      <- condTy.ensure(Bool, cond.cond)
+    passTy <- infer(cond.pass, scope)
+    failTy <- infer(cond.fail, scope)
+    _      <- failTy.ensure(passTy, cond.fail)
+  yield
+    passTy
 
 def inferLet(let: typeless.Let, scope: Scope): Inferred[Type] =
   ???
@@ -57,3 +64,10 @@ def lookup(ir: Ir, label: String, scope: Scope): Either[LookupErr, Type] =
 val ids = LazyList.from(1).sliding(1)
 def fresh() =
   Var(ids.next.head)
+
+
+extension (ty: Type)
+  def ensure(expected: Type, node: Ir): Either[TypeMismatchErr, Type] =
+    if ty == expected
+    then Right(ty)
+    else Left(TypeMismatchErr(expected, ty, node))
