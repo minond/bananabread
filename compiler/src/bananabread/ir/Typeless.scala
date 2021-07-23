@@ -20,11 +20,16 @@ case class Symbol(symbol: ast.Symbol) extends Ir with Print(s"(symbol ${symbol.l
 case class App(lambda: Ir, args: List[Ir], expr: Expr) extends Ir with Print(s"(app lambda: ${lambda} args: (${args.mkString(" ")}))")
 case class Lambda(params: List[Id], body: Ir, expr: Expr) extends Ir with Print(s"(lambda params: (${params.mkString(" ")}) body: $body)"), Ptr("lambda")
 case class Cond(cond: Ir, pass: Ir, fail: Ir, expr: Expr) extends Ir with Print(s"(if cond: $cond then: $pass else: $fail)")
-case class Let(bindings: List[Binding], body: Ir, expr: Expr) extends Ir with Print(s"(let bindings: (${bindings.mkString(" ")}) body: $body)")
 case class Begin(ins: List[Ir], expr: Expr) extends Ir with Print(s"(begin ${ins.mkString(" ")})")
 case class Def(name: ast.Id, value: Ir, stmt: Stmt) extends Ir with Print(s"(def $name $value)")
 
+case class Let(bindings: List[Binding], body: Ir, expr: Expr) extends Ir with Print(s"(let bindings: (${bindings.mkString(" ")}) body: $body)")
 case class Binding(label: ast.Id, value: Ir, expr: ast.Binding) extends Print(s"binding: $label value: $value")
+
+sealed trait Bool extends Ir
+case class True(expr: ast.True) extends Bool, Print("true")
+case class False(expr: ast.False) extends Bool, Print("false")
+
 
 def lift(tree: Tree): Lifted[List[Ir]] =
   tree.nodes.map(lift).squished
@@ -36,6 +41,8 @@ def lift(binding: ast.Binding): Lifted[Binding] =
 def lift(node: Stmt | Expr): Lifted[Ir] = node match
   case expr: ast.Num    => Right(Num(expr))
   case expr: ast.Str    => Right(Str(expr))
+  case expr: ast.True   => Right(True(expr))
+  case expr: ast.False  => Right(False(expr))
   case expr: ast.Id     => Right(Id(expr))
   case expr: ast.Symbol => Right(Symbol(expr))
   case expr: ast.App    => liftApp(expr)

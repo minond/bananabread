@@ -41,6 +41,12 @@ def pp(err: Errors, source: String) = err match
       isolateBadLine(token.location, source),
     )
 
+  case genop.UndeclaredIdentifierErr(id) =>
+    lines(
+      generateRuntimeErrorLine(s"${id.id.lexeme} was referenced but not found", id.id.location, source),
+      isolateBadLine(id.id.location, source),
+    )
+
   case genop.LookupErr(id) =>
     lines(
       generateRuntimeErrorLine(s"${id.id.lexeme} was referenced but not found", id.id.location, source),

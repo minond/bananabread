@@ -17,7 +17,7 @@ import runtime.register._
 import runtime.instruction
 import runtime.instruction._
 import runtime.instruction.{Value, Label, Instruction}
-import runtime.instruction.{Type, I32, Str, Symbol}
+import runtime.instruction.{Bool, Type, I32, Str, Symbol}
 
 import utils.{safeToInt, squished}
 
@@ -42,6 +42,7 @@ def generate(scope: Scope, node: Ir): Result = node match
   case num: typeless.Num    => generatePush(scope, num, I32)
   case str: typeless.Str    => generatePush(scope, str, Str)
   case sym: typeless.Symbol => generatePush(scope, sym, Symbol)
+  case bool: typeless.Bool  => generatePush(scope, bool, Bool)
   case id: typeless.Id      => generateLoad(scope, id)
   case lam: typeless.Lambda => generateAnnonLambda(scope, lam)
   case typeless.App(lambda, args, _)      => generateCall(scope, lambda, args)
@@ -55,6 +56,10 @@ def generatePush(scope: Scope, node: Ir, ty: Type): Result = (ty, node) match
     num.num.lexeme.safeToInt match
       case Left(_)  => Left(BadPushErr(ty, node))
       case Right(i) => Right(group(scope, Push(I32, value.I32(i))))
+  case (Bool, _: typeless.True) =>
+    Right(group(scope, Push(Bool, value.True)))
+  case (Bool, _: typeless.False) =>
+    Right(group(scope, Push(Bool, value.False)))
   case (Str, str: typeless.Str) =>
     Right(Value(Str, str.ptr, value.Str(str.str.lexeme)) +:
           group(scope, Push(Const, value.Id(str.ptr))))
@@ -111,32 +116,33 @@ def generateCall(scope: Scope, lambda: Ir, args: List[Ir]): Result = lambda matc
 def generateOpcode(scope: Scope, tree: OpcodeTree, source: String, loc: Location): Result =
   tree.nodes.map(generateOpcode(scope, _, source, loc)).squished.map(_.flatten)
 def generateOpcode(scope: Scope, expr: OpcodeExpr, source: String, loc: Location): Result = expr match
-  case InstructionExpr("add",     Some("I32"), Nil,         _) => Right(group(scope, Add(I32)))
-  case InstructionExpr("sub",     Some("I32"), Nil,         _) => Right(group(scope, Sub(I32)))
-  case InstructionExpr("push",    Some("I32"), List(str), _)   => withI32(expr, str) { i => group(scope, Push(I32, value.I32(i))) }
-  case InstructionExpr("push",    Some("Str"), List(label), _) => Right(group(scope, Push(Str, value.Id(scope.qualified(label)))))
-  case InstructionExpr("push",    Some("Ref"), List(label), _) => Right(group(scope, Push(Ref, value.Id(scope.qualified(label)))))
-  case InstructionExpr("load",    Some("I32"), List(label), _) => Right(group(scope, Load(I32, scope.qualified(label))))
-  case InstructionExpr("load",    Some("Str"), List(label), _) => Right(group(scope, Load(Str, scope.qualified(label))))
-  case InstructionExpr("load",    Some("Ref"), List(label), _) => Right(group(scope, Load(Ref, scope.qualified(label))))
-  case InstructionExpr("store",   Some("I32"), List(label), _) => Right(group(scope, Store(I32, scope.qualified(label))))
-  case InstructionExpr("store",   Some("Str"), List(label), _) => Right(group(scope, Store(Str, scope.qualified(label))))
-  case InstructionExpr("store",   Some("Ref"), List(label), _) => Right(group(scope, Store(Ref, scope.qualified(label))))
-  case InstructionExpr("jz",      None,        List(label), _) => Right(group(scope, Jz(scope.qualified(label))))
-  case InstructionExpr("jmp",     None,        List(label), _) => Right(group(scope, Jmp(label)))
-  case InstructionExpr("call",    None,        List(label), _) => Right(group(scope, Call(scope.qualified(label))))
-  case InstructionExpr("mov",     Some("Pc"),  Nil,         _) => Right(group(scope, Mov(Pc, None)))
-  case InstructionExpr("mov",     Some("Lr"),  Nil,         _) => Right(group(scope, Mov(Lr, None)))
-  case InstructionExpr("mov",     Some("Jm"),  Nil,         _) => Right(group(scope, Mov(Jm, None)))
-  case InstructionExpr("mov",     Some("Pc"),  List(str), _)   => withI32(expr, str) { i => group(scope, Mov(Pc, Some(value.I32(i)))) }
-  case InstructionExpr("mov",     Some("Lr"),  List(str), _)   => withI32(expr, str) { i => group(scope, Mov(Lr, Some(value.I32(i)))) }
-  case InstructionExpr("mov",     Some("Jm"),  List(str), _)   => withI32(expr, str) { i => group(scope, Mov(Jm, Some(value.I32(i)))) }
-  case InstructionExpr("concat",  None,        Nil,         _) => Right(group(scope, Concat))
-  case InstructionExpr("println", None,        Nil,         _) => Right(group(scope, Println))
-  case InstructionExpr("halt",    None,        Nil,         _) => Right(group(scope, Halt))
-  case InstructionExpr("call0",   None,        Nil,         _) => Right(group(scope, Call0))
-  case InstructionExpr("ret",     None,        Nil,         _) => Right(group(scope, Ret))
-  case InstructionExpr("swap",    None,        Nil,         _) => Right(group(scope, Swap))
+  case InstructionExpr("add",     Some("I32"),  Nil,         _) => Right(group(scope, Add(I32)))
+  case InstructionExpr("sub",     Some("I32"),  Nil,         _) => Right(group(scope, Sub(I32)))
+  case InstructionExpr("push",    Some("I32"),  List(str), _)   => withI32(expr, str) { i => group(scope, Push(I32, value.I32(i))) }
+  case InstructionExpr("push",    Some("Str"),  List(label), _) => Right(group(scope, Push(Str, value.Id(scope.qualified(label)))))
+  case InstructionExpr("push",    Some("Ref"),  List(label), _) => Right(group(scope, Push(Ref, value.Id(scope.qualified(label)))))
+  case InstructionExpr("load",    Some("I32"),  List(label), _) => Right(group(scope, Load(I32, scope.qualified(label))))
+  case InstructionExpr("load",    Some("Bool"), List(label), _) => Right(group(scope, Load(Bool, scope.qualified(label))))
+  case InstructionExpr("load",    Some("Str"),  List(label), _) => Right(group(scope, Load(Str, scope.qualified(label))))
+  case InstructionExpr("load",    Some("Ref"),  List(label), _) => Right(group(scope, Load(Ref, scope.qualified(label))))
+  case InstructionExpr("store",   Some("I32"),  List(label), _) => Right(group(scope, Store(I32, scope.qualified(label))))
+  case InstructionExpr("store",   Some("Str"),  List(label), _) => Right(group(scope, Store(Str, scope.qualified(label))))
+  case InstructionExpr("store",   Some("Ref"),  List(label), _) => Right(group(scope, Store(Ref, scope.qualified(label))))
+  case InstructionExpr("jz",      None,         List(label), _) => Right(group(scope, Jz(scope.qualified(label))))
+  case InstructionExpr("jmp",     None,         List(label), _) => Right(group(scope, Jmp(label)))
+  case InstructionExpr("call",    None,         List(label), _) => Right(group(scope, Call(scope.qualified(label))))
+  case InstructionExpr("mov",     Some("Pc"),   Nil,         _) => Right(group(scope, Mov(Pc, None)))
+  case InstructionExpr("mov",     Some("Lr"),   Nil,         _) => Right(group(scope, Mov(Lr, None)))
+  case InstructionExpr("mov",     Some("Jm"),   Nil,         _) => Right(group(scope, Mov(Jm, None)))
+  case InstructionExpr("mov",     Some("Pc"),   List(str), _)   => withI32(expr, str) { i => group(scope, Mov(Pc, Some(value.I32(i)))) }
+  case InstructionExpr("mov",     Some("Lr"),   List(str), _)   => withI32(expr, str) { i => group(scope, Mov(Lr, Some(value.I32(i)))) }
+  case InstructionExpr("mov",     Some("Jm"),   List(str), _)   => withI32(expr, str) { i => group(scope, Mov(Jm, Some(value.I32(i)))) }
+  case InstructionExpr("concat",  None,         Nil,         _) => Right(group(scope, Concat))
+  case InstructionExpr("println", None,         Nil,         _) => Right(group(scope, Println))
+  case InstructionExpr("halt",    None,         Nil,         _) => Right(group(scope, Halt))
+  case InstructionExpr("call0",   None,         Nil,         _) => Right(group(scope, Call0))
+  case InstructionExpr("ret",     None,         Nil,         _) => Right(group(scope, Ret))
+  case InstructionExpr("swap",    None,         Nil,         _) => Right(group(scope, Swap))
   case LabelExpr(label, _)                                     => Right(group(scope, Label(label)))
   case _                                                       => Left(UnknownUserOpcodeErr(expr, source, loc))
 
@@ -238,6 +244,7 @@ def generateStore(scope: Scope, label: String, value: Ir): Result = value match
   case _: typeless.Lambda => Right(group(scope, Store(Ref, scope.qualified(label))))
   case _: typeless.Num    => Right(group(scope, Store(I32, scope.qualified(label))))
   case _: typeless.Str    => Right(group(scope, Store(Str, scope.qualified(label))))
+  case _: typeless.Bool   => Right(group(scope, Store(Bool, scope.qualified(label))))
   case _: typeless.Begin  => Right(group(scope, Store(I32, scope.qualified(label)))) /* XXX May not be an I32 */
   case _: typeless.Let    => Right(group(scope, Store(I32, scope.qualified(label)))) /* XXX May not be an I32 */
   case _: typeless.Cond   => Right(group(scope, Store(I32, scope.qualified(label)))) /* XXX May not be an I32 */

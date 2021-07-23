@@ -66,6 +66,7 @@ def parsePrimary(head: Token, tail: Tokens, syntax: Syntax): Parsed[Expr] =
     case lit: Str    => Right(lit)
     case lit: Id     => Right(lit)
     case lit: Symbol => Right(lit)
+    case lit: Bool   => Right(lit)
     case unexpected  => Left(UnexpectedTokenErr(unexpected))
 
 def parseLambda(start: Token, tail: Tokens, syntax: Syntax): Parsed[Lambda] =
@@ -327,7 +328,10 @@ def nextToken(
     val rest = takeWhile(tail, isIdTail).mkString
     val lexeme = head +: rest
 
-    Right(Id(lexeme, loc))
+    lexeme match
+      case "true"  => Right(True(loc))
+      case "false" => Right(False(loc))
+      case id      => Right(Id(lexeme, loc))
 
   case head =>
     val rest = takeWhile(tail, isUnknownTail).mkString

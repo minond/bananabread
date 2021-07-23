@@ -30,6 +30,10 @@ case class Str(lexeme: String, loc: Location) extends Token, At(loc) with Expr, 
 case class Id(lexeme: String, loc: Location) extends Token, At(loc) with Expr, Print(lexeme)
 case class Symbol(lexeme: String, loc: Location) extends Token, At(loc) with Expr, Print(s"'$lexeme")
 
+sealed trait Bool extends Token with Expr
+case class True(loc: Location) extends Bool, At(loc), Print("true")
+case class False(loc: Location) extends Bool, At(loc), Print("false")
+
 
 case class Binop(op: Id, lhs: Expr, rhs: Expr) extends Expr with At(op.location), Print(s"($op $lhs $rhs)")
 case class Uniop(op: Id, operand: Expr) extends Expr with At(op.location), Print(s"($op $operand)")

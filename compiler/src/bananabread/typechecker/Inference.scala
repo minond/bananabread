@@ -19,6 +19,7 @@ def infer(node: Ir, scope: Scope): Inferred[Type] = node match
   case _: typeless.Num     => Right(ty.I32)
   case _: typeless.Str     => Right(ty.Str)
   case _: typeless.Symbol  => Right(ty.Symbol)
+  case _: typeless.Bool    => Right(ty.Bool)
   case ir: typeless.Id     => inferId(ir, scope)
   case ir: typeless.Begin  => inferBegin(ir, scope)
   case ir: typeless.Def    => inferDef(ir, scope)
