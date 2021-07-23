@@ -34,57 +34,73 @@ def lift(binding: ast.Binding): Lifted[Binding] =
   yield
     Binding(binding.label, valueIr, binding)
 def lift(node: Stmt | Expr): Lifted[Ir] = node match
-  case expr: ast.Num => Right(Num(expr))
-  case expr: ast.Str => Right(Str(expr))
-  case expr: ast.Id => Right(Id(expr))
+  case expr: ast.Num    => Right(Num(expr))
+  case expr: ast.Str    => Right(Str(expr))
+  case expr: ast.Id     => Right(Id(expr))
   case expr: ast.Symbol => Right(Symbol(expr))
-  case expr @ ast.App(lambda, args) =>
-    for
-      lambdaIr <- lift(lambda)
-      argsIrs  <- args.map(lift).squished
-    yield
-      App(lambdaIr, argsIrs, expr)
-  case expr @ ast.Lambda(params, body, _, _) =>
-    for
-      paramsIr <- params.map(_.name).map(lift).squished
-      bodyIr   <- lift(body)
-    yield
-      paramsIr.onlys[Id] match
-        case Right(ids) =>
-          Lambda(ids, bodyIr, expr)
-        case _ => return Left(BadParamIdentifier(paramsIr))
-  case expr @ ast.Uniop(op, operand) =>
-    for
-      opIr  <- lift(op)
-      argIr <- lift(operand)
-    yield
-      App(opIr, List(argIr), expr)
-  case expr @ ast.Binop(op, lhs, rhs) =>
-    for
-      opIr    <- lift(op)
-      argsIrs <- List(lhs, rhs).map(lift).squished
-    yield
-      App(opIr, argsIrs, expr)
-  case expr @ ast.Cond(_, cond, pass, fail) =>
-    for
-      condIr <- lift(cond)
-      passIr <- lift(pass)
-      failIr <- lift(fail)
-    yield
-      Cond(condIr, passIr, failIr, expr)
-  case expr @ ast.Let(_, bindings, body) =>
-    for
-      bindingsIr <- bindings.map(lift).squished
-      bodyIr     <- lift(body)
-    yield
-      Let(bindingsIr, bodyIr, expr)
-  case expr @ ast.Begin(head, tail) =>
-    for
-      irs <- (head +: tail).map(lift).squished
-    yield
-      Begin(irs, expr)
-  case stmt @ ast.Def(name, value) =>
-    for
-      valueIr <- lift(value)
-    yield
-      Def(name, valueIr, stmt)
+  case expr: ast.App    => liftApp(expr)
+  case expr: ast.Lambda => liftLambda(expr)
+  case expr: ast.Uniop  => liftUniop(expr)
+  case expr: ast.Binop  => liftBinop(expr)
+  case expr: ast.Cond   => liftCond(expr)
+  case expr: ast.Let    => liftLet(expr)
+  case expr: ast.Begin  => liftBegin(expr)
+  case stmt: ast.Def    => liftDef(stmt)
+
+def liftApp(app: ast.App): Lifted[App] =
+  for
+    lambdaIr <- lift(app.lambda)
+    argsIrs  <- app.args.map(lift).squished
+  yield
+    App(lambdaIr, argsIrs, app)
+
+def liftLambda(lambda: ast.Lambda): Lifted[Lambda] =
+  for
+    paramsIr <- lambda.params.map(_.name).map(lift).squished
+    bodyIr   <- lift(lambda.body)
+  yield
+    paramsIr.onlys[Id] match
+      case Right(ids) =>
+        Lambda(ids, bodyIr, lambda)
+      case _ => return Left(BadParamIdentifier(paramsIr))
+
+def liftUniop(app: ast.Uniop): Lifted[App] =
+  for
+    opIr  <- lift(app.op)
+    argIr <- lift(app.operand)
+  yield
+    App(opIr, List(argIr), app)
+
+def liftBinop(app: ast.Binop): Lifted[App] =
+  for
+    opIr    <- lift(app.op)
+    argsIrs <- List(app.lhs, app.rhs).map(lift).squished
+  yield
+    App(opIr, argsIrs, app)
+
+def liftCond(cond: ast.Cond): Lifted[Cond] =
+  for
+    condIr <- lift(cond.cond)
+    passIr <- lift(cond.pass)
+    failIr <- lift(cond.fail)
+  yield
+    Cond(condIr, passIr, failIr, cond)
+
+def liftLet(let: ast.Let): Lifted[Let] =
+  for
+    bindingsIr <- let.bindings.map(lift).squished
+    bodyIr     <- lift(let.body)
+  yield
+    Let(bindingsIr, bodyIr, let)
+
+def liftBegin(begin: ast.Begin): Lifted[Begin] =
+  for
+    irs <- (begin.head +: begin.tail).map(lift).squished
+  yield
+    Begin(irs, begin)
+
+def liftDef(defStmt: ast.Def): Lifted[Def] =
+  for
+    valueIr <- lift(defStmt.value)
+  yield
+    Def(defStmt.name, valueIr, defStmt)
