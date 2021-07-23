@@ -53,7 +53,13 @@ def inferCond(cond: typeless.Cond, scope: Scope): Inferred[Type] =
     passTy
 
 def inferLet(let: typeless.Let, scope: Scope): Inferred[Type] =
-  ???
+  val subscope = let.bindings.foldLeft(scope) { (scope, binding) =>
+    infer(binding.value, scope) match
+      case Right(ty) => scope + (binding.label.lexeme -> ty)
+      case Left(err) => return Left(err)
+  }
+
+  infer(let.body, subscope)
 
 
 def lookup(ir: Ir, label: String, scope: Scope): Either[LookupErr, Type] =
