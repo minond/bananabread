@@ -1,32 +1,58 @@
 package bananabread
 package typechecker
 
+import error._
 import ty._
 import ir.typeless
 import ir.typeless.Ir
 
+import utils.squished
+
 
 type Scope = Map[String, Type]
+type Inferred[T] = Either[InferenceErr, T]
 
 
-def infer(nodes: List[Ir], scope: Scope = Map.empty): List[Type] =
-  nodes.map(node => infer(node, scope))
-def infer(node: Ir, scope: Scope): Type = node match
-  case typeless.Num(_) => ty.I32
-  case typeless.Str(_) => ty.Str
-  case typeless.Symbol(_) => ty.Symbol
-  case typeless.Id(id) => lookup(id.lexeme, scope)
-  case typeless.Begin(ins, _) => infer(ins.last, scope)
-  case typeless.Def(_, value, _) => infer(value, scope)
-  case typeless.App(lambda, args, expr) => ???
-  case typeless.Lambda(params, body, expr) => ???
-  case typeless.Cond(cond, pass, fail, _) => ???
-  case typeless.Let(bindings, body, _) => ???
+def infer(nodes: List[Ir], scope: Scope = Map.empty): Inferred[List[Type]] =
+  nodes.map(node => infer(node, scope)).squished
+def infer(node: Ir, scope: Scope): Inferred[Type] = node match
+  case _: typeless.Num     => Right(ty.I32)
+  case _: typeless.Str     => Right(ty.Str)
+  case _: typeless.Symbol  => Right(ty.Symbol)
+  case ir: typeless.Id     => inferId(ir, scope)
+  case ir: typeless.Begin  => inferBegin(ir, scope)
+  case ir: typeless.Def    => inferDef(ir, scope)
+  case ir: typeless.App    => inferApp(ir, scope)
+  case ir: typeless.Lambda => inferLambda(ir, scope)
+  case ir: typeless.Cond   => inferCond(ir, scope)
+  case ir: typeless.Let    => inferLet(ir, scope)
 
-def lookup(label: String, scope: Scope): Type =
+def inferId(id: typeless.Id, scope: Scope): Inferred[Type] =
+  lookup(id, id.id.lexeme, scope)
+
+def inferBegin(begin: typeless.Begin, scope: Scope): Inferred[Type] =
+  infer(begin.ins.last, scope)
+
+def inferDef(defIr: typeless.Def, scope: Scope): Inferred[Type] =
+  infer(defIr.value, scope)
+
+def inferApp(app: typeless.App, scope: Scope): Inferred[Type] =
+  ???
+
+def inferLambda(lam: typeless.Lambda, scope: Scope): Inferred[Lambda] =
+  ???
+
+def inferCond(cond: typeless.Cond, scope: Scope): Inferred[Type] =
+  ???
+
+def inferLet(let: typeless.Let, scope: Scope): Inferred[Type] =
+  ???
+
+
+def lookup(ir: Ir, label: String, scope: Scope): Either[LookupErr, Type] =
   scope.get(label) match
-    case None => fresh()
-    case Some(ty) => ty
+    case None => Left(LookupErr(label, ir))
+    case Some(ty) => Right(ty)
 
 val ids = LazyList.from(1).sliding(1)
 def fresh() =

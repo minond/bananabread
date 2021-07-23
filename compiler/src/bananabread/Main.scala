@@ -379,7 +379,7 @@ def main(args: Array[String]) =
     for
       ast <- parse("<stdin>", code)
       ir  <- typeless.lift(ast)
-      tys  = typechecker.infer(ir)
+      tys <- typechecker.infer(ir)
       _    = println(ir)
       _    = println(tys)
       ins <- backend.opcode.compile(ir)
