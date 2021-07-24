@@ -360,9 +360,10 @@ def main(args: Array[String]) =
 
   code =
     """
-    // operator(prefix, 0, println)
-    // operator(prefix, 0, opcode)
-    //
+    operator(prefix, 0, println)
+    operator(prefix, 0, opcode)
+    operator(infix, 2, +)
+
     // def println[T](x: T): Str =
     //   opcode %{
     //     load [Str] x
@@ -370,9 +371,14 @@ def main(args: Array[String]) =
     //     ret
     //   }
 
-    def x = 1
+    def x = true
 
-    // println x
+    def +(a: I32, b: I32): I32 =
+      opcode %{
+        load [I32] a
+        load [I32] b
+        add [I32]
+      }
     """
 
   val res =
@@ -380,11 +386,14 @@ def main(args: Array[String]) =
       ast <- parse("<stdin>", code)
       ir  <- typeless.lift(ast)
       tys <- typechecker.infer(ir)
-      _    = println(ir)
-      _    = println(tys)
       ins <- backend.opcode.compile(ir)
       _   <- Interpreter(ins).run //.debugging//.stepping
     yield
+      ir.zip(tys).foreach {
+        case (typeless.Def(name, _, _), ty) => println(s"$name: $ty")
+        case (ir, ty) => println(s"$ir: $ty")
+      }
+
       "ok"
 
   res match

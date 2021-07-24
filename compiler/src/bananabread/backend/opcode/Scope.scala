@@ -15,28 +15,28 @@ object Scope:
 
 class Scope(val module: String, env: Map[String, Ir], parent: Option[Scope]):
   def contains(id: ast.Id): Boolean = contains(id.lexeme)
-  def contains(id: typeless.Id): Boolean = contains(id.id.lexeme)
+  def contains(id: typeless.Id): Boolean = contains(id.expr.lexeme)
   def contains(label: String): Boolean = (env.contains(label), parent) match
     case (true, _) => true
     case (_, Some(scope)) => scope.contains(label)
     case _ => false
 
   def get(id: ast.Id): Option[Ir] = get(id.lexeme)
-  def get(id: typeless.Id): Option[Ir] = get(id.id.lexeme)
+  def get(id: typeless.Id): Option[Ir] = get(id.expr.lexeme)
   def get(label: String): Option[Ir] = (env.get(label), parent) match
     case (Some(ir), _) => Some(ir)
     case (_, Some(scope)) => scope.get(label)
     case _ => None
 
   def qualified(id: ast.Id): String = qualified(id.lexeme)
-  def qualified(id: typeless.Id): String = qualified(id.id.lexeme)
+  def qualified(id: typeless.Id): String = qualified(id.expr.lexeme)
   def qualified(label: String): String = (env.get(label), parent) match
     case (Some(_), _) => s"$module.$label"
     case (_, Some(scope)) => scope.qualified(label)
     case _ => ???
 
   def qualified2(id: ast.Id): Option[String] = qualified2(id.lexeme)
-  def qualified2(id: typeless.Id): Option[String] = qualified2(id.id.lexeme)
+  def qualified2(id: typeless.Id): Option[String] = qualified2(id.expr.lexeme)
   def qualified2(label: String): Option[String] = (env.get(label), parent) match
     case (Some(_), _) => Some(s"$module.$label")
     case (_, Some(scope)) => scope.qualified2(label)
@@ -44,7 +44,7 @@ class Scope(val module: String, env: Map[String, Ir], parent: Option[Scope]):
 
   def define(bi: Binding): Unit = define(bi.label.lexeme, bi.value)
   def define(id: ast.Id, ir: Ir): Unit = define(id.lexeme, ir)
-  def define(id: typeless.Id, ir: Ir): Unit = define(id.id.lexeme, ir)
+  def define(id: typeless.Id, ir: Ir): Unit = define(id.expr.lexeme, ir)
   def define(label: String, ir: Ir): Unit =
     env.update(label, ir)
 

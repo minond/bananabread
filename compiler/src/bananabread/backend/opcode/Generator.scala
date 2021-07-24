@@ -53,7 +53,7 @@ def generate(scope: Scope, node: Ir): Result = node match
 
 def generatePush(scope: Scope, node: Ir, ty: Type): Result = (ty, node) match
   case (I32, num: typeless.Num) =>
-    num.num.lexeme.safeToInt match
+    num.expr.lexeme.safeToInt match
       case Left(_)  => Left(BadPushErr(ty, node))
       case Right(i) => Right(group(scope, Push(I32, value.I32(i))))
   case (Bool, _: typeless.True) =>
@@ -61,10 +61,10 @@ def generatePush(scope: Scope, node: Ir, ty: Type): Result = (ty, node) match
   case (Bool, _: typeless.False) =>
     Right(group(scope, Push(Bool, value.False)))
   case (Str, str: typeless.Str) =>
-    Right(Value(Str, str.ptr, value.Str(str.str.lexeme)) +:
+    Right(Value(Str, str.ptr, value.Str(str.expr.lexeme)) +:
           group(scope, Push(Const, value.Id(str.ptr))))
   case (Symbol, sym: typeless.Symbol) =>
-    Right(Value(Symbol, sym.ptr, value.Symbol(sym.symbol.lexeme)) +:
+    Right(Value(Symbol, sym.ptr, value.Symbol(sym.expr.lexeme)) +:
           group(scope, Push(Const, value.Id(sym.ptr))))
   case _ =>
     Left(BadPushErr(ty, node))
@@ -252,7 +252,7 @@ def generateStore(scope: Scope, label: String, value: Ir): Result = value match
   case _: typeless.Symbol => Right(group(scope, Store(Symbol, scope.qualified(label))))
   case _: typeless.Def    => Left(CannotStoreDefErr(value))
   case id: typeless.Id => scope.get(id) match
-    case Some(v: typeless.Id) if v.id.lexeme == id.id.lexeme =>
+    case Some(v: typeless.Id) if v.expr.lexeme == id.expr.lexeme =>
       Right(group(scope, Store(I32, scope.qualified(label)))) /* XXX May not be an I32 */
     case Some(v) => generateStore(scope, label, v)
     case None    => Left(UndeclaredIdentifierErr(id))

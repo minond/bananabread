@@ -5,6 +5,7 @@ import error._
 import ty._
 import ir.typeless
 import ir.typeless.Ir
+import parsing.ast
 
 import utils.squished
 
@@ -29,7 +30,7 @@ def infer(node: Ir, scope: Scope): Inferred[Type] = node match
   case ir: typeless.Let    => inferLet(ir, scope)
 
 def inferId(id: typeless.Id, scope: Scope): Inferred[Type] =
-  lookup(id, id.id.lexeme, scope)
+  lookup(id, id.expr.lexeme, scope)
 
 def inferBegin(begin: typeless.Begin, scope: Scope): Inferred[Type] =
   infer(begin.ins.last, scope)
@@ -40,8 +41,43 @@ def inferDef(defIr: typeless.Def, scope: Scope): Inferred[Type] =
 def inferApp(app: typeless.App, scope: Scope): Inferred[Type] =
   ???
 
+// TODO Handle type variables
 def inferLambda(lam: typeless.Lambda, scope: Scope): Inferred[Lambda] =
-  ???
+  for
+    paramTys <- inferLambdaParams(lam, scope)
+    retTys   <- inferLambdaRets(lam, scope)
+  yield
+    Lambda(paramTys, retTys)
+
+// TODO Infer untagged parameters
+def inferLambdaParams(lam: typeless.Lambda, scope: Scope): Inferred[List[Type]] =
+  val paramTags = lam.expr.params.map(_.ty)
+  val paramTys = lam.params.zip(paramTags).map {
+    case (param, Some(tag)) =>
+      parseType(param, tag) match
+        case Right(ty) => ty
+        case Left(err) => return Left(err)
+
+    case (param, _) =>
+      ???
+  }
+
+  Right(paramTys)
+
+// TODO Infer untagged return type
+def inferLambdaRets(lam: typeless.Lambda, scope: Scope): Inferred[List[Type]] =
+  val retTag = lam.expr.tyRet
+  val retTy =
+    retTag match
+      case Some(tag) =>
+        parseType(lam, tag) match
+          case Right(ty) => ty
+          case Left(err) => return Left(err)
+
+      case None =>
+        ???
+
+  Right(List(retTy))
 
 def inferCond(cond: typeless.Cond, scope: Scope): Inferred[Type] =
   for
@@ -71,6 +107,15 @@ def lookup(ir: Ir, label: String, scope: Scope): Either[LookupErr, Type] =
 val ids = LazyList.from(1).sliding(1)
 def fresh() =
   Var(ids.next.head)
+
+
+def parseType(ir: Ir, node: ast.Ty): Either[UnknowTypeErr, Type] =
+  node.ty.lexeme match
+    case "I32"    => Right(ty.I32)
+    case "Str"    => Right(ty.Str)
+    case "Symbol" => Right(ty.Symbol)
+    case "Bool"   => Right(ty.Bool)
+    case baddie   => Left(UnknowTypeErr(baddie, ir))
 
 
 extension (ty: Type)

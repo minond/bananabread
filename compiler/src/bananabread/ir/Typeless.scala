@@ -12,16 +12,16 @@ import utils.{onlys, squished}
 type Lifted[T] = Either[LiftErr, T]
 
 
-sealed trait Ir
-case class Num(num: ast.Num) extends Ir with Print(s"(num ${num.lexeme})")
-case class Str(str: ast.Str) extends Ir with Print(s"(str ${str.lexeme})"), Ptr("str")
-case class Id(id: ast.Id) extends Ir with Print(s"(id ${id.lexeme})")
-case class Symbol(symbol: ast.Symbol) extends Ir with Print(s"(symbol ${symbol.lexeme})"), Ptr("symbol")
+sealed trait Ir { def expr: Expr | Stmt }
+case class Num(expr: ast.Num) extends Ir with Print(s"(num ${expr.lexeme})")
+case class Str(expr: ast.Str) extends Ir with Print(s"(str ${expr.lexeme})"), Ptr("str")
+case class Id(expr: ast.Id) extends Ir with Print(s"(id ${expr.lexeme})")
+case class Symbol(expr: ast.Symbol) extends Ir with Print(s"(symbol ${expr.lexeme})"), Ptr("symbol")
 case class App(lambda: Ir, args: List[Ir], expr: Expr) extends Ir with Print(s"(app lambda: ${lambda} args: (${args.mkString(" ")}))")
-case class Lambda(params: List[Id], body: Ir, expr: Expr) extends Ir with Print(s"(lambda params: (${params.mkString(" ")}) body: $body)"), Ptr("lambda")
+case class Lambda(params: List[Id], body: Ir, expr: ast.Lambda) extends Ir with Print(s"(lambda params: (${params.mkString(" ")}) body: $body)"), Ptr("lambda")
 case class Cond(cond: Ir, pass: Ir, fail: Ir, expr: Expr) extends Ir with Print(s"(if cond: $cond then: $pass else: $fail)")
 case class Begin(ins: List[Ir], expr: Expr) extends Ir with Print(s"(begin ${ins.mkString(" ")})")
-case class Def(name: ast.Id, value: Ir, stmt: Stmt) extends Ir with Print(s"(def $name $value)")
+case class Def(name: ast.Id, value: Ir, expr: Stmt) extends Ir with Print(s"(def $name $value)")
 
 case class Let(bindings: List[Binding], body: Ir, expr: Expr) extends Ir with Print(s"(let bindings: (${bindings.mkString(" ")}) body: $body)")
 case class Binding(label: ast.Id, value: Ir, expr: ast.Binding) extends Print(s"binding: $label value: $value")

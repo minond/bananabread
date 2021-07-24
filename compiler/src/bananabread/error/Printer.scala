@@ -4,6 +4,7 @@ package error
 import backend.opcode.error => genop
 import parsing.error => parse
 import runtime.error => runtime
+import typechecker.error => typechecker
 
 import ir.typeless => tl
 import parsing.location.Location
@@ -20,6 +21,7 @@ val OpcodePadding = 10
 type Errors = parse.SyntaxErr
             | genop.GeneratorErr
             | runtime.RuntimeErr
+            | typechecker.InferenceErr
 
 
 def pp(err: Errors, source: String) = err match
@@ -43,14 +45,14 @@ def pp(err: Errors, source: String) = err match
 
   case genop.UndeclaredIdentifierErr(id) =>
     lines(
-      generateRuntimeErrorLine(s"${id.id.lexeme} was referenced but not found", id.id.location, source),
-      isolateBadLine(id.id.location, source),
+      generateRuntimeErrorLine(s"${id.expr.lexeme} was referenced but not found", id.expr.location, source),
+      isolateBadLine(id.expr.location, source),
     )
 
   case genop.LookupErr(id) =>
     lines(
-      generateRuntimeErrorLine(s"${id.id.lexeme} was referenced but not found", id.id.location, source),
-      isolateBadLine(id.id.location, source),
+      generateRuntimeErrorLine(s"${id.expr.lexeme} was referenced but not found", id.expr.location, source),
+      isolateBadLine(id.expr.location, source),
     )
 
   case genop.UnknownUserOpcodeErr(code, source, loc) =>
@@ -71,6 +73,12 @@ def pp(err: Errors, source: String) = err match
       isolateBadOpcode(registers.pc.value, codes),
     )
 
+  case typechecker.UnknowTypeErr(tag, ir) =>
+    lines(
+      generateTypeErrorLine(s"unknown type `$tag`"),
+      isolateBadLine(ir.expr.location, source),
+    )
+
   case _ =>
     err.toString
 
@@ -82,6 +90,9 @@ def generateRuntimeErrorLine(message: String, loc: Location, source: String) =
 
 def generateOpcodeErrorLine(message: String) =
   s"${BOLD}opcode runtime error: ${message}${RESET}"
+
+def generateTypeErrorLine(message: String) =
+  s"${BOLD}type error: ${message}${RESET}"
 
 def generateCoordinates(loc: Location, source: String) =
   val (row, col) = offsetToRowAndCol(loc.offset, source)
