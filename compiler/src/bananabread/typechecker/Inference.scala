@@ -45,39 +45,45 @@ def inferApp(app: typeless.App, scope: Scope): Inferred[Type] =
 def inferLambda(lam: typeless.Lambda, scope: Scope): Inferred[Lambda] =
   for
     paramTys <- inferLambdaParams(lam, scope)
-    retTys   <- inferLambdaRets(lam, scope)
+    retTys   <- inferLambdaRets(paramTys, lam, scope)
   yield
     Lambda(paramTys, retTys)
 
-// TODO Infer untagged parameters
 def inferLambdaParams(lam: typeless.Lambda, scope: Scope): Inferred[List[Type]] =
-  val paramTags = lam.expr.params.map(_.ty)
-  val paramTys = lam.params.zip(paramTags).map {
-    case (param, Some(tag)) =>
-      parseType(tag) match
-        case Right(ty) => ty
-        case Left(err) => return Left(err)
+  val tags = lam.expr.params.map(_.ty)
+  val params = lam.params
 
-    case (param, _) =>
-      ???
+  params.zip(tags).foldLeft[Inferred[List[Type]]](Right(List.empty)) {
+    case (Right(acc), (param, None)) =>
+      Right(acc :+ fresh())
+
+    case (Right(acc), (param, Some(tag))) =>
+      parseType(tag) match
+        case Right(ty) => Right(acc :+ ty)
+        case Left(err) => Left(err)
+
+    case (Left(err), _) =>
+      Left(err)
   }
 
-  Right(paramTys)
+// TODO Substitute type variables
+def inferLambdaRets(paramTys: List[Type], lam: typeless.Lambda, scope: Scope): Inferred[List[Type]] =
+  lam.expr.tyRet match
+    case Some(tag) =>
+      parseType(tag) match
+        case Right(ty) => Right(List(ty))
+        case Left(err) => Left(err)
 
-// TODO Infer untagged return type
-def inferLambdaRets(lam: typeless.Lambda, scope: Scope): Inferred[List[Type]] =
-  val retTag = lam.expr.tyRet
-  val retTy =
-    retTag match
-      case Some(tag) =>
-        parseType(tag) match
-          case Right(ty) => ty
-          case Left(err) => return Left(err)
+    case None =>
+      val lexicalScope = lam.expr.params
+        .map { param => param.name.lexeme }
+        .zip(paramTys)
+        .foldLeft(scope) { case (scope, (name, ty)) => scope + (name -> ty) }
 
-      case None =>
-        ???
-
-  Right(List(retTy))
+      for
+        ty <- infer(lam.body, lexicalScope)
+      yield
+        List(ty)
 
 def inferCond(cond: typeless.Cond, scope: Scope): Inferred[Type] =
   for
