@@ -79,6 +79,12 @@ def pp(err: Errors, source: String) = err match
       isolateBadLine(tag.ty.location, source),
     )
 
+  case typechecker.LookupErr(label, ir) =>
+    lines(
+      generateTypeErrorLine(s"`${label}` was referenced but not found", ir.expr.location, source),
+      isolateBadLine(ir.expr.location, source),
+    )
+
   case _ =>
     err.toString
 
