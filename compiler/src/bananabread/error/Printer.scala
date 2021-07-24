@@ -73,10 +73,10 @@ def pp(err: Errors, source: String) = err match
       isolateBadOpcode(registers.pc.value, codes),
     )
 
-  case typechecker.UnknowTypeErr(tag, ir) =>
+  case typechecker.UnknowTypeErr(tag) =>
     lines(
-      generateTypeErrorLine(s"unknown type `$tag`"),
-      isolateBadLine(ir.expr.location, source),
+      generateTypeErrorLine(s"unknown type `${tag.ty.lexeme}`"),
+      isolateBadLine(tag.ty.location, source),
     )
 
   case _ =>
