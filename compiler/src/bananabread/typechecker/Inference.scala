@@ -9,6 +9,8 @@ import parsing.ast
 
 import utils.squished
 
+import scala.reflect.ClassTag
+
 
 type Scope = Map[String, Type]
 type Inferred[T] = Either[InferenceErr, T]
@@ -35,11 +37,17 @@ def inferId(id: typeless.Id, scope: Scope): Inferred[Type] =
 def inferBegin(begin: typeless.Begin, scope: Scope): Inferred[Type] =
   infer(begin.ins.last, scope)
 
+// TODO This needs to return a new and updated scope
 def inferDef(defIr: typeless.Def, scope: Scope): Inferred[Type] =
   infer(defIr.value, scope)
 
 def inferApp(app: typeless.App, scope: Scope): Inferred[Type] =
-  ???
+  for
+    argTys <- app.args.map { arg => infer(arg, scope) }.squished
+    called <- infer(app.lambda, scope)
+    fnTy   <- called.expect[Lambda](app.lambda)
+  yield
+    fnTy
 
 // TODO Handle type variables
 def inferLambda(lam: typeless.Lambda, scope: Scope): Inferred[Lambda] =
@@ -129,3 +137,8 @@ extension (ty: Type)
     if ty == expected
     then Right(ty)
     else Left(TypeMismatchErr(expected, ty, node))
+
+  def expect[T <: Type : ClassTag](node: Ir): Either[UnexpectedTypeErr[_], T] =
+    ty match
+      case typed : T => Right(typed)
+      case _         => Left(UnexpectedTypeErr[T](ty, node))
