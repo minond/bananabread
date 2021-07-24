@@ -75,7 +75,7 @@ def pp(err: Errors, source: String) = err match
 
   case typechecker.UnknowTypeErr(tag) =>
     lines(
-      generateTypeErrorLine(s"unknown type `${tag.ty.lexeme}`"),
+      generateTypeErrorLine(s"unknown type `${tag.ty.lexeme}`", tag.ty.location, source),
       isolateBadLine(tag.ty.location, source),
     )
 
@@ -91,8 +91,8 @@ def generateRuntimeErrorLine(message: String, loc: Location, source: String) =
 def generateOpcodeErrorLine(message: String) =
   s"${BOLD}opcode runtime error: ${message}${RESET}"
 
-def generateTypeErrorLine(message: String) =
-  s"${BOLD}type error: ${message}${RESET}"
+def generateTypeErrorLine(message: String, loc: Location, source: String) =
+  s"${BOLD}type error: ${message} in ${generateCoordinates(loc, source)}${RESET}"
 
 def generateCoordinates(loc: Location, source: String) =
   val (row, col) = offsetToRowAndCol(loc.offset, source)
