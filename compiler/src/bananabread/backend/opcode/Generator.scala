@@ -328,7 +328,7 @@ extension (output: Output)
     }
 
     group("main", Label("main")) ++
-    sections("main").toList ++
+    sections.get("main").getOrElse(Queue.empty).toList ++
     (for (section, instructions) <- sections if section != "main"
      yield group(section, Label(section)) ++ instructions).flatten ++
     values

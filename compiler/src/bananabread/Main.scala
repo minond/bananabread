@@ -371,8 +371,6 @@ def main(args: Array[String]) =
         ret
       }
 
-    def x = true
-
     def +(a : I32, b : I32) : I32 =
       opcode %{
         load [I32] a
@@ -381,12 +379,16 @@ def main(args: Array[String]) =
       }
 
     def add_em(a, b) = a + b
+
     // def add_1 = add_em(1)
     // def res = add_1(3)
 
     // println(add_em(34))
-    // println(%{result:})
-    // println(add_em(34, 3))
+    // println %{result:}
+    println(add_em(34, 3))
+
+    def x = true
+    println(x)
     """
 
   println("~~~~~~~~~~~~~~~~~~~~~~~")
