@@ -41,14 +41,15 @@ def infer(node: Ir, scope: Scope): Scoped[Type] = node match
   case ir: typeless.Let    => inferLet(ir, scope)
 
 def inferId(id: typeless.Id, scope: Scope): Scoped[Type] =
-  lookup(id, id.expr.lexeme, scope).flatMap { ty => Right((ty, scope)) }
+  lookup(id, id.expr.lexeme, scope).map { ty => (ty, scope) }
 
 def inferBegin(begin: typeless.Begin, scope: Scope): Scoped[Type] =
   infer(begin.ins.last, scope)
 
-// TODO This needs to return a new and updated scope
 def inferDef(defIr: typeless.Def, scope: Scope): Scoped[Type] =
-  infer(defIr.value, scope)
+  infer(defIr.value, scope).map { (ty, scope) =>
+    (ty, scope + (defIr.name.lexeme -> ty))
+  }
 
 // TODO Apply argTys
 def inferApp(app: typeless.App, scope: Scope): Scoped[Type] =
