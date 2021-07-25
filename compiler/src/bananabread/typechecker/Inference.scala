@@ -55,14 +55,14 @@ def inferDef(label: String, value: Ir, scope: Scope): Scoped[Type] =
     (ty, scope + (label -> ty))
   }
 
-// TODO Apply argTys
+// TODO Unify argTys
 def inferApp(app: typeless.App, scope: Scope): Scoped[Type] =
   for
     argTys <- app.args.map { arg => infer(arg, scope) }.squished
     called <- infer(app.lambda, scope)
     fnTy   <- called._1.expect[Lambda](app.lambda)
   yield
-    (fnTy, scope)
+    (fnTy.app(argTys.size), scope)
 
 // TODO Handle type variables
 def inferLambda(lam: typeless.Lambda, scope: Scope): Scoped[Lambda] =

@@ -364,23 +364,32 @@ def main(args: Array[String]) =
     operator(prefix, 0, opcode)
     operator(infix, 2, +)
 
-    // def println[T](x: T): Str =
-    //   opcode %{
-    //     load [Str] x
-    //     println
-    //     ret
-    //   }
+    def println[T](x: Str): Str =
+      opcode %{
+        load [Str] x
+        println
+        ret
+      }
 
     def x = true
 
-    def +(a: I32, b: I32): I32 =
+    def +(a : I32, b : I32) : I32 =
       opcode %{
         load [I32] a
         load [I32] b
         add [I32]
       }
+
+    def add_em(a, b) = a + b
+    // def add_1 = add_em(1)
+    // def res = add_1(3)
+
+    // println(add_em(34))
+    // println(%{result:})
+    // println(add_em(34, 3))
     """
 
+  println("~~~~~~~~~~~~~~~~~~~~~~~")
   val res =
     for
       ast <- parse("<stdin>", code)
@@ -389,10 +398,12 @@ def main(args: Array[String]) =
       ins <- backend.opcode.compile(ir)
       _   <- Interpreter(ins).run //.debugging//.stepping
     yield
+      println("~~~~~~~~~~~~~~~~~~~~~~~")
       ir.zip(tys._1).foreach {
         case (typeless.Def(name, _, _), ty) => println(s"$name: $ty")
         case (ir, ty) => println(s"$ir: $ty")
       }
+      println("~~~~~~~~~~~~~~~~~~~~~~~")
 
       "ok"
 
