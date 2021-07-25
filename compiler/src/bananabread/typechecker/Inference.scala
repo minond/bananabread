@@ -81,7 +81,7 @@ def inferLambdaParams(lam: typeless.Lambda, scope: Scope): Inferred[List[Type]] 
       Right(acc :+ fresh())
 
     case (Right(acc), (param, Some(tag))) =>
-      parseType(tag) match
+      parseType(lam.tyVars, tag) match
         case Right(ty) => Right(acc :+ ty)
         case Left(err) => Left(err)
 
@@ -93,7 +93,7 @@ def inferLambdaParams(lam: typeless.Lambda, scope: Scope): Inferred[List[Type]] 
 def inferLambdaRets(paramTys: List[Type], lam: typeless.Lambda, scope: Scope): Inferred[List[Type]] =
   lam.expr.tyRet match
     case Some(tag) =>
-      parseType(tag) match
+      parseType(lam.tyVars, tag) match
         case Right(ty) => Right(List(ty))
         case Left(err) => Left(err)
 
@@ -138,8 +138,9 @@ def fresh() =
   Var(ids.next.head)
 
 
-def parseType(node: ast.Ty): Either[UnknowTypeErr, Type] =
+def parseType(tyVars: List[ast.Ty], node: ast.Ty): Either[UnknowTypeErr, Type] =
   node.ty.lexeme match
+    case ty if tyVars.map(_.ty.lexeme).contains(ty) => Right(fresh())
     case "I32"    => Right(ty.I32)
     case "Str"    => Right(ty.Str)
     case "Symbol" => Right(ty.Symbol)

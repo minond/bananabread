@@ -364,7 +364,7 @@ def main(args: Array[String]) =
     operator(prefix, 0, opcode)
     operator(infix, 2, +)
 
-    def println[T](x: Str): Str =
+    def println[T](x: T): Str =
       opcode %{
         load [Str] x
         println
