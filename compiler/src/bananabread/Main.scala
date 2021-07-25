@@ -389,7 +389,7 @@ def main(args: Array[String]) =
       ins <- backend.opcode.compile(ir)
       _   <- Interpreter(ins).run //.debugging//.stepping
     yield
-      ir.zip(tys).foreach {
+      ir.zip(tys._1).foreach {
         case (typeless.Def(name, _, _), ty) => println(s"$name: $ty")
         case (ir, ty) => println(s"$ir: $ty")
       }

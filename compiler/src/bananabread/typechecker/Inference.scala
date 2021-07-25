@@ -13,16 +13,25 @@ import scala.reflect.ClassTag
 
 
 type Scope = Map[String, Type]
+type Scoped[T] = Inferred[(T, Scope)]
 type Inferred[T] = Either[InferenceErr, T]
 
 
-def infer(nodes: List[Ir], scope: Scope = Map.empty): Inferred[List[Type]] =
-  nodes.map(node => infer(node, scope)).squished
-def infer(node: Ir, scope: Scope): Inferred[Type] = node match
-  case _: typeless.Num     => Right(ty.I32)
-  case _: typeless.Str     => Right(ty.Str)
-  case _: typeless.Symbol  => Right(ty.Symbol)
-  case _: typeless.Bool    => Right(ty.Bool)
+def infer(nodes: List[Ir], scope: Scope = Map.empty): Scoped[List[Type]] =
+  nodes.foldLeft[Scoped[List[Type]]](Right((List.empty, scope))) {
+    case (Left(err), _) =>
+      Left(err)
+    case (Right((tys, scope)), node) =>
+      infer(node, scope) match
+        case Left(err) => Left(err)
+        case Right((ty, next)) =>
+          Right((tys :+ ty, next))
+  }
+def infer(node: Ir, scope: Scope): Scoped[Type] = node match
+  case _: typeless.Num     => Right((ty.I32, scope))
+  case _: typeless.Str     => Right((ty.Str, scope))
+  case _: typeless.Symbol  => Right((ty.Symbol, scope))
+  case _: typeless.Bool    => Right((ty.Bool, scope))
   case ir: typeless.Id     => inferId(ir, scope)
   case ir: typeless.Begin  => inferBegin(ir, scope)
   case ir: typeless.Def    => inferDef(ir, scope)
@@ -31,31 +40,32 @@ def infer(node: Ir, scope: Scope): Inferred[Type] = node match
   case ir: typeless.Cond   => inferCond(ir, scope)
   case ir: typeless.Let    => inferLet(ir, scope)
 
-def inferId(id: typeless.Id, scope: Scope): Inferred[Type] =
-  lookup(id, id.expr.lexeme, scope)
+def inferId(id: typeless.Id, scope: Scope): Scoped[Type] =
+  lookup(id, id.expr.lexeme, scope).flatMap { ty => Right((ty, scope)) }
 
-def inferBegin(begin: typeless.Begin, scope: Scope): Inferred[Type] =
+def inferBegin(begin: typeless.Begin, scope: Scope): Scoped[Type] =
   infer(begin.ins.last, scope)
 
 // TODO This needs to return a new and updated scope
-def inferDef(defIr: typeless.Def, scope: Scope): Inferred[Type] =
+def inferDef(defIr: typeless.Def, scope: Scope): Scoped[Type] =
   infer(defIr.value, scope)
 
-def inferApp(app: typeless.App, scope: Scope): Inferred[Type] =
+// TODO Apply argTys
+def inferApp(app: typeless.App, scope: Scope): Scoped[Type] =
   for
     argTys <- app.args.map { arg => infer(arg, scope) }.squished
     called <- infer(app.lambda, scope)
-    fnTy   <- called.expect[Lambda](app.lambda)
+    fnTy   <- called._1.expect[Lambda](app.lambda)
   yield
-    fnTy
+    (fnTy, scope)
 
 // TODO Handle type variables
-def inferLambda(lam: typeless.Lambda, scope: Scope): Inferred[Lambda] =
+def inferLambda(lam: typeless.Lambda, scope: Scope): Scoped[Lambda] =
   for
     paramTys <- inferLambdaParams(lam, scope)
     retTys   <- inferLambdaRets(paramTys, lam, scope)
   yield
-    Lambda(paramTys, retTys)
+    (Lambda(paramTys, retTys), scope)
 
 def inferLambdaParams(lam: typeless.Lambda, scope: Scope): Inferred[List[Type]] =
   val tags = lam.expr.params.map(_.ty)
@@ -91,22 +101,22 @@ def inferLambdaRets(paramTys: List[Type], lam: typeless.Lambda, scope: Scope): I
       for
         ty <- infer(lam.body, lexicalScope)
       yield
-        List(ty)
+        List(ty._1)
 
-def inferCond(cond: typeless.Cond, scope: Scope): Inferred[Type] =
+def inferCond(cond: typeless.Cond, scope: Scope): Scoped[Type] =
   for
     condTy <- infer(cond.cond, scope)
-    _      <- condTy.ensure(Bool, cond.cond)
+    _      <- condTy._1.ensure(Bool, cond.cond)
     passTy <- infer(cond.pass, scope)
     failTy <- infer(cond.fail, scope)
-    _      <- failTy.ensure(passTy, cond.fail)
+    _      <- failTy._1.ensure(passTy._1, cond.fail)
   yield
-    passTy
+    (passTy._1, scope)
 
-def inferLet(let: typeless.Let, scope: Scope): Inferred[Type] =
+def inferLet(let: typeless.Let, scope: Scope): Scoped[Type] =
   val subscope = let.bindings.foldLeft(scope) { (scope, binding) =>
     infer(binding.value, scope) match
-      case Right(ty) => scope + (binding.label.lexeme -> ty)
+      case Right((ty, _)) => scope + (binding.label.lexeme -> ty)
       case Left(err) => return Left(err)
   }
 
