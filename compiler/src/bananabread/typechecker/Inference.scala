@@ -47,8 +47,12 @@ def inferBegin(begin: typeless.Begin, scope: Scope): Scoped[Type] =
   infer(begin.ins.last, scope)
 
 def inferDef(defIr: typeless.Def, scope: Scope): Scoped[Type] =
-  infer(defIr.value, scope).map { (ty, scope) =>
-    (ty, scope + (defIr.name.lexeme -> ty))
+  inferDef(defIr.name.lexeme, defIr.value, scope)
+def inferDef(bindingIr: typeless.Binding, scope: Scope): Scoped[Type] =
+  inferDef(bindingIr.label.lexeme, bindingIr.value, scope)
+def inferDef(label: String, value: Ir, scope: Scope): Scoped[Type] =
+  infer(value, scope).map { (ty, scope) =>
+    (ty, scope + (label -> ty))
   }
 
 // TODO Apply argTys
@@ -116,8 +120,8 @@ def inferCond(cond: typeless.Cond, scope: Scope): Scoped[Type] =
 
 def inferLet(let: typeless.Let, scope: Scope): Scoped[Type] =
   val subscope = let.bindings.foldLeft(scope) { (scope, binding) =>
-    infer(binding.value, scope) match
-      case Right((ty, _)) => scope + (binding.label.lexeme -> ty)
+    inferDef(binding, scope) match
+      case Right((_, scope)) => scope
       case Left(err) => return Left(err)
   }
 
