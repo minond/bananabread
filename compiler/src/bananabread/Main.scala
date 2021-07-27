@@ -401,6 +401,8 @@ def main(args: Array[String]) =
       _   <- Interpreter(ins).run //.debugging//.stepping
     yield
       println("~~~~~~~~~~~~~~~~~~~~~~~")
+      println(pp(ins))
+      println("~~~~~~~~~~~~~~~~~~~~~~~")
       ir.zip(tys._1).foreach {
         case (typeless.Def(name, _, _), ty) => println(s"$name: $ty")
         case (ir, ty) => println(s"$ir: $ty")

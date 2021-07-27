@@ -37,8 +37,8 @@ case object Println extends Instruction
 case object Concat extends Instruction
 case class Add(typ: Type) extends Instruction
 case class Sub(typ: Type) extends Instruction
-case class Frame(stack: Int, locals: Int) extends Instruction
-case object FrameInit extends Instruction
+case class Frame(argc: Int) extends Instruction
+case class FrameInit(argc: Int) extends Instruction
 
 
 type Code = Label
@@ -72,7 +72,6 @@ def pp(code: Code, align: Boolean = true): String = code match
   case Swap                 => "swap"
   case Println              => "println"
   case Concat               => "concat"
-  case FrameInit            => "frame_init"
   case Jz(l)                => if align then s"jz        $l"              else s"jz $l"
   case Jmp(l)               => if align then s"jmp       $l"              else s"jmp $l"
   case Push(t, v)           => if align then s"push      $t, $v"          else s"push $t, $v"
@@ -83,4 +82,5 @@ def pp(code: Code, align: Boolean = true): String = code match
   case Store(t, l)          => if align then s"store     $t, $l"          else s"store $t, $l"
   case Add(t)               => if align then s"add       $t"              else s"add $t"
   case Sub(t)               => if align then s"sub       $t"              else s"sub $t"
-  case Frame(stack, locals) => if align then s"frame     $stack, $locals" else s"frame $stack, $locals"
+  case Frame(argc)          => if align then s"frame     $argc" else s"frame $argc"
+  case FrameInit(argc)      => if align then s"frame!    $argc" else s"frame! $argc"

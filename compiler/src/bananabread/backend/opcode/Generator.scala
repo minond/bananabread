@@ -230,7 +230,7 @@ def generateDef(scope: Scope, name: String, value: Ir): Result = value match
       .map(_ ++ group(scope, Store(I32, scope.qualified(name))))
 
 def generateLambda(scope: Scope, params: List[typeless.Id], body: Ir): Result =
-  val setup = group(scope, FrameInit)
+  val setup = group(scope, FrameInit(params.size))
 
   val header = params.reverse.flatMap { case param @ typeless.Id(label) =>
     scope.define(param, param)
@@ -308,8 +308,8 @@ extension (output: Output)
     }
 
     output.map {
-      case inst @ Grouped(section, FrameInit) =>
-        Grouped(section, Frame(0, 0))
+      case inst @ Grouped(section, FrameInit(argc)) =>
+        Grouped(section, Frame(argc))
       case inst =>
         inst
     }
