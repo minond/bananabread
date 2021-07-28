@@ -389,6 +389,7 @@ def main(args: Array[String]) =
 
     def x = true
     println(x)
+    println(%{done})
     """
 
   println("~~~~~~~~~~~~~~~~~~~~~~~")
