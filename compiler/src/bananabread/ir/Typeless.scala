@@ -4,7 +4,7 @@ package ir.typeless
 import parsing.ast
 import error._
 import ast.{Tree, Expr, Stmt}
-import utils.{Ptr, Print}
+import utils.{Ptr, PtrWith, Print}
 
 import utils.{onlys, squished}
 
@@ -14,7 +14,7 @@ type Lifted[T] = Either[LiftErr, T]
 
 sealed trait Ir { def expr: Expr | Stmt }
 case class Num(expr: ast.Num) extends Ir with Print(s"(num ${expr.lexeme})")
-case class Str(expr: ast.Str) extends Ir with Print(s"(str ${expr.lexeme})"), Ptr("str")
+case class Str(expr: ast.Str) extends Ir with Print(s"(str ${expr.lexeme})"), PtrWith("str", () => expr.lexeme.hashCode)
 case class Id(expr: ast.Id) extends Ir with Print(s"(id ${expr.lexeme})")
 case class Symbol(expr: ast.Symbol) extends Ir with Print(s"(symbol ${expr.lexeme})"), Ptr("symbol")
 case class App(lambda: Ir, args: List[Ir], expr: Expr) extends Ir with Print(s"(app lambda: ${lambda} args: (${args.mkString(" ")}))")

@@ -23,6 +23,7 @@ import utils.{safeToInt, squished}
 
 import scala.util.Random
 import scala.collection.mutable.{Map, Queue}
+import scala.collection.immutable.Map => ImMap
 
 
 case class Grouped(section: String, data: Instruction | Label)
@@ -31,7 +32,7 @@ type Result = Either[GeneratorErr, Output]
 
 
 def compile(nodes: List[Ir]): Either[GeneratorErr, List[Code]] =
-  generate(nodes).map(_.labeled.framed.sectioned)
+  generate(nodes).map(_.deduped.labeled.framed.sectioned)
 
 def generate(nodes: List[Ir]): Result =
   generate(backend.opcode.Scope.empty, nodes)
@@ -313,6 +314,16 @@ extension (output: Output)
       case inst =>
         inst
     }
+
+  def deduped: Output =
+    output.foldLeft[(Output, ImMap[String, Value])]((List.empty, ImMap.empty)) {
+      case ((output, values), Value(_, label, _)) if values.contains(label) =>
+        (output, values)
+      case ((output, values), value @ Value(_, label, _value)) =>
+        (output :+ value, values + (label -> value))
+      case ((output, values), inst) =>
+        (output :+ inst, values)
+    }._1
 
   def labeled: Output =
     val sections = Map[String, Queue[Grouped | Label]]()

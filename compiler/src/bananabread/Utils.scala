@@ -74,3 +74,6 @@ def ptrOf(header: String, hash: Int) = ptrs.get(header + hash.toString) match
 
 trait Ptr(prefix: String):
   def ptr = ptrOf(prefix, hashCode)
+
+trait PtrWith(prefix: String, hashCodeF: () => Int):
+  def ptr = ptrOf(prefix, hashCodeF())
