@@ -1,6 +1,4 @@
 #include <iostream>
-#include <vector>
-#include <sstream>
 
 #include "instruction.hpp"
 #include "parsing.hpp"
@@ -25,10 +23,7 @@ std::string program =
 
 
 int main() {
-  auto lines = Bananabread::Parsing::split_lines(program);
-
-  for (auto line : lines)
-    Bananabread::Parsing::parse_line(line);
+  Bananabread::Parsing::parse(program);
 
   return 0;
 }
