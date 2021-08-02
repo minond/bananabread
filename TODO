@@ -1,0 +1,13 @@
+- Implement runtime currying
+- Parsing errors:
+
+    astOf("3 + 1 / 4 * 1 + 9") shouldEqual "(+ (+ 3 (/ 1 (* 4 1))) 9)"
+                         shouldReallyEqual "(+ (+ 3 (* (/ 1 4) 1)) 9)"
+
+    it should "correctly order operator with equal precedence 2" in {
+      astOf("1 + 2 / 1 * 5") shouldEqual "(+ 1 (* (/ 2 1) 5))"
+    }
+
+    it should "correctly order operator with equal precedence 4" in {
+      astOf("1 + 2 / 1 * 5 + 7") shouldEqual "(+ (+ 1 (* (/ 2 1) 5)) 7)"
+    }
