@@ -23,7 +23,9 @@ std::string program =
 
 
 int main() {
-  Bananabread::Parsing::parse(program);
+  for (auto code : Bananabread::Parsing::parse(program)) {
+    std::cout << code->to_string() << std::endl;
+  }
 
   return 0;
 }

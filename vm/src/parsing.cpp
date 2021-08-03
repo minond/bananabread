@@ -15,6 +15,12 @@ using std::stringstream;
 using std::ostringstream;
 using std::optional;
 
+enum class TVIKind {
+  Push,
+  Store,
+  Load,
+};
+
 vector<string> split_lines(const string& str) {
   auto lines = vector<string>();
   auto ss = stringstream(str);
@@ -206,7 +212,6 @@ vector<Instruction::Code*> parse(const string& program) {
     auto code = parse_line(line);
     if (code) {
       codes.push_back(code);
-      std::cout << code->to_string() << std::endl;
     }
   }
 
