@@ -40,6 +40,18 @@ string clean_label(string token) {
   return token.erase(token.size() - 1);
 }
 
+string clean_type(string token) {
+  if (token.ends_with(",")) {
+    token = token.erase(token.size() - 1);
+  }
+
+  if (token.starts_with(".")) {
+    token = token.erase(0, 1);
+  }
+
+  return token;
+}
+
 Instruction::Type deduce_instruction_type(const string& token) {
   if (token.ends_with(":")) {
     return Instruction::Type::Label;
@@ -50,37 +62,39 @@ Instruction::Type deduce_instruction_type(const string& token) {
   }
 }
 
-optional<Instruction::Value::Type> deduce_value_type(const string& token) {
-  if (token == ".Str") {
-    return optional{Instruction::Value::Type::Str};
-  } else if (token == ".Ref") {
-    return optional{Instruction::Value::Type::Ref};
-  } else if (token == ".Const") {
-    return optional{Instruction::Value::Type::Const};
+Instruction::Value::Type deduce_value_type(const string& token) {
+  if (token == "Str") {
+    return Instruction::Value::Type::Str;
+  } else if (token == "I32") {
+    return Instruction::Value::Type::I32;
+  } else if (token == "Ref") {
+    return Instruction::Value::Type::Ref;
+  } else if (token == "Const") {
+    return Instruction::Value::Type::Const;
   } else {
-    return std::nullopt;
+    return Instruction::Value::Type::Invalid;
   }
 }
 
-optional<Instruction::Label> parse_label(vector<string> tokens) {
+Instruction::Label* parse_label(vector<string> tokens) {
   if (tokens.size() != 1) {
-    return std::nullopt;
+    return nullptr;
   }
 
   auto token = tokens.at(0);
   auto label = clean_label(token);
 
-  return optional{Instruction::Label(label)};
+  return new Instruction::Label(label);
 }
 
-optional<Instruction::Value> parse_value(vector<string> tokens) {
+Instruction::Value* parse_value(vector<string> tokens) {
   if (tokens.size() < 3) {
-    return std::nullopt;
+    return nullptr;
   }
 
-  auto type = deduce_value_type(tokens.at(0));
-  if (!type.has_value()) {
-    return std::nullopt;
+  auto type = deduce_value_type(clean_type(tokens.at(0)));
+  if (type == Instruction::Value::Type::Invalid) {
+    return nullptr;
   }
 
   auto label = clean_label(tokens.at(1));
@@ -93,18 +107,84 @@ optional<Instruction::Value> parse_value(vector<string> tokens) {
             value_tokens.end(),
             std::ostream_iterator<string>(value, " "));
 
-  return optional{Instruction::Value(type.value(), label, value.str())};
+  return new Instruction::Value(type, label, value.str());
 }
 
-// TODO
-optional<Instruction::Instruction> parse_instruction(vector<string> tokens) {
-  return optional{Instruction::Halt()};
+Instruction::Frame* parse_frame_instruction(vector<string> tokens) {
+  if (tokens.size() != 2) {
+    return nullptr;
+  }
+
+  try {
+    auto argc = std::stoi(tokens.at(1));
+    return new Instruction::Frame(argc);
+  } catch (std::invalid_argument) {
+    return nullptr;
+  }
 }
 
-optional<Instruction::Code> parse_line(const string& line) {
+Instruction::Call* parse_call_instruction(vector<string> tokens) {
+  if (tokens.size() != 2) {
+    return nullptr;
+  }
+
+  return new Instruction::Call(tokens.at(1));
+}
+
+Instruction::Instruction* parse_type_value_instruction(TVIKind kind, vector<string> tokens) {
+  if (tokens.size() != 3) {
+    return nullptr;
+  }
+
+  auto type = deduce_value_type(clean_type(tokens.at(1)));
+  if (type == Instruction::Value::Type::Invalid) {
+    return nullptr;
+  }
+
+  switch (kind) {
+    case TVIKind::Push:
+      return new Instruction::Push(type, tokens.at(2));
+    case TVIKind::Store:
+      return new Instruction::Store(type, tokens.at(2));
+    case TVIKind::Load:
+      return new Instruction::Load(type, tokens.at(2));
+  }
+}
+
+Instruction::Instruction* parse_instruction(vector<string> tokens) {
+  if (tokens.size() < 1) {
+    return nullptr;
+  }
+
+  auto head = tokens.at(0);
+
+  if (head == "halt") {
+    return new Instruction::Halt();
+  } else if (head == "swap") {
+    return new Instruction::Swap();
+  } else if (head == "ret") {
+    return new Instruction::Ret();
+  } else if (head == "println") {
+    return new Instruction::Println();
+  } else if (head == "frame") {
+    return parse_frame_instruction(tokens);
+  } else if (head == "call") {
+    return parse_call_instruction(tokens);
+  } else if (head == "push") {
+    return parse_type_value_instruction(TVIKind::Push, tokens);
+  } else if (head == "store") {
+    return parse_type_value_instruction(TVIKind::Store, tokens);
+  } else if (head == "load") {
+    return parse_type_value_instruction(TVIKind::Load, tokens);
+  }
+
+  return nullptr;
+}
+
+Instruction::Code* parse_line(const string& line) {
     auto tokens = split_tokens(line);
     if (tokens.size() < 1) {
-      return std::nullopt;
+      return nullptr;
     }
 
     auto type = deduce_instruction_type(tokens.at(0));
@@ -118,14 +198,15 @@ optional<Instruction::Code> parse_line(const string& line) {
     }
 }
 
-vector<Instruction::Code> parse(const string& program) {
+vector<Instruction::Code*> parse(const string& program) {
   auto lines = split_lines(program);
-  auto codes = vector<Instruction::Code>();
+  auto codes = vector<Instruction::Code*>();
 
   for (auto line : lines) {
     auto code = parse_line(line);
-    if (code.has_value()) {
-      codes.push_back(code.value());
+    if (code) {
+      codes.push_back(code);
+      std::cout << code->to_string() << std::endl;
     }
   }
 

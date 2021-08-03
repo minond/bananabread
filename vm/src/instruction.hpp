@@ -14,15 +14,22 @@ enum class Type {
 };
 
 class Code {
+public:
+  virtual string to_string() = 0;
+  virtual ~Code() = default;
 };
 
 class Value : public Code {
 public:
-  enum class Type {
+  enum Type {
+    Invalid,
     Str,
+    I32,
     Ref,
     Const,
   };
+
+  static string type_to_string(Type type);
 
   Value(Type _type, string _label, string _value) :
     type(_type),
@@ -32,6 +39,13 @@ public:
   Type get_type() { return type; }
   string get_label() { return label; }
   string get_value() { return value; }
+
+  virtual string to_string() override {
+    return string(".") +
+      Value::type_to_string(type) + " " +
+      label + ": " +
+      value;
+  }
 
 private:
   Type type;
@@ -45,14 +59,35 @@ public:
 
   string get_label() { return label; }
 
+  virtual string to_string() override { return label + ":"; }
+
 private:
   string label;
 };
 
 class Instruction : public Code {
+public:
+  virtual ~Instruction() = default;
 };
 
 class Halt : public Instruction {
+public:
+  virtual string to_string() override { return "    halt"; }
+};
+
+class Swap : public Instruction {
+public:
+  virtual string to_string() override { return "    swap"; }
+};
+
+class Ret : public Instruction {
+public:
+  virtual string to_string() override { return "    ret"; }
+};
+
+class Println : public Instruction {
+public:
+  virtual string to_string() override { return "    println"; }
 };
 
 class Push : public Instruction {
@@ -63,6 +98,12 @@ public:
 
   Value::Type get_type() { return type; }
   string get_value() { return value; }
+
+  virtual string to_string() override {
+    return "    push " +
+      Value::type_to_string(type) + ", " +
+      value;
+  }
 
 private:
   Value::Type type;
@@ -75,6 +116,8 @@ public:
 
   string get_label() { return label; }
 
+  virtual string to_string() override { return "    call " + label; }
+
 private:
   string label;
 };
@@ -84,6 +127,8 @@ public:
   Frame(int _argc) : argc(_argc) {}
 
   int get_argc() { return argc; }
+
+  virtual string to_string() override { return "    frame " + std::to_string(argc); }
 
 private:
   int argc;
@@ -98,6 +143,12 @@ public:
   Value::Type get_type() { return type; }
   string get_value() { return value; }
 
+  virtual string to_string() override {
+    return "    store " +
+      Value::type_to_string(type) + ", " +
+      value;
+  }
+
 private:
   Value::Type type;
   string value;
@@ -111,6 +162,12 @@ public:
 
   Value::Type get_type() { return type; }
   string get_value() { return value; }
+
+  virtual string to_string() override {
+    return "    load " +
+      Value::type_to_string(type) + ", " +
+      value;
+  }
 
 private:
   Value::Type type;
