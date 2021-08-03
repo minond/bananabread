@@ -6,9 +6,7 @@
 namespace Bananabread {
 namespace Parsing {
 
-using std::vector;
-
-vector<Instruction::Code> parse(const std::string& program);
+  std::vector<Instruction::Code> parse(const std::string& program);
 
 } // namespace Parsing
 } // namespace Bananabread
