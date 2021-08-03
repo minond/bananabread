@@ -4,6 +4,7 @@
 #include <iostream>
 #include <vector>
 #include <sstream>
+#include <optional>
 
 namespace Bananabread {
 namespace Parsing {
@@ -12,6 +13,7 @@ using std::string;
 using std::vector;
 using std::stringstream;
 using std::ostringstream;
+using std::optional;
 
 vector<string> split_lines(const string& str) {
   auto lines = vector<string>();
@@ -48,33 +50,40 @@ Instruction::Type deduce_instruction_type(const string& token) {
   }
 }
 
-// TODO Return maybe types instead
-Instruction::Value::Type deduce_value_type(const string& token) {
+optional<Instruction::Value::Type> deduce_value_type(const string& token) {
   if (token == ".Str") {
-    return Instruction::Value::Type::Str;
+    return optional{Instruction::Value::Type::Str};
   } else if (token == ".Ref") {
-    return Instruction::Value::Type::Ref;
+    return optional{Instruction::Value::Type::Ref};
   } else if (token == ".Const") {
-    return Instruction::Value::Type::Const;
+    return optional{Instruction::Value::Type::Const};
   } else {
-    // XXX
-    return Instruction::Value::Type::Const;
+    return std::nullopt;
   }
 }
 
-// TODO Return maybe types instead
-Instruction::Label parse_label(vector<string> tokens) {
+optional<Instruction::Label> parse_label(vector<string> tokens) {
+  if (tokens.size() != 1) {
+    return std::nullopt;
+  }
+
   auto token = tokens.at(0);
   auto label = clean_label(token);
 
-  return Instruction::Label(label);
+  return optional{Instruction::Label(label)};
 }
 
-// TODO Return maybe types instead
-Instruction::Value parse_value(vector<string> tokens) {
-  auto type = deduce_value_type(tokens.at(0));
-  auto label = clean_label(tokens.at(1));
+optional<Instruction::Value> parse_value(vector<string> tokens) {
+  if (tokens.size() < 3) {
+    return std::nullopt;
+  }
 
+  auto type = deduce_value_type(tokens.at(0));
+  if (!type.has_value()) {
+    return std::nullopt;
+  }
+
+  auto label = clean_label(tokens.at(1));
   auto value_tokens = vector<string>(tokens.size() - 2);
   std::copy(tokens.begin() + 2,
             tokens.end(),
@@ -84,18 +93,21 @@ Instruction::Value parse_value(vector<string> tokens) {
             value_tokens.end(),
             std::ostream_iterator<string>(value, " "));
 
-  return Instruction::Value(type, label, value.str());
+  return optional{Instruction::Value(type.value(), label, value.str())};
 }
 
-Instruction::Instruction parse_instruction(vector<string> tokens) {
-  return Instruction::Halt();
+// TODO
+optional<Instruction::Instruction> parse_instruction(vector<string> tokens) {
+  return optional{Instruction::Halt()};
 }
 
-// TODO Return maybe types instead
-Instruction::Code parse_line(const string& line) {
+optional<Instruction::Code> parse_line(const string& line) {
     auto tokens = split_tokens(line);
-    auto type = deduce_instruction_type(tokens.at(0));
+    if (tokens.size() < 1) {
+      return std::nullopt;
+    }
 
+    auto type = deduce_instruction_type(tokens.at(0));
     switch (type) {
       case Instruction::Type::Label:
         return parse_label(tokens);
@@ -112,7 +124,9 @@ vector<Instruction::Code> parse(const string& program) {
 
   for (auto line : lines) {
     auto code = parse_line(line);
-    codes.push_back(code);
+    if (code.has_value()) {
+      codes.push_back(code.value());
+    }
   }
 
   return codes;
