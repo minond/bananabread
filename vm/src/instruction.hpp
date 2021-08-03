@@ -1,81 +1,120 @@
+#pragma once
+
+#include <iostream>
+
 namespace Bananabread {
 namespace Instruction {
 
-struct Label {
-  std::string data;
-};
+using std::string;
 
-enum class ValueType {
-  Str,
-  Ref,
-  Const,
-};
-
-struct Value {
-  ValueType type;
-  std::string data;
-};
-
-enum class OpcodeType {
-  Halt,
-  Push,
-  Call,
-  Frame,
-  Swap,
-  Store,
-  Load,
-  Println,
-  Ret,
-};
-
-struct PushInstruction {
-  ValueType type;
-  std::string value;
-};
-
-struct CallInstruction {
-  std::string label;
-};
-
-struct FrameInstruction {
-  int argc;
-};
-
-struct StoreInstruction {
-  ValueType type;
-  std::string value;
-};
-
-struct LoadInstruction {
-  ValueType type;
-  std::string value;
-};
-
-struct Instruction {
-  OpcodeType type;
-  union {
-    PushInstruction push;
-    CallInstruction call;
-    FrameInstruction frame;
-    StoreInstruction store;
-    LoadInstruction load;
-  };
-};
-
-enum class CodeType {
+enum class Type {
   Label,
   Value,
   Instruction,
 };
 
-struct Code {
-  CodeType type;
+class Code {
+};
 
-  union {
-    Label label;
-    Value value;
-    Instruction instruction;
+class Value : public Code {
+public:
+  enum class Type {
+    Str,
+    Ref,
+    Const,
   };
+
+  Value(Type _type, string _label, string _value) :
+    type(_type),
+    label(_label),
+    value(_value) {}
+
+  Type get_type() { return type; }
+  string get_label() { return label; }
+  string get_value() { return value; }
+
+private:
+  Type type;
+  string label;
+  string value;
+};
+
+class Label : public Code {
+public:
+  Label(const string& _label) : label(_label) {}
+
+  string get_label() { return label; }
+
+private:
+  string label;
+};
+
+class Instruction : public Code {
+};
+
+class Halt : public Instruction {
+};
+
+class Push : public Instruction {
+public:
+  Push(Value::Type _type, const string& _value) :
+    type(_type),
+    value(_value) {}
+
+  Value::Type get_type() { return type; }
+  string get_value() { return value; }
+
+private:
+  Value::Type type;
+  string value;
+};
+
+class Call : public Instruction {
+public:
+  Call(const string& _label) : label(_label) {}
+
+  string get_label() { return label; }
+
+private:
+  string label;
+};
+
+class Frame : public Instruction {
+public:
+  Frame(int _argc) : argc(_argc) {}
+
+  int get_argc() { return argc; }
+
+private:
+  int argc;
+};
+
+class Store : public Instruction {
+public:
+  Store(Value::Type _type, const string& _value) :
+    type(_type),
+    value(_value) {}
+
+  Value::Type get_type() { return type; }
+  string get_value() { return value; }
+
+private:
+  Value::Type type;
+  string value;
+};
+
+class Load : public Instruction {
+public:
+  Load(Value::Type _type, const string& _value) :
+    type(_type),
+    value(_value) {}
+
+  Value::Type get_type() { return type; }
+  string get_value() { return value; }
+
+private:
+  Value::Type type;
+  string value;
 };
 
 } // namespace Instruction
