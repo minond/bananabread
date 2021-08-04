@@ -1,4 +1,6 @@
 #include "vm.hpp"
+#include "dispatch.hpp"
+#include "handlers.hpp"
 
 #include <map>
 #include <vector>
@@ -43,8 +45,19 @@ void Interpreter::run() {
   auto labels = get_labels();
   auto constants = get_constants();
 
-  for (auto code : codes) {
-    std::cout << code->to_string() << std::endl;
+  while (reg.pc() != -1) {
+    auto code = codes.at(reg.pc());
+    auto action = Handlers::handle(code, reg);
+
+    std::cout << "running " << code->to_string() << std::endl;
+
+    if (static_cast<Dispatch::Stop*>(action)) {
+      reg.set_pc(-1);
+    } else if (static_cast<Dispatch::Error*>(action)) {
+      reg.set_pc(-1);
+    } else if (static_cast<Dispatch::Cont*>(action)) {
+      reg.inc_pc();
+    }
   }
 }
 
