@@ -48,7 +48,7 @@ void Interpreter::run() {
   while (reg.pc() != -1) {
     auto code = codes.at(reg.pc());
     std::cout << "running " << code->to_string() << std::endl;
-    auto action = Handlers::handle(code, reg, stack);
+    auto action = Handlers::handle(code, reg, stack, constants);
 
     if (dynamic_cast<Dispatch::Stop*>(action)) {
       reg.set_pc(-1);

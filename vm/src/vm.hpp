@@ -49,7 +49,7 @@ public:
 private:
   Codes codes;
   Registers reg;
-  stack<Value::Base> stack;
+  stack<Value::Base*> stack;
 
   map<string, int> get_labels();
   map<string, Instruction::Value*> get_constants();
