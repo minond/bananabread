@@ -2,6 +2,7 @@
 
 #include "instruction.hpp"
 #include "parsing.hpp"
+#include "vm.hpp"
 
 
 std::string program =
@@ -23,9 +24,11 @@ std::string program =
 
 
 int main() {
-  for (auto code : Bananabread::Parsing::parse(program)) {
-    std::cout << code->to_string() << std::endl;
-  }
+  Bananabread::VM::Interpreter vm{
+    Bananabread::Parsing::parse(program)
+  };
+
+  vm.run();
 
   return 0;
 }
