@@ -47,15 +47,15 @@ void Interpreter::run() {
 
   while (reg.pc() != -1) {
     auto code = codes.at(reg.pc());
-    auto action = Handlers::handle(code, reg);
-
     std::cout << "running " << code->to_string() << std::endl;
+    auto action = Handlers::handle(code, reg, stack);
 
-    if (static_cast<Dispatch::Stop*>(action)) {
+    if (dynamic_cast<Dispatch::Stop*>(action)) {
       reg.set_pc(-1);
-    } else if (static_cast<Dispatch::Error*>(action)) {
+    } else if (auto error = dynamic_cast<Dispatch::Error*>(action)) {
+      std::cout << "error: " << error->get_message() << std::endl;
       reg.set_pc(-1);
-    } else if (static_cast<Dispatch::Cont*>(action)) {
+    } else if (dynamic_cast<Dispatch::Cont*>(action)) {
       reg.inc_pc();
     }
   }

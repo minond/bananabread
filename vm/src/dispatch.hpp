@@ -8,6 +8,8 @@ namespace Dispatch {
 using std::string;
 
 class Action {
+public:
+  virtual ~Action() = default;
 };
 
 class Cont : public Action {

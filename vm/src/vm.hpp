@@ -1,10 +1,12 @@
 #pragma once
 
 #include "instruction.hpp"
+#include "value.hpp"
 
 #include <map>
 #include <vector>
 #include <string>
+#include <stack>
 
 namespace Bananabread {
 namespace VM {
@@ -12,6 +14,7 @@ namespace VM {
 using std::map;
 using std::vector;
 using std::string;
+using std::stack;
 
 typedef vector< Instruction::Code* > Codes;
 
@@ -46,6 +49,7 @@ public:
 private:
   Codes codes;
   Registers reg;
+  stack<Value::Base> stack;
 
   map<string, int> get_labels();
   map<string, Instruction::Value*> get_constants();
