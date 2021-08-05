@@ -58,11 +58,7 @@ Dispatch::Action* handle_swap(Instruction::Swap* swap, State* state) {
 }
 
 Dispatch::Action* handle_store(Instruction::Store* store, State* state) {
-  state->frames->get_curr()->put(
-    "testing",
-    state->stack->top()
-  );
-
+  state->frames->get_curr()->put(store->get_label(), state->stack->top());
   state->stack->pop();
   return new Dispatch::Cont();
 }
