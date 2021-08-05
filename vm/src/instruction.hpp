@@ -161,7 +161,7 @@ public:
     label(_label) {}
 
   Value::Type get_type() { return type; }
-  string get_value() { return label; }
+  string get_label() { return label; }
 
   virtual string to_string() override {
     return "    load " +

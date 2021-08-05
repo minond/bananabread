@@ -69,6 +69,9 @@ void Interpreter::run() {
       reg.set_pc(labels[gt->get_label()]);
     } else if (auto jm = dynamic_cast<Dispatch::Jump*>(next)) {
       reg.set_pc(jm->get_index());
+    } else {
+      std::cout << "error: bad dispatch" << std::endl;
+      reg.set_pc(-1);
     }
   }
 }
