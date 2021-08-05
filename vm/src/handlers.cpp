@@ -32,10 +32,17 @@ Dispatch::Action* handle_push(Instruction::Push* push, State* state) {
   }
 }
 
+// TODO handle Some(Id), Some(Scope), and Some(Invalid).
 Dispatch::Action* handle_call(Instruction::Call* call, State* state) {
-  state->stack->push(new Value::I32{state->reg->pc()});
-  // TODO: Add frame
-  return new Dispatch::Goto(call->get_label());
+  auto ref = state->frames->get_curr()->get(call->get_label());
+
+  if (!ref) {
+    state->stack->push(new Value::I32{state->reg->pc() + 1});
+    state->frames->move_to_next();
+    return new Dispatch::Goto(call->get_label());
+  }
+
+  return new Dispatch::Error("bad call");
 }
 
 // TODO: Add frame
