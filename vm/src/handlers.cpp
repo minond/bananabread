@@ -24,8 +24,8 @@ Dispatch::Action* handle_push(Instruction::Push* push, State* state) {
     case Instruction::Value::Type::Ref:
       return new Dispatch::Error("unimplemented: push ref");
     case Instruction::Value::Type::Const:
-      // TODO Convert constants to runtime values before evaluating expression.
-      // TODO Handle invalid/missing constants.
+      // TODO Convert constants to runtime values before evaluating expression
+      // and handle invalid/missing constants.
       auto value = Value::from_instruction(state->constants[push->get_value()]);
       state->stack->push(value);
       return new Dispatch::Cont();
@@ -45,7 +45,6 @@ Dispatch::Action* handle_call(Instruction::Call* call, State* state) {
   return new Dispatch::Error("bad call");
 }
 
-// TODO: Add frame
 Dispatch::Action* handle_swap(Instruction::Swap* swap, State* state) {
   auto a = state->stack->top();
   state->stack->pop();
