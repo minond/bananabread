@@ -40,7 +40,9 @@ private:
 
 class Frame {
 public:
-  Frame(Frame* _parent) : parent(_parent), env{} {}
+  Frame(Frame* _parent) : parent(_parent) {
+    env = new map<string, Value::Base*>{};
+  }
   Frame(map<string, Value::Base*>* _env, Frame* _parent) :
     parent(_parent), env(_env) {}
 
@@ -48,7 +50,11 @@ public:
   Frame* get_next() { return new Frame(this); }
 
   Frame* from(Frame* other) { return new Frame(other->env, this); }
-  void put(string label, Value::Base* value) { env->insert_or_assign(label, value); }
+
+  void put(string label, Value::Base* value) {
+    env->insert_or_assign(label, value);
+  }
+
   Value::Base* get(string label) {
     if (env && env->contains(label)) {
       return env->at(label);

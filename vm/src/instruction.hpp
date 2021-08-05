@@ -136,42 +136,42 @@ private:
 
 class Store : public Instruction {
 public:
-  Store(Value::Type _type, const string& _value) :
+  Store(Value::Type _type, const string& _label) :
     type(_type),
-    value(_value) {}
+    label(_label) {}
 
   Value::Type get_type() { return type; }
-  string get_value() { return value; }
+  string get_label() { return label; }
 
   virtual string to_string() override {
     return "    store " +
       Value::type_to_string(type) + ", " +
-      value;
+      label;
   }
 
 private:
   Value::Type type;
-  string value;
+  string label;
 };
 
 class Load : public Instruction {
 public:
-  Load(Value::Type _type, const string& _value) :
+  Load(Value::Type _type, const string& _label) :
     type(_type),
-    value(_value) {}
+    label(_label) {}
 
   Value::Type get_type() { return type; }
-  string get_value() { return value; }
+  string get_value() { return label; }
 
   virtual string to_string() override {
     return "    load " +
       Value::type_to_string(type) + ", " +
-      value;
+      label;
   }
 
 private:
   Value::Type type;
-  string value;
+  string label;
 };
 
 } // namespace Instruction

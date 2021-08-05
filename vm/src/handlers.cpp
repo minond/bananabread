@@ -57,6 +57,16 @@ Dispatch::Action* handle_swap(Instruction::Swap* swap, State* state) {
   return new Dispatch::Cont();
 }
 
+Dispatch::Action* handle_store(Instruction::Store* store, State* state) {
+  state->frames->get_curr()->put(
+    "testing",
+    state->stack->top()
+  );
+
+  state->stack->pop();
+  return new Dispatch::Cont();
+}
+
 Dispatch::Action* handle(Instruction::Code* code, State* state) {
   if (dynamic_cast<Instruction::Label*>(code)) {
     return new Dispatch::Cont();
@@ -72,6 +82,8 @@ Dispatch::Action* handle(Instruction::Code* code, State* state) {
     return new Dispatch::Cont();
   } else if (auto swap = dynamic_cast<Instruction::Swap*>(code)) {
     return handle_swap(swap, state);
+  } else if (auto store = dynamic_cast<Instruction::Store*>(code)) {
+    return handle_store(store, state);
   }
 
   return new Dispatch::Error("internal error: unhandled instruction");
