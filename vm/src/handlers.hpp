@@ -1,3 +1,5 @@
+#pragma once
+
 #include "vm.hpp"
 #include "dispatch.hpp"
 #include "value.hpp"
