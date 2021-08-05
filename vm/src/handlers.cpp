@@ -63,6 +63,24 @@ Dispatch::Action* handle_store(Instruction::Store* store, State* state) {
   return new Dispatch::Cont();
 }
 
+Dispatch::Action* handle_load(Instruction::Load* load, State* state) {
+  auto ref = state->frames->get_curr()->get(load->get_label());
+
+  if (ref) {
+    state->stack->push(ref);
+    return new Dispatch::Cont();
+  }
+
+  auto inst = state->constants[load->get_label()];
+  if (!inst) {
+    return new Dispatch::Error("missing const: " + load->get_label());
+  }
+
+  auto value = Value::from_instruction(inst);
+  state->stack->push(value);
+  return new Dispatch::Cont();
+}
+
 Dispatch::Action* handle(Instruction::Code* code, State* state) {
   if (dynamic_cast<Instruction::Label*>(code)) {
     return new Dispatch::Cont();
@@ -80,6 +98,8 @@ Dispatch::Action* handle(Instruction::Code* code, State* state) {
     return handle_swap(swap, state);
   } else if (auto store = dynamic_cast<Instruction::Store*>(code)) {
     return handle_store(store, state);
+  } else if (auto load = dynamic_cast<Instruction::Load*>(code)) {
+    return handle_load(load, state);
   }
 
   return new Dispatch::Error("internal error: unhandled instruction");
