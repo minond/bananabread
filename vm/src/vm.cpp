@@ -45,21 +45,30 @@ void Interpreter::run() {
   auto labels = get_labels();
   auto constants = get_constants();
 
+  auto state = Handlers::State{
+    .reg = &reg,
+    .frames = &frames,
+    .stack = &stack,
+    .constants = constants,
+  };
+
   while (reg.pc() != -1) {
     auto code = codes.at(reg.pc());
-    std::cout << "running " << code->to_string() << std::endl;
-    auto action = Handlers::handle(code, reg, &stack, constants);
+    auto next = Handlers::handle(code, &state);
 
-    if (dynamic_cast<Dispatch::Stop*>(action)) {
+    std::cout << "running " << code->to_string() << std::endl;
+
+    if (dynamic_cast<Dispatch::Stop*>(next)) {
       reg.set_pc(-1);
-    } else if (auto error = dynamic_cast<Dispatch::Error*>(action)) {
+    } else if (auto error = dynamic_cast<Dispatch::Error*>(next)) {
       std::cout << "error: " << error->get_message() << std::endl;
       reg.set_pc(-1);
-    } else if (dynamic_cast<Dispatch::Cont*>(action)) {
+    } else if (dynamic_cast<Dispatch::Cont*>(next)) {
       reg.inc_pc();
-    } else if (auto gt = dynamic_cast<Dispatch::Goto*>(action)) {
-      auto label_index = labels[gt->get_label()];
-      reg.set_pc(label_index);
+    } else if (auto gt = dynamic_cast<Dispatch::Goto*>(next)) {
+      reg.set_pc(labels[gt->get_label()]);
+    } else if (auto jm = dynamic_cast<Dispatch::Jump*>(next)) {
+      reg.set_pc(jm->get_index());
     }
   }
 }

@@ -38,6 +38,35 @@ private:
   int _jm;
 };
 
+class Frame {
+public:
+  Frame(Frame* _parent) : parent(_parent) {}
+  Frame(map<string, Value::Base*>* _env, Frame* _parent) :
+    parent(_parent), env(_env) {}
+
+  Frame* get_prev() { return parent; }
+  Frame* get_next() { return new Frame(this); }
+
+  Frame* from(Frame* other) { return new Frame(other->env, this); }
+  void put(string label, Value::Base* value) { env->insert_or_assign(label, value); }
+  Value::Base* get(string label) { return env->at(label); }
+
+protected:
+  Frame* parent;
+  map<string, Value::Base*>* env;
+};
+
+class Frames {
+public:
+  Frame* get_curr() { return curr; }
+
+  void move_to_prev() { curr = curr->get_prev(); }
+  void move_to_next() { curr = curr->get_next(); }
+
+private:
+  Frame* curr;
+};
+
 class Interpreter {
 public:
   Interpreter(Codes _codes) : codes(_codes) {
@@ -49,6 +78,7 @@ public:
 private:
   Codes codes;
   Registers reg;
+  Frames frames;
   stack<Value::Base*> stack;
 
   map<string, int> get_labels();

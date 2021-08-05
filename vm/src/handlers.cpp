@@ -13,7 +13,7 @@ using std::stack;
 using std::string;
 using std::map;
 
-Dispatch::Action* handle_push(Instruction::Push* push, VM::Registers reg, stack<Value::Base*>* stack, map<string, Instruction::Value*> constants) {
+Dispatch::Action* handle_push(Instruction::Push* push, State* state) {
   switch (push->get_type()) {
     case Instruction::Value::Type::Invalid:
       return new Dispatch::Error("invalid type for push instruction");
@@ -26,32 +26,32 @@ Dispatch::Action* handle_push(Instruction::Push* push, VM::Registers reg, stack<
     case Instruction::Value::Type::Const:
       // TODO Convert constants to runtime values before evaluating expression.
       // TODO Handle invalid/missing constants.
-      auto value = Value::from_instruction(constants[push->get_value()]);
-      stack->push(value);
+      auto value = Value::from_instruction(state->constants[push->get_value()]);
+      state->stack->push(value);
       return new Dispatch::Cont();
   }
 }
 
-// TODO: Add frame
-Dispatch::Action* handle_call(Instruction::Call* call, VM::Registers reg, stack<Value::Base*>* stack, map<string, Instruction::Value*> constants) {
-  stack->push(new Value::I32{reg.pc()});
+Dispatch::Action* handle_call(Instruction::Call* call, State* state) {
+  state->stack->push(new Value::I32{state->reg->pc()});
+  // TODO: Add frame
   return new Dispatch::Goto(call->get_label());
 }
 
 // TODO: Add frame
-Dispatch::Action* handle_swap(Instruction::Swap* swap, VM::Registers reg, stack<Value::Base*>* stack, map<string, Instruction::Value*> constants) {
-  auto a = stack->top();
-  stack->pop();
-  auto b = stack->top();
-  stack->pop();
+Dispatch::Action* handle_swap(Instruction::Swap* swap, State* state) {
+  auto a = state->stack->top();
+  state->stack->pop();
+  auto b = state->stack->top();
+  state->stack->pop();
 
-  stack->push(a);
-  stack->push(b);
+  state->stack->push(a);
+  state->stack->push(b);
 
   return new Dispatch::Cont();
 }
 
-Dispatch::Action* handle(Instruction::Code* code, VM::Registers reg, stack<Value::Base*>* stack, map<string, Instruction::Value*> constants) {
+Dispatch::Action* handle(Instruction::Code* code, State* state) {
   if (dynamic_cast<Instruction::Label*>(code)) {
     return new Dispatch::Cont();
   } else if (dynamic_cast<Instruction::Value*>(code)) {
@@ -59,13 +59,13 @@ Dispatch::Action* handle(Instruction::Code* code, VM::Registers reg, stack<Value
   } else if (dynamic_cast<Instruction::Halt*>(code)) {
     return new Dispatch::Stop();
   } else if (auto push = dynamic_cast<Instruction::Push*>(code)) {
-    return handle_push(push, reg, stack, constants);
+    return handle_push(push, state);
   } else if (auto call = dynamic_cast<Instruction::Call*>(code)) {
-    return handle_call(call, reg, stack, constants);
+    return handle_call(call, state);
   } else if (dynamic_cast<Instruction::Frame*>(code)) {
     return new Dispatch::Cont();
   } else if (auto swap = dynamic_cast<Instruction::Swap*>(code)) {
-    return handle_swap(swap, reg, stack, constants);
+    return handle_swap(swap, state);
   }
 
   return new Dispatch::Error("internal error: unhandled instruction");

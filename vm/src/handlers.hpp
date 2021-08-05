@@ -13,7 +13,14 @@ using std::stack;
 using std::string;
 using std::map;
 
-Dispatch::Action* handle(Instruction::Code* code, VM::Registers reg, stack<Value::Base*>* stack, map<string, Instruction::Value*> constants);
+struct State {
+  VM::Registers* reg;
+  VM::Frames* frames;
+  stack<Value::Base*>* stack;
+  map<string, Instruction::Value*> constants;
+};
+
+Dispatch::Action* handle(Instruction::Code* code, State* state);
 
 } // namespace Handlers
 } // namespace Bananabread
