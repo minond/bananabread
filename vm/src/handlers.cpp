@@ -81,6 +81,17 @@ Dispatch::Action* handle_load(Instruction::Load* load, State* state) {
   return new Dispatch::Cont();
 }
 
+Dispatch::Action* handle_println(Instruction::Println* println, State* state) {
+  auto value = state->stack->top();
+  if (!value) {
+    return new Dispatch::Error("missing stack value");
+  }
+
+  std::cout << value->to_string() << std::endl;
+  state->stack->pop();
+  return new Dispatch::Cont();
+}
+
 Dispatch::Action* handle(Instruction::Code* code, State* state) {
   if (dynamic_cast<Instruction::Label*>(code)) {
     return new Dispatch::Cont();
@@ -100,6 +111,8 @@ Dispatch::Action* handle(Instruction::Code* code, State* state) {
     return handle_store(store, state);
   } else if (auto load = dynamic_cast<Instruction::Load*>(code)) {
     return handle_load(load, state);
+  } else if (auto println = dynamic_cast<Instruction::Println*>(code)) {
+    return handle_println(println, state);
   }
 
   return new Dispatch::Error("internal error: unhandled instruction");
