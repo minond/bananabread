@@ -174,5 +174,61 @@ private:
   string label;
 };
 
+class Add : public Instruction {
+public:
+  Add(Value::Type _type) : type(_type) {}
+
+  Value::Type get_type() { return type; }
+
+  virtual string to_string() override {
+    return "    add " + Value::type_to_string(type);
+  }
+
+private:
+  Value::Type type;
+};
+
+class Sub : public Instruction {
+public:
+  Sub(Value::Type _type) : type(_type) {}
+
+  Value::Type get_type() { return type; }
+
+  virtual string to_string() override {
+    return "    sub " + Value::type_to_string(type);
+  }
+
+private:
+  Value::Type type;
+};
+
+class Jz : public Instruction {
+public:
+  Jz(string _label) : label(_label) {}
+
+  string get_label() { return label; }
+
+  virtual string to_string() override {
+    return "    jz " + label;
+  }
+
+private:
+  string label;
+};
+
+class Jmp : public Instruction {
+public:
+  Jmp(string _label) : label(_label) {}
+
+  string get_label() { return label; }
+
+  virtual string to_string() override {
+    return "    jz " + label;
+  }
+
+private:
+  string label;
+};
+
 } // namespace Instruction
 } // namespace Bananabread

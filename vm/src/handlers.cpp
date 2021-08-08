@@ -20,7 +20,14 @@ Dispatch::Action* handle_push(Instruction::Push* push, State* state) {
     case Instruction::Value::Type::Str:
       return new Dispatch::Error("unimplemented: push str");
     case Instruction::Value::Type::I32:
-      return new Dispatch::Error("unimplemented: push i32");
+      try {
+        auto inner = std::stoi(push->get_value());
+        auto value = new Value::I32(inner);
+        state->stack->push(value);
+        return new Dispatch::Cont();
+      } catch (std::invalid_argument) {
+        return new Dispatch::Error("bad push: invalid i32 value");
+      }
     case Instruction::Value::Type::Ref:
       return new Dispatch::Error("unimplemented: push ref");
     case Instruction::Value::Type::Const:
@@ -92,6 +99,81 @@ Dispatch::Action* handle_println(Instruction::Println* println, State* state) {
   return new Dispatch::Cont();
 }
 
+Dispatch::Action* handle_ret(Instruction::Ret* ret, State* state) {
+  auto value = state->stack->top();
+  if (!value) {
+    return new Dispatch::Error("bad ret: missing return address");
+  }
+
+  if (auto addr = dynamic_cast<Value::I32*>(value)) {
+    state->stack->pop();
+    state->frames->move_to_prev();
+    return new Dispatch::Jump(addr->get_int());
+  }
+
+  return new Dispatch::Error("bad ret: invalid return address");
+}
+
+Dispatch::Action* handle_add(Instruction::Add* add, State* state) {
+  auto rhs_value = state->stack->top();
+  state->stack->pop();
+  auto lhs_value = state->stack->top();
+  state->stack->pop();
+
+  if (auto rhs = dynamic_cast<Value::I32*>(rhs_value)) {
+    if (auto lhs = dynamic_cast<Value::I32*>(lhs_value)) {
+      auto result = lhs->get_int() + rhs->get_int();
+      state->stack->push(new Value::I32(result));
+      return new Dispatch::Cont();
+    } else {
+      return new Dispatch::Error("bad add: left hand side is not an int");
+    }
+  } else {
+    return new Dispatch::Error("bad add: right hand side is not an int");
+  }
+}
+
+Dispatch::Action* handle_sub(Instruction::Sub* sub, State* state) {
+  auto rhs_value = state->stack->top();
+  state->stack->pop();
+  auto lhs_value = state->stack->top();
+  state->stack->pop();
+
+  if (auto rhs = dynamic_cast<Value::I32*>(rhs_value)) {
+    if (auto lhs = dynamic_cast<Value::I32*>(lhs_value)) {
+      auto result = lhs->get_int() - rhs->get_int();
+      state->stack->push(new Value::I32(result));
+      return new Dispatch::Cont();
+    } else {
+      return new Dispatch::Error("bad sub: left hand side is not an int");
+    }
+  } else {
+    return new Dispatch::Error("bad sub: right hand side is not an int");
+  }
+}
+
+Dispatch::Action* handle_jz(Instruction::Jz* jz, State* state) {
+  auto value = state->stack->top();
+  if (!value) {
+    return new Dispatch::Error("bad jz: empty stack");
+  }
+
+  auto cond = dynamic_cast<Value::I32*>(value);
+  if (!cond) {
+    return new Dispatch::Error("bad jz: invalid head value");
+  }
+
+  if (cond->get_int() == 0) {
+    return new Dispatch::Goto(jz->get_label());
+  }
+
+  return new Dispatch::Cont();
+}
+
+Dispatch::Action* handle_jmp(Instruction::Jmp* jmp, State* state) {
+  return new Dispatch::Goto(jmp->get_label());
+}
+
 Dispatch::Action* handle(Instruction::Code* code, State* state) {
   if (dynamic_cast<Instruction::Label*>(code)) {
     return new Dispatch::Cont();
@@ -113,6 +195,16 @@ Dispatch::Action* handle(Instruction::Code* code, State* state) {
     return handle_load(load, state);
   } else if (auto println = dynamic_cast<Instruction::Println*>(code)) {
     return handle_println(println, state);
+  } else if (auto ret = dynamic_cast<Instruction::Ret*>(code)) {
+    return handle_ret(ret, state);
+  } else if (auto add = dynamic_cast<Instruction::Add*>(code)) {
+    return handle_add(add, state);
+  } else if (auto sub = dynamic_cast<Instruction::Sub*>(code)) {
+    return handle_sub(sub, state);
+  } else if (auto jz = dynamic_cast<Instruction::Jz*>(code)) {
+    return handle_jz(jz, state);
+  } else if (auto jmp = dynamic_cast<Instruction::Jmp*>(code)) {
+    return handle_jmp(jmp, state);
   }
 
   return new Dispatch::Error("internal error: unhandled instruction");

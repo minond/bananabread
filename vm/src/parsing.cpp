@@ -15,6 +15,16 @@ using std::stringstream;
 using std::ostringstream;
 using std::optional;
 
+enum class LIKind {
+  Jz,
+  Jmp,
+};
+
+enum class TIKind {
+  Add,
+  Sub,
+};
+
 enum class TVIKind {
   Push,
   Store,
@@ -137,7 +147,39 @@ Instruction::Call* parse_call_instruction(vector<string> tokens) {
   return new Instruction::Call(tokens.at(1));
 }
 
-Instruction::Instruction* parse_type_value_instruction(TVIKind kind, vector<string> tokens) {
+Instruction::Instruction* parse_labeled_instruction(LIKind kind, vector<string> tokens) {
+  if (tokens.size() != 2) {
+    return nullptr;
+  }
+
+  auto label = clean_label(tokens.at(1));
+  switch (kind) {
+    case LIKind::Jz:
+      return new Instruction::Jz(label);
+    case LIKind::Jmp:
+      return new Instruction::Jmp(label);
+  }
+}
+
+Instruction::Instruction* parse_typed_instruction(TIKind kind, vector<string> tokens) {
+  if (tokens.size() != 2) {
+    return nullptr;
+  }
+
+  auto type = deduce_value_type(clean_type(tokens.at(1)));
+  if (type == Instruction::Value::Type::Invalid) {
+    return nullptr;
+  }
+
+  switch (kind) {
+    case TIKind::Add:
+      return new Instruction::Add(type);
+    case TIKind::Sub:
+      return new Instruction::Sub(type);
+  }
+}
+
+Instruction::Instruction* parse_typed_value_instruction(TVIKind kind, vector<string> tokens) {
   if (tokens.size() != 3) {
     return nullptr;
   }
@@ -176,12 +218,20 @@ Instruction::Instruction* parse_instruction(vector<string> tokens) {
     return parse_frame_instruction(tokens);
   } else if (head == "call") {
     return parse_call_instruction(tokens);
+  } else if (head == "add") {
+    return parse_typed_instruction(TIKind::Add, tokens);
+  } else if (head == "sub") {
+    return parse_typed_instruction(TIKind::Sub, tokens);
   } else if (head == "push") {
-    return parse_type_value_instruction(TVIKind::Push, tokens);
+    return parse_typed_value_instruction(TVIKind::Push, tokens);
   } else if (head == "store") {
-    return parse_type_value_instruction(TVIKind::Store, tokens);
+    return parse_typed_value_instruction(TVIKind::Store, tokens);
   } else if (head == "load") {
-    return parse_type_value_instruction(TVIKind::Load, tokens);
+    return parse_typed_value_instruction(TVIKind::Load, tokens);
+  } else if (head == "jz") {
+    return parse_labeled_instruction(LIKind::Jz, tokens);
+  } else if (head == "jmp") {
+    return parse_labeled_instruction(LIKind::Jmp, tokens);
   }
 
   return nullptr;
