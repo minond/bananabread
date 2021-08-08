@@ -39,7 +39,7 @@ Dispatch::Action* handle_push(Instruction::Push* push, State* state) {
   }
 }
 
-// TODO handle Some(Id), Some(Scope), and Some(Invalid).
+// TODO handle Some(Scope), and Some(Invalid).
 Dispatch::Action* handle_call(Instruction::Call* call, State* state) {
   auto ref = state->frames->get_curr()->get(call->get_label());
 
@@ -47,6 +47,10 @@ Dispatch::Action* handle_call(Instruction::Call* call, State* state) {
     state->stack->push(new Value::I32{state->reg->pc() + 1});
     state->frames->move_to_next();
     return new Dispatch::Goto(call->get_label());
+  } else if (auto id = dynamic_cast<Value::Id*>(ref)) {
+    state->stack->push(new Value::I32{state->reg->pc() + 1});
+    state->frames->move_to_next();
+    return new Dispatch::Goto(id->get_label());
   }
 
   return new Dispatch::Error("bad call");
@@ -84,6 +88,10 @@ Dispatch::Action* handle_load(Instruction::Load* load, State* state) {
   }
 
   auto value = Value::from_instruction(inst);
+  if (!value) {
+    return new Dispatch::Error("unable to get runtime value: " + load->get_label());
+  }
+
   state->stack->push(value);
   return new Dispatch::Cont();
 }

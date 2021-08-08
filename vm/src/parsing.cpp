@@ -123,7 +123,9 @@ Instruction::Value* parse_value(vector<string> tokens) {
             value_tokens.end(),
             std::ostream_iterator<string>(value, " "));
 
-  return new Instruction::Value(type, label, value.str());
+  auto str = value.str();
+  str = str.erase(str.size() - 1);
+  return new Instruction::Value(type, label, str);
 }
 
 Instruction::Frame* parse_frame_instruction(vector<string> tokens) {
@@ -152,7 +154,7 @@ Instruction::Instruction* parse_labeled_instruction(LIKind kind, vector<string> 
     return nullptr;
   }
 
-  auto label = clean_label(tokens.at(1));
+  auto label = tokens.at(1);
   switch (kind) {
     case LIKind::Jz:
       return new Instruction::Jz(label);

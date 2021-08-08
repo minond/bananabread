@@ -18,7 +18,7 @@ Base* from_instruction(Instruction::Value* inst) {
         return nullptr;
       }
     case Instruction::Value::Type::Ref:
-      return nullptr;
+      return new Id{inst->get_value()};
     case Instruction::Value::Type::Const:
       return nullptr;
   }

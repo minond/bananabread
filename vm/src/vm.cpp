@@ -66,7 +66,13 @@ void Interpreter::run() {
     } else if (dynamic_cast<Dispatch::Cont*>(next)) {
       reg.inc_pc();
     } else if (auto gt = dynamic_cast<Dispatch::Goto*>(next)) {
-      reg.set_pc(labels[gt->get_label()]);
+      auto label = gt->get_label();
+      if (labels.contains(label)) {
+        reg.set_pc(labels.at(label));
+      } else {
+        std::cout << "error: bad goto, missing label: " << gt->get_label() << std::endl;
+        reg.set_pc(-1);
+      }
     } else if (auto jm = dynamic_cast<Dispatch::Jump*>(next)) {
       reg.set_pc(jm->get_index());
     } else {

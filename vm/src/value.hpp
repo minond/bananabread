@@ -39,6 +39,18 @@ private:
   string value;
 };
 
+class Id : public Base {
+public:
+  Id(string _label) : label(_label) {}
+
+  string get_label() { return label; }
+
+  virtual string to_string() override { return label; }
+
+private:
+  string label;
+};
+
 Base* from_instruction(Instruction::Value* inst);
 
 } // namespace Value
