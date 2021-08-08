@@ -56,7 +56,9 @@ void Interpreter::run() {
     auto code = codes.at(reg.pc());
     auto next = Handlers::handle(code, &state);
 
+#if DEBUG
     std::cout << "running " << code->to_string() << std::endl;
+#endif
 
     if (dynamic_cast<Dispatch::Stop*>(next)) {
       reg.set_pc(-1);
