@@ -1,4 +1,11 @@
+CC = clang++
+CFLAGS = -Wall -std=c++20 -o vm
+SRC = src/*.cpp
+
 compile:
-	clang++ -Wall -std=c++20 src/*.cpp -o vm
+	$(CC) $(CFLAGS) $(SRC)
+
+debug:
+	$(CC) $(CFLAGS) $(SRC) -DDEBUG=1
 
 main.cpp: compile
