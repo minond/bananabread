@@ -41,6 +41,22 @@ map<string, Instruction::Value*> Interpreter::get_constants() {
   return constants;
 }
 
+void Interpreter::debug_print_pre() {
+  auto code = codes.at(reg.pc());
+  std::cout << "STACK SIZE: " << std::to_string(stack.size()) << std::endl;
+  if (! stack.empty()) {
+    std::cout << "STACK HEAD: " << stack.top()->to_string() << std::endl;
+  }
+  std::cout << "INSTRUCTION: " << code->to_string() << std::endl;
+}
+
+void Interpreter::debug_print_post() {
+  std::cout << "STACK SIZE: " << std::to_string(stack.size()) << std::endl;
+  if (! stack.empty()) {
+    std::cout << "STACK HEAD: " << stack.top()->to_string() << std::endl;
+  }
+}
+
 void Interpreter::run() {
   auto labels = get_labels();
   auto constants = get_constants();
@@ -53,12 +69,13 @@ void Interpreter::run() {
   };
 
   while (reg.pc() != -1) {
+    DEBUG_PRINT_PRE;
+
     auto code = codes.at(reg.pc());
     auto next = Handlers::handle(code, &state);
 
-#ifdef DEBUG
-    std::cout << "running " << code->to_string() << std::endl;
-#endif
+    DEBUG_PRINT_POST;
+    DEBUG_DELAY;
 
     if (dynamic_cast<Dispatch::Stop*>(next)) {
       reg.set_pc(-1);
