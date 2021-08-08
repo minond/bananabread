@@ -11,25 +11,27 @@ import scala.io.Source
 
 
 def main(args: Array[String]) =
-  val code = Source.fromFile("./lib/Sample.bb").getLines.mkString
+  val fileName = "./lib/Sample.bb"
+  val code = Source.fromFile(fileName).getLines.mkString("\n")
 
   println("~~~~~~~~~~~~~~~~~~~~~~~")
   val res =
     for
-      ast <- parse("<stdin>", code)
+      ast <- parse(fileName, code)
       ir  <- typeless.lift(ast)
-      tys <- typechecker.infer(ir)
       ins <- backend.opcode.compile(ir)
       _   <- Interpreter(ins).run //.debugging//.stepping
     yield
       println("~~~~~~~~~~~~~~~~~~~~~~~")
       println(pp(ins))
       println("~~~~~~~~~~~~~~~~~~~~~~~")
-      ir.zip(tys._1).foreach {
-        case (typeless.Def(name, _, _), ty) => println(s"$name: $ty")
-        case (ir, ty) => println(s"$ir: $ty")
+      typechecker.infer(ir).map { tys =>
+        ir.zip(tys._1).foreach {
+          case (typeless.Def(name, _, _), ty) => println(s"$name: $ty")
+          case (ir, ty) => println(s"$ir: $ty")
+        }
+        println("~~~~~~~~~~~~~~~~~~~~~~~")
       }
-      println("~~~~~~~~~~~~~~~~~~~~~~~")
 
       "ok"
 
