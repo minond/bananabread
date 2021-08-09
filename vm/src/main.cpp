@@ -7,7 +7,7 @@
 
 std::string program =
   "main:\n"
-  "    push      I32, 10\n"
+  "    push      I32, 2\n"
   "    load      I32, main.println\n"
   "    call      main.loop\n"
   "    halt\n"
