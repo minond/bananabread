@@ -20,19 +20,18 @@ def main(args: Array[String]) =
       ast <- parse(fileName, code)
       ir  <- typeless.lift(ast)
       ins <- backend.opcode.compile(ir)
+      _    = println("~~~~~~~~~~~~~~~~~~~~~~~")
+      _    = println(pp(ins))
+      _    = println("~~~~~~~~~~~~~~~~~~~~~~~")
+      _    = typechecker.infer(ir).map { tys =>
+               ir.zip(tys._1).foreach {
+                 case (typeless.Def(name, _, _), ty) => println(s"$name: $ty")
+                 case (ir, ty) => println(s"$ir: $ty")
+               }
+               println("~~~~~~~~~~~~~~~~~~~~~~~")
+             }
       _   <- Interpreter(ins).run //.debugging//.stepping
     yield
-      println("~~~~~~~~~~~~~~~~~~~~~~~")
-      println(pp(ins))
-      println("~~~~~~~~~~~~~~~~~~~~~~~")
-      typechecker.infer(ir).map { tys =>
-        ir.zip(tys._1).foreach {
-          case (typeless.Def(name, _, _), ty) => println(s"$name: $ty")
-          case (ir, ty) => println(s"$ir: $ty")
-        }
-        println("~~~~~~~~~~~~~~~~~~~~~~~")
-      }
-
       "ok"
 
   res match
