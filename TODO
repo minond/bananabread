@@ -11,3 +11,24 @@
     it should "correctly order operator with equal precedence 4" in {
       astOf("1 + 2 / 1 * 5 + 7") shouldEqual "(+ (+ 1 (* (/ 2 1) 5)) 7)"
     }
+
+- Fully qualify all anonymous functions
+- More VM/compiler tests
+- Leaving something on the stack is causing this to enter an infinite loop.
+
+    it should "handle recursive calls" in {
+      stackHeadOf(
+        """
+        def loop(i, fn) =
+          if i
+          then begin
+            fn(i)
+            loop(i - 1, fn)
+          end
+          else fn(0)
+
+
+        loop(10, func(x) = x + x)
+        """
+      ) shouldEqual I32(42)
+    }
