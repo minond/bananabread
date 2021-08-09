@@ -21,10 +21,12 @@ using std::string;
 using std::stack;
 
 #ifdef DEBUG
+# define DEBUG_PRINT_REG  debug_print_reg();
 # define DEBUG_PRINT_PRE  debug_print_pre();
 # define DEBUG_PRINT_POST debug_print_post();
 # define DEBUG_DELAY      sleep(1);
 #else
+# define DEBUG_PRINT_REG  0;
 # define DEBUG_PRINT_PRE  0;
 # define DEBUG_PRINT_POST 0;
 # define DEBUG_DELAY      0;
@@ -106,6 +108,7 @@ public:
   void run();
 
 protected:
+  void debug_print_reg();
   void debug_print_pre();
   void debug_print_post();
 

@@ -41,12 +41,16 @@ map<string, Instruction::Value*> Interpreter::get_constants() {
   return constants;
 }
 
+void Interpreter::debug_print_reg() {
+  std::cout << "REGISTERS: "
+            << "{ pc = " << std::to_string(reg.pc())
+            << ", lr = " << std::to_string(reg.lr())
+            << ", jm = " << std::to_string(reg.jm())
+            << " }" << std::endl;
+}
+
 void Interpreter::debug_print_pre() {
   auto code = codes.at(reg.pc());
-  std::cout << "STACK SIZE: " << std::to_string(stack.size()) << std::endl;
-  if (! stack.empty()) {
-    std::cout << "STACK HEAD: " << stack.top()->to_string() << std::endl;
-  }
   std::cout << "INSTRUCTION: " << code->to_string() << std::endl;
 }
 
@@ -69,13 +73,11 @@ void Interpreter::run() {
   };
 
   while (reg.pc() != -1) {
+    DEBUG_PRINT_REG;
     DEBUG_PRINT_PRE;
 
     auto code = codes.at(reg.pc());
     auto next = Handlers::handle(code, &state);
-
-    DEBUG_PRINT_POST;
-    DEBUG_DELAY;
 
     if (dynamic_cast<Dispatch::Stop*>(next)) {
       reg.set_pc(-1);
@@ -98,6 +100,12 @@ void Interpreter::run() {
       std::cout << "error: bad dispatch" << std::endl;
       reg.set_pc(-1);
     }
+
+    DEBUG_PRINT_POST;
+    DEBUG_PRINT_REG;
+    DEBUG_DELAY;
+
+    std::cin.ignore();
   }
 }
 
