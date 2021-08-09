@@ -1,0 +1,19 @@
+- Fully qualify all anonymous functions
+- More VM/runtime tests
+- Leaving something on the stack is causing this to enter an infinite loop.
+  // it should "handle recursive calls" in {
+  //   stackHeadOf(
+  //     """
+  //     def loop(i, fn) =
+  //       if i
+  //       then begin
+  //         fn(i)
+  //         loop(i - 1, fn)
+  //       end
+  //       else fn(0)
+  //
+  //
+  //     loop(10, func(x) = x + x)
+  //     """
+  //   ) shouldEqual I32(42)
+  // }

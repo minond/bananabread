@@ -170,7 +170,16 @@ def generateCallWithArgs(scope: Scope, args: List[Ir], call: Instruction): Resul
   }
 
 def generateCallArgsLoad(scope: Scope, args: List[Ir]): Result =
-  args.map(generate(scope, _)).squished.map(_.flatten)
+  args.map {
+    case lam: typeless.Lambda =>
+      // TODO Fully qualify all anonymous functions
+      generate(scope, lam).map { lamop =>
+        scope.define(lam.ptr, lam)
+        group(scope, Load(I32, lam.ptr)) ++ lamop
+      }
+    case arg =>
+      generate(scope, arg)
+  }.squished.map(_.flatten)
 
 def generateCond(scope: Scope, cond: Ir, pass: Ir, fail: Ir): Result =
   val condString = uniqueString(scope, "cond")

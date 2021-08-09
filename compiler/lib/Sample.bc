@@ -1,0 +1,68 @@
+main:
+    push      I32, 1000
+    load      I32, main.println
+    call      main.loop
+    halt
+
+main.loop:
+    frame     2
+    swap
+    store     I32, main.loop.fn
+    swap
+    store     I32, main.loop.i
+    load      I32, main.loop.i
+    jz        else-8bri
+then-0Yfr:
+    load      I32, main.loop.i
+    call      main.loop.fn
+    load      I32, main.loop.i
+    push      I32, 1
+    call      main.-
+    load      I32, main.loop.fn
+    call      main.loop
+    jmp       done-hfAV
+else-8bri:
+    push      I32, 0
+    call      main.loop.fn
+done-hfAV:
+    swap
+    ret
+
+main.-:
+    frame     2
+    swap
+    store     I32, main.-.b
+    swap
+    store     I32, main.-.a
+    load      I32, main.-.a
+    load      I32, main.-.b
+    sub       I32
+    swap
+    ret
+
+main.+:
+    frame     2
+    swap
+    store     I32, main.+.b
+    swap
+    store     I32, main.+.a
+    load      I32, main.+.a
+    load      I32, main.+.b
+    add       I32
+    swap
+    ret
+
+main.println:
+    frame     1
+    swap
+    store     I32, main.println.x
+    load      Str, main.println.x
+    println
+    ret
+    swap
+    ret
+
+.Ref main.println:  main.println
+.Ref main.+:        main.+
+.Ref main.-:        main.-
+.Ref main.loop:     main.loop

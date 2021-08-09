@@ -190,3 +190,43 @@ class VmTests extends AnyFlatSpec with should.Matchers:
       """
     ) shouldEqual I32(123)
   }
+
+  it should "pass annonymous functions as arguments" in {
+    stackHeadOf(
+      """
+      def gen(f, a) =
+        func(b) =
+          f(a, b)
+
+      gen(func(a, b) = a + b, 2)(40)
+      """
+    ) shouldEqual I32(42)
+  }
+
+  it should "pass defined functions as arguments" in {
+    stackHeadOf(
+      """
+      def gen(f, a) =
+        func(b) =
+          f(a, b)
+
+      def add(a, b) = a + b
+
+      gen(add, 2)(40)
+      """
+    ) shouldEqual I32(42)
+  }
+
+  it should "pass defined function values as arguments" in {
+    stackHeadOf(
+      """
+      def gen(f, a) =
+        func(b) =
+          f(a, b)
+
+      def add = func(a, b) = a + b
+
+      gen(add, 2)(40)
+      """
+    ) shouldEqual I32(42)
+  }
