@@ -72,22 +72,22 @@ public:
 
 class Halt : public Instruction {
 public:
-  virtual string to_string() override { return "    halt"; }
+  virtual string to_string() override { return "halt"; }
 };
 
 class Swap : public Instruction {
 public:
-  virtual string to_string() override { return "    swap"; }
+  virtual string to_string() override { return "swap"; }
 };
 
 class Ret : public Instruction {
 public:
-  virtual string to_string() override { return "    ret"; }
+  virtual string to_string() override { return "ret"; }
 };
 
 class Println : public Instruction {
 public:
-  virtual string to_string() override { return "    println"; }
+  virtual string to_string() override { return "println"; }
 };
 
 class Push : public Instruction {
@@ -100,7 +100,7 @@ public:
   string get_value() { return value; }
 
   virtual string to_string() override {
-    return "    push " +
+    return "push " +
       Value::type_to_string(type) + ", " +
       value;
   }
@@ -116,7 +116,7 @@ public:
 
   string get_label() { return label; }
 
-  virtual string to_string() override { return "    call " + label; }
+  virtual string to_string() override { return "call " + label; }
 
 private:
   string label;
@@ -128,7 +128,7 @@ public:
 
   int get_argc() { return argc; }
 
-  virtual string to_string() override { return "    frame " + std::to_string(argc); }
+  virtual string to_string() override { return "frame " + std::to_string(argc); }
 
 private:
   int argc;
@@ -144,7 +144,7 @@ public:
   string get_label() { return label; }
 
   virtual string to_string() override {
-    return "    store " +
+    return "store " +
       Value::type_to_string(type) + ", " +
       label;
   }
@@ -164,7 +164,7 @@ public:
   string get_label() { return label; }
 
   virtual string to_string() override {
-    return "    load " +
+    return "load " +
       Value::type_to_string(type) + ", " +
       label;
   }
@@ -181,7 +181,7 @@ public:
   Value::Type get_type() { return type; }
 
   virtual string to_string() override {
-    return "    add " + Value::type_to_string(type);
+    return "add " + Value::type_to_string(type);
   }
 
 private:
@@ -195,7 +195,7 @@ public:
   Value::Type get_type() { return type; }
 
   virtual string to_string() override {
-    return "    sub " + Value::type_to_string(type);
+    return "sub " + Value::type_to_string(type);
   }
 
 private:
@@ -209,7 +209,7 @@ public:
   string get_label() { return label; }
 
   virtual string to_string() override {
-    return "    jz " + label;
+    return "jz " + label;
   }
 
 private:
@@ -223,7 +223,7 @@ public:
   string get_label() { return label; }
 
   virtual string to_string() override {
-    return "    jz " + label;
+    return "jmp " + label;
   }
 
 private:
