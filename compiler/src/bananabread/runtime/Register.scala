@@ -1,19 +1,21 @@
 package bananabread
 package runtime.register
 
-import runtime.value.I32
+import runtime.value.{Value, I32, Pointer, Ptr, Nullptr}
 
 
 sealed trait Register
 case object Pc extends Register
 case object Lr extends Register
 case object Jm extends Register
+case object Rt extends Register
 
 
 class Registers:
   private var pcVal = I32(0)
   private var lrVal = I32(0)
   private var jmVal = I32(0)
+  private var rtVal: Value = Nullptr
 
   def pc         = pcVal
   def pc(v: I32) = pcVal = v
@@ -27,7 +29,10 @@ class Registers:
   def jm(v: I32) = jmVal = v
   def jm(i: Int) = jmVal = I32(i)
 
-  def get(reg: Register) = reg match
+  def rt           = rtVal
+  def rt(v: Value) = rtVal = v
+
+  def get(reg: Register): I32 = reg match
     case Pc => pc
     case Lr => lr
     case Jm => jm
@@ -39,4 +44,4 @@ class Registers:
     case Jm => jm(v)
 
   override def toString: String =
-    s"pc => $pc, lr => $lr, jm => $jm"
+    f"pc => ${pc.value}%08X, lr => ${lr.value}%08X, jm => ${jm.value}%08X, rt => $rt"

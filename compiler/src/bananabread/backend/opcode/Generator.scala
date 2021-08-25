@@ -119,7 +119,7 @@ def generateOpcode(scope: Scope, tree: OpcodeTree, source: String, loc: Location
 def generateOpcode(scope: Scope, expr: OpcodeExpr, source: String, loc: Location): Result = expr match
   case InstructionExpr("add",     Some("I32"),  Nil,         _) => Right(group(scope, Add(I32)))
   case InstructionExpr("sub",     Some("I32"),  Nil,         _) => Right(group(scope, Sub(I32)))
-  case InstructionExpr("push",    Some("I32"),  List(str), _)   => withI32(expr, str) { i => group(scope, Push(I32, value.I32(i))) }
+  case InstructionExpr("push",    Some("I32"),  List(str),   _) => withI32(expr, str) { i => group(scope, Push(I32, value.I32(i))) }
   case InstructionExpr("push",    Some("Str"),  List(label), _) => Right(group(scope, Push(Str, value.Id(scope.qualified(label)))))
   case InstructionExpr("push",    Some("Ref"),  List(label), _) => Right(group(scope, Push(Ref, value.Id(scope.qualified(label)))))
   case InstructionExpr("load",    Some("I32"),  List(label), _) => Right(group(scope, Load(I32, scope.qualified(label))))
@@ -135,17 +135,21 @@ def generateOpcode(scope: Scope, expr: OpcodeExpr, source: String, loc: Location
   case InstructionExpr("mov",     Some("Pc"),   Nil,         _) => Right(group(scope, Mov(Pc, None)))
   case InstructionExpr("mov",     Some("Lr"),   Nil,         _) => Right(group(scope, Mov(Lr, None)))
   case InstructionExpr("mov",     Some("Jm"),   Nil,         _) => Right(group(scope, Mov(Jm, None)))
-  case InstructionExpr("mov",     Some("Pc"),   List(str), _)   => withI32(expr, str) { i => group(scope, Mov(Pc, Some(value.I32(i)))) }
-  case InstructionExpr("mov",     Some("Lr"),   List(str), _)   => withI32(expr, str) { i => group(scope, Mov(Lr, Some(value.I32(i)))) }
-  case InstructionExpr("mov",     Some("Jm"),   List(str), _)   => withI32(expr, str) { i => group(scope, Mov(Jm, Some(value.I32(i)))) }
+  case InstructionExpr("mov",     Some("Rt"),   Nil,         _) => Right(group(scope, Mov(Rt, None)))
+  case InstructionExpr("mov",     Some("Pc"),   List(str),   _) => withI32(expr, str) { i => group(scope, Mov(Pc, Some(value.I32(i)))) }
+  case InstructionExpr("mov",     Some("Lr"),   List(str),   _) => withI32(expr, str) { i => group(scope, Mov(Lr, Some(value.I32(i)))) }
+  case InstructionExpr("mov",     Some("Jm"),   List(str),   _) => withI32(expr, str) { i => group(scope, Mov(Jm, Some(value.I32(i)))) }
+  case InstructionExpr("mov",     Some("Rt"),   List(str),   _) => withI32(expr, str) { i => group(scope, Mov(Rt, Some(value.I32(i)))) } // XXX May not always be an I32
+  case InstructionExpr("stw",     None,         List("Rt"),  _) => Right(group(scope, Stw(Rt)))
+  case InstructionExpr("ldw",     None,         List("Rt"),  _) => Right(group(scope, Ldw(Rt)))
   case InstructionExpr("concat",  None,         Nil,         _) => Right(group(scope, Concat))
   case InstructionExpr("println", None,         Nil,         _) => Right(group(scope, Println))
   case InstructionExpr("halt",    None,         Nil,         _) => Right(group(scope, Halt))
   case InstructionExpr("call0",   None,         Nil,         _) => Right(group(scope, Call0))
   case InstructionExpr("ret",     None,         Nil,         _) => Right(group(scope, Ret))
   case InstructionExpr("swap",    None,         Nil,         _) => Right(group(scope, Swap))
-  case LabelExpr(label, _)                                     => Right(group(scope, Label(label)))
-  case _                                                       => Left(UnknownUserOpcodeErr(expr, source, loc))
+  case LabelExpr(label,                                      _) => Right(group(scope, Label(label)))
+  case _                                                        => Left(UnknownUserOpcodeErr(expr, source, loc))
 
 def generateCallId(scope: Scope, args: List[Ir], id: typeless.Id): Result =
   scope.qualified2(id) match

@@ -26,3 +26,6 @@ case class Frame(val env: Map[String, Value] = Map.empty, parent: Option[Frame] 
 
   def from(frame: Frame) = Frame(frame.env, Some(this))
   def put(label: String, value: Value) = env.put(label, value)
+
+  override def toString: String =
+    env.map { (key, value) => s"$key => $value" }.mkString(", ")

@@ -20,6 +20,10 @@ sealed trait Bool extends Value
 case object True extends Bool with Print("true")
 case object False extends Bool with Print("false")
 
+sealed trait Pointer extends Value
+case class Ptr(addr: Int) extends Pointer with Print(s"<$addr>")
+case object Nullptr extends Pointer with Print("nullptr")
+
 
 def lift(nodes: List[Ir]): List[Value] =
   nodes.map(lift)

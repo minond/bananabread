@@ -3,7 +3,7 @@ package runtime
 
 import error._
 import register.Registers
-import instruction.{Code, Instruction, labels, constants}
+import instruction.{Code, Instruction, labels, constants, pp}
 import value.Value
 
 import scala.collection.mutable.Stack
@@ -62,13 +62,14 @@ class Interpreter(codes: List[Code], private val debug: Boolean = false, private
 
   def showInstruction =
     if debug then
-      println(s"- Instruction --- ${codes(registers.pc.value)}")
+      println(s"- Instruction --- ${pp(codes(registers.pc.value), false)}")
 
   def showState =
     if debug then
       println(s"  Stack --------- [${stack.mkString(", ")}]")
       println(s"  Registers ----- {$registers}")
+      println(s"  Frame --------- {${frames.curr}}")
 
   def waitForUser =
-    if step then
-      scala.io.StdIn.readLine()
+    if step && scala.io.StdIn.readLine() == "quit" then
+      throw new Exception("quit")

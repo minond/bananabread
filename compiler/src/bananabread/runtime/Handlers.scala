@@ -1,8 +1,9 @@
 package bananabread
 package runtime
 
-import value.Value
+import value.{Value, Ptr, Nullptr}
 import instruction.{Value => Value_, Label => Label_, _}
+import register.Rt
 
 
 def handle(code: Code, state: State): Dispatch = code match
@@ -18,6 +19,8 @@ def handle(code: Code, state: State): Dispatch = code match
   case Ret       => handleRet(Ret, state)
   case Swap      => handleSwap(Swap, state)
   case op: Mov   => handleMov(op, state)
+  case op: Stw   => handleStw(op, state)
+  case op: Ldw   => handleLdw(op, state)
   case op: Load  => handleLoad(op, state)
   case op: Store => handleStore(op, state)
   case Println   => handlePrintln(Println, state)
@@ -119,6 +122,22 @@ def handleMov(op: Mov, state: State): Dispatch = op match
           Error(s"bad mov: missing scope $label", op)
     case _ =>
       Error("bad mov: invalid stack entry", op)
+
+def handleStw(op: Stw, state: State): Dispatch =
+  op.reg match
+    case Rt =>
+      state.stack.push(state.registers.rt)
+      Cont
+    case _ =>
+      Error("bad stw: register does not accept user data", op)
+
+def handleLdw(op: Ldw, state: State): Dispatch =
+  (op.reg, state.stack.pop) match
+    case (Rt, v) =>
+      state.registers.rt(v)
+      Cont
+    case (_, _) =>
+      Error("bad ldw: register does not accept user data", op)
 
 def handleLoad(op: Load, state: State): Dispatch = state.frames.curr.get(op.label) match
   case None =>

@@ -31,6 +31,8 @@ case object Call0 extends Instruction
 case object Ret extends Instruction
 case object Swap extends Instruction
 case class Mov(reg: Register, data: Option[value.I32]) extends Instruction
+case class Stw(reg: Register) extends Instruction
+case class Ldw(reg: Register) extends Instruction
 case class Load(typ: Type, label: String) extends Instruction
 case class Store(typ: Type, label: String) extends Instruction
 case object Println extends Instruction
@@ -78,6 +80,8 @@ def pp(code: Code, align: Boolean = true): String = code match
   case Call(l)              => if align then s"call      $l"              else s"call $l"
   case Mov(reg, None)       => if align then s"mov       $reg"            else s"mov $reg"
   case Mov(reg, Some(v))    => if align then s"mov       $reg, $v"        else s"mov $reg, $v"
+  case Stw(reg)             => if align then s"stw       $reg"            else s"stw $reg"
+  case Ldw(reg)             => if align then s"ldw       $reg"            else s"ldw $reg"
   case Load(t, l)           => if align then s"load      $t, $l"          else s"load $t, $l"
   case Store(t, l)          => if align then s"store     $t, $l"          else s"store $t, $l"
   case Add(t)               => if align then s"add       $t"              else s"add $t"
