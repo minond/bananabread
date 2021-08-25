@@ -30,7 +30,8 @@ def main(args: Array[String]) =
                }
                println("~~~~~~~~~~~~~~~~~~~~~~~")
              }
-      _   <- Interpreter(ins).run //.debugging//.stepping
+      _   <- Interpreter(ins).debugging.stepping.run
+      // _   <- Interpreter(ins).run
     yield
       "ok"
 
