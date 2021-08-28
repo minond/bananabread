@@ -2,11 +2,10 @@ package bananabread
 package runtime
 
 import error._
-import register.Registers
+import register.{Registers, Sp}
+import memory.Stack
 import instruction.{Code, Instruction, labels, constants, pp}
 import value.Value
-
-import scala.collection.mutable.Stack
 
 
 sealed trait Dispatch
@@ -18,12 +17,19 @@ case class Error(msg: String, instruction: Instruction) extends Dispatch
 
 
 case class State(
-  val stack: Stack[Value],
+  val stack: Stack,
   val frames: Frames,
   val registers: Registers,
   val constants: Map[String, Value],
   val labels: Map[String, Int],
-)
+):
+  def pop: Value =
+    registers.dec(Sp)
+    stack.get(registers.sp)
+
+  def push(v: Value) =
+    stack.set(registers.sp, v)
+    registers.inc(Sp)
 
 object State:
   def from(i: Interpreter) =
@@ -31,7 +37,7 @@ object State:
 
 
 class Interpreter(codes: List[Code], private val debug: Boolean = false, private val step: Boolean = false):
-  val stack = Stack[Value]()
+  val stack = Stack()
   val frames = Frames()
   val registers = Registers()
 
@@ -66,7 +72,7 @@ class Interpreter(codes: List[Code], private val debug: Boolean = false, private
 
   def showState =
     if debug then
-      println(s"  Stack --------- [${stack.mkString(", ")}]")
+      println(s"  Stack --------- [${stack}]")
       println(s"  Registers ----- {$registers}")
       println(s"  Frame --------- {${frames.curr}}")
 

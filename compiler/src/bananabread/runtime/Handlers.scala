@@ -29,7 +29,7 @@ def handle(code: Code, state: State): Dispatch = code match
   case op: Sub   => handleSub(op, state)
   case op: Frame => handleFrame(op, state)
 
-def handleJz(op: Jz, state: State): Dispatch = state.stack.pop match
+def handleJz(op: Jz, state: State): Dispatch = state.pop match
   case value.I32(0) => goto(op, op.label, state)
   case _            => Cont
 
@@ -38,21 +38,21 @@ def handleJmp(op: Jmp, state: State): Dispatch =
 
 def handlePush(op: Push, state: State): Dispatch = op match
   case Push(I32, v: value.I32) =>
-    state.stack.push(v)
+    state.push(v)
     Cont
   case Push(Bool, v: value.Bool) =>
-    state.stack.push(v)
+    state.push(v)
     Cont
   case Push(Ref, v: value.Id) =>
-    state.stack.push(v)
+    state.push(v)
     Cont
   case Push(Scope, value.Id(label)) =>
     val scope = value.Scope(label, state.frames.curr)
-    state.stack.push(scope)
+    state.push(scope)
     Cont
   case Push(Const, value.Id(label)) =>
     const(op, label, state) { const =>
-      state.stack.push(const)
+      state.push(const)
       Cont
     }
   case _ =>
@@ -60,25 +60,25 @@ def handlePush(op: Push, state: State): Dispatch = op match
 
 def handleCall(op: Call, state: State): Dispatch = state.frames.curr.get(op.label) match
   case None =>
-    state.stack.push(value.I32(state.registers.pc.value + 1))
+    state.push(value.I32(state.registers.pc.value + 1))
     state.frames.next
     goto(op, op.label, state)
   case Some(ptr: value.Id) =>
-    state.stack.push(value.I32(state.registers.pc.value + 1))
+    state.push(value.I32(state.registers.pc.value + 1))
     state.frames.next
     goto(op, ptr.label, state)
   case Some(value.Scope(label, frame)) =>
-    state.stack.push(value.I32(state.registers.pc.value + 1))
+    state.push(value.I32(state.registers.pc.value + 1))
     state.frames.from(frame)
     goto(op, label, state)
   case Some(bad) =>
     Error(s"bad call: ${op.label} is instance of `${bad.getClass.getSimpleName}`, expected function", op)
 
 def handleCall0(op: Instruction, state: State): Dispatch =
-  state.stack.push(value.I32(state.registers.pc.value + 1))
+  state.push(value.I32(state.registers.pc.value + 1))
   Jump(state.registers.jm.value)
 
-def handleRet(op: Instruction, state: State): Dispatch = state.stack.pop match
+def handleRet(op: Instruction, state: State): Dispatch = state.pop match
   case value.I32(addr) =>
     state.frames.prev
     Jump(addr)
@@ -86,22 +86,22 @@ def handleRet(op: Instruction, state: State): Dispatch = state.stack.pop match
     Error(s"bad ret: missing return address: $bad", op)
 
 def handleSwap(op: Instruction, state: State): Dispatch =
-  if state.stack.size == 1
+  if state.registers.sp.value == 0
   then Cont
   else
-    val a = state.stack.pop
-    val b = state.stack.pop
-    state.stack.push(a)
-    state.stack.push(b)
+    val a = state.pop
+    val b = state.pop
+    state.push(a)
+    state.push(b)
     Cont
 
 def handleMov(op: Mov, state: State): Dispatch = op match
   case Mov(reg, Some(offset)) =>
     val curr = state.registers.get(reg)
     val next = value.I32(curr.value + offset.value)
-    state.stack.push(next)
+    state.push(next)
     Cont
-  case Mov(reg, None) => state.stack.pop match
+  case Mov(reg, None) => state.pop match
     case addr: value.I32 =>
       state.registers.set(reg, addr)
       Cont
@@ -126,13 +126,13 @@ def handleMov(op: Mov, state: State): Dispatch = op match
 def handleStw(op: Stw, state: State): Dispatch =
   op.reg match
     case Rt =>
-      state.stack.push(state.registers.rt)
+      state.push(state.registers.rt)
       Cont
     case _ =>
       Error("bad stw: register does not accept user data", op)
 
 def handleLdw(op: Ldw, state: State): Dispatch =
-  (op.reg, state.stack.pop) match
+  (op.reg, state.pop) match
     case (Rt, v) =>
       state.registers.rt(v)
       Cont
@@ -142,25 +142,25 @@ def handleLdw(op: Ldw, state: State): Dispatch =
 def handleLoad(op: Load, state: State): Dispatch = state.frames.curr.get(op.label) match
   case None =>
     const(op, op.label, state) { value =>
-      state.stack.push(value)
+      state.push(value)
       Cont
     }
   case Some(v) =>
-    state.stack.push(v)
+    state.push(v)
     Cont
 
 def handleStore(op: Store, state: State): Dispatch =
-  state.frames.curr.put(op.label, state.stack.pop)
+  state.frames.curr.put(op.label, state.pop)
   Cont
 
 def handlePrintln(ins: Instruction, state: State): Dispatch =
-  println(state.stack.pop)
+  println(state.pop)
   Cont
 
 def handleConcat(op: Instruction, state: State): Dispatch =
   binStrOp(state)(_ + _) match
     case Some(v) =>
-      state.stack.push(v)
+      state.push(v)
       Cont
     case None =>
       Error("bad concat: missing argument", op)
@@ -168,7 +168,7 @@ def handleConcat(op: Instruction, state: State): Dispatch =
 def handleAdd(op: Add, state: State): Dispatch =
   binI32Op(state)(_ + _) match
     case Some(v) =>
-      state.stack.push(v)
+      state.push(v)
       Cont
     case None =>
       Error("bad add: missing argument", op)
@@ -176,7 +176,7 @@ def handleAdd(op: Add, state: State): Dispatch =
 def handleSub(op: Sub, state: State): Dispatch =
   binI32Op(state)(_ - _) match
     case Some(v) =>
-      state.stack.push(v)
+      state.push(v)
       Cont
     case None =>
       Error("bad sub: missing argument", op)
@@ -194,14 +194,14 @@ def const(op: Instruction, label: String, state: State)(f: Value => Dispatch): D
     case Some(value) => f(value)
 
 def binI32Op(state: State)(f: (Int, Int) => Int): Option[value.I32] =
-  (state.stack.pop, state.stack.pop) match
+  (state.pop, state.pop) match
     case (value.I32(rhs), value.I32(lhs)) =>
       Some(value.I32(f(lhs, rhs)))
     case _ =>
       None
 
 def binStrOp(state: State)(f: (String, String) => String): Option[value.Str] =
-  (state.stack.pop, state.stack.pop) match
+  (state.pop, state.pop) match
     case (value.Str(rhs), value.Str(lhs)) =>
       Some(value.Str(f(lhs, rhs)))
     case _ =>

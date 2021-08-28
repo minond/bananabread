@@ -76,4 +76,5 @@ def resultOf(code: String, syntax: Syntax = stdOps) =
   interpreter
 
 def stackHeadOf(code: String, syntax: Syntax = stdOps) =
-  resultOf(code, syntax).stack.head
+  val ret = resultOf(code, syntax)
+  ret.stack.get(ret.registers.sp.value - 1)
