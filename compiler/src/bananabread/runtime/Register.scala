@@ -64,4 +64,4 @@ class Registers:
     case Jm => jm(v)
 
   override def toString: String =
-    f"pc => ${pc.value}%08X, sp => $sp, lr => ${lr.value}%08X, jm => ${jm.value}%08X, rt => $rt"
+    f"pc => ${pc.value}, sp => $sp, lr => ${lr.value}, jm => ${jm.value}, rt => $rt"

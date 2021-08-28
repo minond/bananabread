@@ -1,68 +1,67 @@
-main:
-    push      I32, 1000
-    load      I32, main.println
-    call      main.loop
-    halt
-
-main.loop:
-    frame     2
-    swap
-    store     I32, main.loop.fn
-    swap
-    store     I32, main.loop.i
-    load      I32, main.loop.i
-    jz        else-8bri
-then-0Yfr:
-    load      I32, main.loop.i
-    call      main.loop.fn
-    load      I32, main.loop.i
-    push      I32, 1
-    call      main.-
-    load      I32, main.loop.fn
-    call      main.loop
-    jmp       done-hfAV
-else-8bri:
-    push      I32, 0
-    call      main.loop.fn
-done-hfAV:
-    swap
-    ret
-
-main.-:
-    frame     2
-    swap
-    store     I32, main.-.b
-    swap
-    store     I32, main.-.a
-    load      I32, main.-.a
-    load      I32, main.-.b
-    sub       I32
-    swap
-    ret
-
-main.+:
-    frame     2
-    swap
-    store     I32, main.+.b
-    swap
-    store     I32, main.+.a
-    load      I32, main.+.a
-    load      I32, main.+.b
-    add       I32
-    swap
-    ret
-
-main.println:
-    frame     1
-    swap
-    store     I32, main.println.x
-    load      Str, main.println.x
-    println
-    ret
-    swap
-    ret
-
-.Ref main.println:  main.println
-.Ref main.+:        main.+
-.Ref main.-:        main.-
-.Ref main.loop:     main.loop
+0000000000000000    main:
+0000000000000001        push      I32, 1
+0000000000000002        load      I32, lambda-5
+0000000000000003        call      main.loop
+0000000000000004        halt
+0000000000000005    lambda-5:
+0000000000000006        frame     1
+0000000000000007        swap
+0000000000000008        store     I32, lambda-5.x
+0000000000000009        load      I32, lambda-5.x
+0000000000000010        call      main.println
+0000000000000011        swap
+0000000000000012        ret
+0000000000000013    main.-:
+0000000000000014        frame     2
+0000000000000015        swap
+0000000000000016        store     I32, main.-.b
+0000000000000017        swap
+0000000000000018        store     I32, main.-.a
+0000000000000019        load      I32, main.-.a
+0000000000000020        load      I32, main.-.b
+0000000000000021        sub       I32
+0000000000000022        swap
+0000000000000023        ret
+0000000000000024    main.loop:
+0000000000000025        frame     2
+0000000000000026        swap
+0000000000000027        store     I32, main.loop.fn
+0000000000000028        swap
+0000000000000029        store     I32, main.loop.i
+0000000000000030        load      I32, main.loop.i
+0000000000000031        jz        else-QG9A
+0000000000000032    then-9BHp:
+0000000000000033        load      I32, main.loop.i
+0000000000000034        call      main.loop.fn
+0000000000000035        load      I32, main.loop.i
+0000000000000036        push      I32, 1
+0000000000000037        call      main.-
+0000000000000038        load      I32, main.loop.fn
+0000000000000039        call      main.loop
+0000000000000040        jmp       done-1q6f
+0000000000000041    else-QG9A:
+0000000000000042        push      I32, 0
+0000000000000043        call      main.loop.fn
+0000000000000044    done-1q6f:
+0000000000000045        swap
+0000000000000046        ret
+0000000000000047    main.println:
+0000000000000048        frame     1
+0000000000000049        swap
+0000000000000050        store     I32, main.println.x
+0000000000000051        load      Str, main.println.x
+0000000000000052        println
+0000000000000053        ret
+0000000000000054        swap
+0000000000000055        ret
+0000000000000056    main.+:
+0000000000000057        frame     2
+0000000000000058        swap
+0000000000000059        store     I32, main.+.b
+0000000000000060        swap
+0000000000000061        store     I32, main.+.a
+0000000000000062        load      I32, main.+.a
+0000000000000063        load      I32, main.+.b
+0000000000000064        add       I32
+0000000000000065        swap
+0000000000000066        ret

@@ -62,8 +62,8 @@ extension (codes: List[Code])
 def pp(codes: List[Code]): String =
   codes.zipWithIndex.map {
     case (op: Value, _) => pp(op)
-    case (op: Label, i) => f"${i}%016X    ${pp(op)}"
-    case (op: Instruction, i) => f"${i}%016X        ${pp(op)}"
+    case (op: Label, i) => f"${i}%016d    ${pp(op)}"
+    case (op: Instruction, i) => f"${i}%016d        ${pp(op)}"
   }.mkString("\n")
 def pp(code: Code, align: Boolean = true): String = code match
   case Label(l)             => s"$l:"
