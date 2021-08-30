@@ -30,8 +30,9 @@ def main(args: Array[String]) =
                }
                println("~~~~~~~~~~~~~~~~~~~~~~~")
              }
-      _   <- Interpreter(ins).debugging.stepping.run
-      // _   <- Interpreter(ins).run
+      _   <- if args.headOption == Some("debug")
+             then Interpreter(ins).debugging.stepping.run
+             else Interpreter(ins).run
     yield
       "ok"
 
