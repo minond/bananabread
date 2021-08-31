@@ -6,7 +6,7 @@ def println[T](x: T): Str =
   opcode %{
     load [Str] x
     println
-    ret
+    load [Str] x
   }
 
 def +(a : I32, b : I32) : I32 =
@@ -32,4 +32,11 @@ def loop(i, fn) =
   else fn(0)
 
 
-loop(1000, println)
+loop(10,
+  (func (y) =
+    func (x) =
+      begin
+        println(y)
+        println(x)
+      end
+    )(123))
