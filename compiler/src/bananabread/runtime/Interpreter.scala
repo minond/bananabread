@@ -48,13 +48,13 @@ class Interpreter(codes: List[Code], private val debug: Boolean = false, private
   def stepping  = Interpreter(codes, debug, true)
 
   def run: Either[RuntimeErr, State] =
-    showState
+    debugState
     while registers.pc.value != -1 do
-      showInstruction
+      debugInstruction
       next match
         case Some(Error(msg, ins)) => return Left(RuntimeErr(msg, ins, codes, registers))
         case _ =>
-      showState
+      debugState
       waitForUser
     Right(State.from(this))
 
@@ -66,15 +66,18 @@ class Interpreter(codes: List[Code], private val debug: Boolean = false, private
       case Jump(index) => registers.pc(index); None
       case err: Error  => Some(err)
 
-  def showInstruction =
+  def debugInstruction =
     if debug then
       println(s"- Instruction --- ${pp(codes(registers.pc.value), false)}")
 
-  def showState =
+  def debugState =
     if debug then
-      println(s"  Stack --------- [${stack}]")
-      println(s"  Registers ----- {$registers}")
-      println(s"  Frame --------- {${frames.curr}}")
+      printState
+
+  def printState =
+    println(s"  Stack --------- [${stack}]")
+    println(s"  Registers ----- {$registers}")
+    println(s"  Frame --------- {${frames.curr}}")
 
   def waitForUser =
     if step && scala.io.StdIn.readLine() == "quit" then

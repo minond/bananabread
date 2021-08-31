@@ -30,13 +30,16 @@ def main(args: Array[String]) =
                }
                println("~~~~~~~~~~~~~~~~~~~~~~~")
              }
+      vm   = Interpreter(ins)
       _   <- if args.headOption == Some("debug")
-             then Interpreter(ins).debugging.stepping.run
-             else Interpreter(ins).run
+             then vm.debugging.stepping.run
+             else vm.run
     yield
-      "ok"
+      vm
 
   res match
-    case Right(msg) => println(msg)
+    case Right(vm) =>
+      println("~~~~~~~~~~~~~~~~~~~~~~~")
+      vm.printState
     case Left(err: Errors) => println(errpp(err, code))
     case Left(err) => println(s"unhandled error: $err")
