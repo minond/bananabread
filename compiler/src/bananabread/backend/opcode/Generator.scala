@@ -244,15 +244,34 @@ def generateDef(scope: Scope, name: String, value: Ir): Result = value match
       .map(_ ++ group(scope, Store(I32, scope.qualified(name))))
 
 def generateLambda(scope: Scope, params: List[typeless.Id], body: Ir): Result =
-  val setup = group(scope, FrameInit(params.size))
+  val init = group(scope,
+    FrameInit(params.size),
+  )
 
-  val header = params.reverse.flatMap { case param @ typeless.Id(label) =>
+  val storeArgs = params.reverse.flatMap { case param @ typeless.Id(label) =>
     scope.define(param, param)
     group(scope, Swap, Store(I32, scope.qualified(label)))
   }
 
-  val footer = group(scope, Swap, Ret)
-  generate(scope, body).map(setup ++ header ++ _ ++ footer)
+  val callerInfo = group(scope,
+    Stw(Ebp), // Track old ebp.
+    Stw(Esp), // Load esp.
+    Ldw(Ebp), // And store it in ebp.
+              // TODO do this std+ldw in a single mov inst.
+  )
+
+  val ret = group(scope,
+    Ldw(Rt),  // Still using stack conventions, store return value in
+              // rt register while we do some cleanup.
+    Stw(Ebp), // Load ebp.
+    Ldw(Esp), // And store it in esp.
+              // TODO do this std+ldw in a single mov inst.
+    Ldw(Ebp), // Restore the previous ebp value back into that register.
+    Stw(Rt),  // Reload the return value on the stack.
+    Swap,     // Swap return value and return address which are now at
+    Ret)      // top of the stack and return.
+
+  generate(scope, body).map(init ++ storeArgs ++ callerInfo ++ _ ++ ret)
 
 def generateStore(scope: Scope, label: String, value: Ir): Result = value match
   case _: typeless.Lambda => Right(group(scope, Store(Ref, scope.qualified(label))))

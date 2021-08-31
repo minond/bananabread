@@ -3,7 +3,7 @@ package runtime
 
 import value.{Value, Ptr}
 import instruction.{Value => Value_, Label => Label_, _}
-import register.Rt
+import register.{Rt, Ebp, Esp}
 
 
 def handle(code: Code, state: State): Dispatch = code match
@@ -128,6 +128,12 @@ def handleStw(op: Stw, state: State): Dispatch =
     case Rt =>
       state.push(state.registers.rt)
       Cont
+    case Ebp =>
+      state.push(state.registers.ebp)
+      Cont
+    case Esp =>
+      state.push(state.registers.esp)
+      Cont
     case _ =>
       Error("bad stw: register does not accept user data", op)
 
@@ -136,6 +142,14 @@ def handleLdw(op: Ldw, state: State): Dispatch =
     case (Rt, v) =>
       state.registers.rt(v)
       Cont
+    case (Ebp, v : value.I32) =>
+      state.registers.ebp(v.value)
+      Cont
+    case (Esp, v : value.I32) =>
+      state.registers.esp(v.value)
+      Cont
+    case (Ebp | Esp, _) =>
+      Error("bad ldw: register does not accept non-int32 data", op)
     case (_, _) =>
       Error("bad ldw: register does not accept user data", op)
 
