@@ -23,7 +23,7 @@ class Stack():
 
   def ensureAccessible(i: Int): Unit =
     if i >= data.size then
-      growBy(100)
+      growBy(1)
       ensureAccessible(i)
 
   def growBy(size: Int) =

@@ -86,7 +86,7 @@ def handleRet(op: Instruction, state: State): Dispatch = state.pop match
     Error(s"bad ret: missing return address: $bad", op)
 
 def handleSwap(op: Instruction, state: State): Dispatch =
-  if state.registers.sp.value == 0
+  if state.registers.esp.value == 0
   then Cont
   else
     val a = state.pop

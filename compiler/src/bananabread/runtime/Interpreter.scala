@@ -2,7 +2,7 @@ package bananabread
 package runtime
 
 import error._
-import register.{Registers, Sp}
+import register.{Registers, Esp}
 import memory.Stack
 import instruction.{Code, Instruction, labels, constants, pp}
 import value.Value
@@ -24,12 +24,12 @@ case class State(
   val labels: Map[String, Int],
 ):
   def pop: Value =
-    registers.dec(Sp)
-    stack.get(registers.sp)
+    registers.dec(Esp)
+    stack.get(registers.esp)
 
   def push(v: Value) =
-    stack.set(registers.sp, v)
-    registers.inc(Sp)
+    stack.set(registers.esp, v)
+    registers.inc(Esp)
 
 object State:
   def from(i: Interpreter) =
