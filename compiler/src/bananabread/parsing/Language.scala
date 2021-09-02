@@ -305,8 +305,9 @@ def nextToken(
     tail.headOption match
       case Some('{', _) =>
         val str = takeWhile(skip(tail), not(is('}')))
-        // TODO Unsafe head lookup
-        if tail.next._1 != '}'
+        if tail.isEmpty
+        then Left(UnclosedStringErr(loc))
+        else if tail.next._1 != '}'
         then Left(UnclosedStringErr(loc))
         else Right(Str(str.mkString, loc))
       case _ => nextToken(head, tail, loc, syntax, ignorePString=true)

@@ -25,6 +25,24 @@ type Errors = parse.SyntaxErr
 
 
 def pp(err: Errors, source: String) = err match
+  case parse.BadNumErr(_, location) =>
+    lines(
+      generateSyntaxErrorLine(s"bad number", location, source),
+      isolateBadLine(location, source),
+    )
+
+  case parse.UnclosedStringErr(location) =>
+    lines(
+      generateSyntaxErrorLine(s"bad string", location, source),
+      isolateBadLine(location, source),
+    )
+
+  case parse.EmptyBeginNotAllowedErr(token) =>
+    lines(
+      generateSyntaxErrorLine(s"empty begin", token.location, source),
+      isolateBadLine(token.location, source),
+    )
+
   case parse.BadOperatorDefinitionErr(location) =>
     lines(
       generateSyntaxErrorLine(s"bad operator definition", location, source),
@@ -33,7 +51,7 @@ def pp(err: Errors, source: String) = err match
 
   case parse.UnexpectedEofErr(prev) =>
     lines(
-      generateSyntaxErrorLine(s"unexpected <EOF> after `$prev`", prev.location, source),
+      generateSyntaxErrorLine(s"unexpected <eof> after `$prev`", prev.location, source),
       isolateBadLine(prev.location, source),
     )
 
