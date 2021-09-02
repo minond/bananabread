@@ -13,7 +13,7 @@ sealed trait Expr extends Located
 sealed trait Stmt extends Located
 
 
-case class Eof(loc: Location) extends Token, At(loc) with Print("<EOF>")
+case class Eof(loc: Location) extends Token, At(loc) with Print("<eof>")
 case class Comma(loc: Location) extends Token, At(loc) with Print(",")
 case class Dot(loc: Location) extends Token, At(loc) with Print(".")
 case class Colon(loc: Location) extends Token, At(loc) with Print(":")

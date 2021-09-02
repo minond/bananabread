@@ -100,7 +100,7 @@ def generateCall(scope: Scope, lambda: Ir, args: List[Ir]): Result = lambda matc
     case typeless.Str(node @ parsing.ast.Str(str, loc)) :: Nil =>
       parsing.opcode.parse("<opcode>", str) match
         case Right(tr) => generateOpcode(scope, tr, str, loc)
-        case Left(err) => Left(OpcodeSyntaxErr(node, err))
+        case Left(err) => Left(OpcodeSyntaxErr(err, node))
     case _             => Left(BadCallErr(lambda))
 
   case lam: typeless.Lambda =>

@@ -25,7 +25,7 @@ type Errors = parse.SyntaxErr
             | typechecker.InferenceErr
 
 
-def pp(err: Errors, source: String) = err match
+def pp(err: Errors, source: String): String = err match
   case parse.BadNumErr(_, location) =>
     lines(
       generateSyntaxErrorLine(s"bad number", location, source),
@@ -98,6 +98,9 @@ def pp(err: Errors, source: String) = err match
       generateRuntimeErrorLine(s"bad call to ${id.lexeme}", id.location, source),
       isolateBadLine(id.location, source),
     )
+
+  case genop.OpcodeSyntaxErr(err, source) =>
+    pp(err, source.lexeme)
 
   case runtime.RuntimeErr(msg, ins, codes, registers) =>
     lines(

@@ -4,7 +4,7 @@ package parsing.opcode
 import parsing.{Parsed, takeWhile, not, isWhitespace, and, oneof, eat}
 import parsing.location.{Location, Located, At}
 import parsing.error.{SyntaxErr, UnexpectedTokenErr, UnexpectedEofErr, BadNumErr}
-import utils.{isA, asList, squished, safeToInt}
+import utils.{Print, isA, asList, squished, safeToInt}
 
 import scala.reflect.ClassTag
 
@@ -16,11 +16,11 @@ sealed trait Token extends Located
 sealed trait Expr extends Located
 
 
-case class OpenSquareBraket(loc: Location) extends Token, At(loc)
-case class CloseSquareBraket(loc: Location) extends Token, At(loc)
-case class Word(lexeme: String, loc: Location) extends Token, At(loc)
-case class Comma(loc: Location) extends Token, At(loc)
-case class Eof(loc: Location) extends Token, At(loc)
+case class OpenSquareBraket(loc: Location) extends Token, At(loc) with Print("[")
+case class CloseSquareBraket(loc: Location) extends Token, At(loc) with Print("]")
+case class Word(lexeme: String, loc: Location) extends Token, At(loc) with Print(lexeme)
+case class Comma(loc: Location) extends Token, At(loc) with Print(",")
+case class Eof(loc: Location) extends Token, At(loc) with Print("<eof>")
 
 
 case class Label(label: String, loc: Location) extends Expr, At(loc)

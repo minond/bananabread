@@ -12,7 +12,7 @@ import runtime.instruction.Type
 sealed trait GeneratorErr
 case class BadPushErr(ty: Type, node: Ir) extends GeneratorErr
 case class BadCallErr(lambda: Ir) extends GeneratorErr
-case class OpcodeSyntaxErr(source: Str, err: SyntaxErr) extends GeneratorErr
+case class OpcodeSyntaxErr(err: SyntaxErr, source: Str) extends GeneratorErr
 case class UndeclaredIdentifierErr(id: Id) extends GeneratorErr
 case class CannotStoreDefErr(definition: Ir) extends GeneratorErr
 case class UnknownUserOpcodeErr(expr: OpcodeExpr, source: String, loc: Location) extends GeneratorErr
