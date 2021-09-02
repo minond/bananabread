@@ -8,6 +8,7 @@ import typechecker.error => typechecker
 
 import ir.typeless => tl
 import parsing.location.Location
+import parsing.ast.Expr
 import bananabread.runtime.instruction.{Instruction, Code, Label, Value, pp => inspp}
 
 import scala.io.AnsiColor.{BOLD, RESET}
@@ -60,6 +61,14 @@ def pp(err: Errors, source: String) = err match
       generateSyntaxErrorLine(s"unexpected token `$token` found", token.location, source),
       isolateBadLine(token.location, source),
     )
+
+  case genop.BadPushErr(_, node) =>
+    node.expr match
+      case expr : Expr =>
+        lines(
+          generateRuntimeErrorLine(s"bad push, `${expr}` is not a valid runtime value", expr.location, source),
+          isolateBadLine(expr.location, source),
+        )
 
   case genop.UndeclaredIdentifierErr(id) =>
     lines(
