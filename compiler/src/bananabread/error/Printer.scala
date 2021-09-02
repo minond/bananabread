@@ -8,7 +8,7 @@ import typechecker.error => typechecker
 
 import ir.typeless => tl
 import parsing.location.Location
-import parsing.ast.Expr
+import parsing.ast.{Def, Expr}
 import bananabread.runtime.instruction.{Instruction, Code, Label, Value, pp => inspp}
 
 import scala.io.AnsiColor.{BOLD, RESET}
@@ -68,6 +68,11 @@ def pp(err: Errors, source: String) = err match
         lines(
           generateRuntimeErrorLine(s"bad push, `${expr}` is not a valid runtime value", expr.location, source),
           isolateBadLine(expr.location, source),
+        )
+      case stmt : Def =>
+        lines(
+          generateRuntimeErrorLine(s"bad push, `${stmt.value}` is not a valid runtime value", stmt.value.location, source),
+          isolateBadLine(stmt.value.location, source),
         )
 
   case genop.UndeclaredIdentifierErr(id) =>
