@@ -69,7 +69,7 @@ def liftLambda(lambda: ast.Lambda): Lifted[Lambda] =
     paramsIr.onlys[Id] match
       case Right(ids) =>
         Lambda(ids, bodyIr, lambda.tyVars, lambda)
-      case _ => return Left(BadParamIdentifier(paramsIr))
+      case _ => return Left(BadParamIdErr(paramsIr))
 
 def liftUniop(app: ast.Uniop): Lifted[App] =
   for
