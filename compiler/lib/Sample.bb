@@ -2,7 +2,7 @@ operator(prefix, 0, opcode)
 operator(infix, 2, +)
 operator(infix, 2, -)
 
-def println[T](x: T): Str =
+def println[T](x : T) : T =
   opcode %{
     load [Str] x
     println
