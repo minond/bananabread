@@ -186,6 +186,8 @@ class VmTests extends AnyFlatSpec with should.Matchers:
           load [Ref] x
         }
 
+      def force_keep = jump_test_2
+
       jump_test_1()
       """
     ) shouldEqual I32(123)

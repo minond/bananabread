@@ -18,7 +18,8 @@ def main(args: Array[String]) =
   val res =
     for
       ast <- parse(fileName, code)
-      ir  <- typeless.lift(ast)
+      ir1 <- typeless.lift(ast)
+      ir   = typeless.pass(ir1)
       ins <- backend.opcode.compile(ir)
       _    = println("~~~~~~~~~~~~~~~~~~~~~~~")
       _    = println(pp(ins))
