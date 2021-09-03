@@ -1,5 +1,5 @@
 package bananabread
-package ir
+package ir.typed
 
 import parsing.ast
 import parsing.ast.Expr
