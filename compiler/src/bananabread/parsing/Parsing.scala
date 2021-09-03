@@ -1,8 +1,8 @@
 package bananabread
 package parsing
 
-import parsing.ast.{Token, Tree, Expr, Stmt, Eof, Id}
-import parsing.error._
+import ast.{Token, Tree, Expr, Stmt, Eof, Id}
+import error._
 
 import scala.reflect.ClassTag
 

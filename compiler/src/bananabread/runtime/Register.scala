@@ -1,7 +1,8 @@
 package bananabread
-package runtime.register
+package runtime
+package register
 
-import runtime.value.{Value, I32, Pointer, Ptr, Nullptr}
+import value.{Value, I32, Pointer, Ptr, Nullptr}
 
 
 sealed trait Register

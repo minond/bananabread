@@ -1,7 +1,8 @@
 package bananabread
-package parsing.error
+package parsing
+package error
 
-import parsing.location.{Location, Located}
+import location.{Location, Located}
 
 
 sealed trait SyntaxErr(loc: Location) extends Located { def location = loc }

@@ -1,7 +1,8 @@
 package bananabread
-package runtime.memory
+package runtime
+package memory
 
-import runtime.value.{Value, Nullptr, I32}
+import value.{Value, Nullptr, I32}
 
 import scala.collection.mutable.ListBuffer
 

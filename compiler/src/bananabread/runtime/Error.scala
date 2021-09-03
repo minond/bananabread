@@ -1,8 +1,9 @@
 package bananabread
-package runtime.error
+package runtime
+package error
 
-import runtime.instruction.{Code, Instruction}
-import runtime.register.Registers
+import instruction.{Code, Instruction}
+import register.Registers
 
 
 case class RuntimeErr(msg: String, instruction: Instruction, codes: List[Code], registers: Registers)

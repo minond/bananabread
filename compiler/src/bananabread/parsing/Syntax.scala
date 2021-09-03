@@ -1,7 +1,8 @@
 package bananabread
-package parsing.language
+package parsing
+package language
 
-import parsing.ast.{Token, Id}
+import ast.{Token, Id}
 
 
 sealed trait OpPosition

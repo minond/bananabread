@@ -1,9 +1,9 @@
 package bananabread
-package runtime.instruction
+package runtime
+package instruction
 
-import runtime.value
-import runtime.value.Value
-import runtime.register.Register
+import value.Value
+import register.Register
 
 
 sealed trait Type

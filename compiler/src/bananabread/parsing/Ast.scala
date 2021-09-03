@@ -1,7 +1,8 @@
 package bananabread
-package parsing.ast
+package parsing
+package ast
 
-import parsing.location.{Location, Located, At}
+import location.{Location, Located, At}
 import utils.Print
 
 

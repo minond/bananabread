@@ -1,14 +1,10 @@
 package bananabread
-package parsing.language
+package parsing
+package language
 
-import parsing.{Parsed, takeWhile, eat, skip, lookahead}
-import parsing.{and, is, not, oneof, or}
-import parsing.{isLetter, isNewline, isNumeric, isWhitespace}
-
-import parsing.location.Location
-import parsing.ast._
-import parsing.error._
-
+import location.Location
+import ast._
+import error._
 import utils.{isAn, squished, safeToFloat, without}
 
 import scala.reflect.ClassTag

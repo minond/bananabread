@@ -1,9 +1,8 @@
 package bananabread
-package runtime.value
+package runtime
+package value
 
 import parsing.ast
-import runtime.Frame
-
 import ir.typeless
 import ir.typeless.Ir
 import utils.Print

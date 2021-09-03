@@ -1,9 +1,9 @@
 package bananabread
-package parsing.opcode
+package parsing
+package opcode
 
-import parsing.{Parsed, takeWhile, not, isWhitespace, and, oneof, eat}
-import parsing.location.{Location, Located, At}
-import parsing.error.{SyntaxErr, UnexpectedTokenErr, UnexpectedEofErr, BadNumErr}
+import location.{Location, Located, At}
+import error.{SyntaxErr, UnexpectedTokenErr, UnexpectedEofErr, BadNumErr}
 import utils.{Print, isA, asList, squished, safeToInt}
 
 import scala.reflect.ClassTag
