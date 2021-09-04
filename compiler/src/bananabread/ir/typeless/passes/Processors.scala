@@ -3,9 +3,9 @@ package ir.typeless
 package passes
 
 
-def listCalledLambdas(binding: Binding): Set[String] =
-  listCalledLambdas(binding.value)
-def listCalledLambdas(node: Ir): Set[String] =
+def listReferencedIds(binding: Binding): Set[String] =
+  listReferencedIds(binding.value)
+def listReferencedIds(node: Ir): Set[String] =
   node match
     case _: Num    => Set.empty
     case _: Str    => Set.empty
@@ -14,19 +14,19 @@ def listCalledLambdas(node: Ir): Set[String] =
     case Id(name)  =>
       Set(name.lexeme)
     case App(Id(name), args, _) =>
-      Set(name.lexeme) ++ args.map(listCalledLambdas).flatten
+      Set(name.lexeme) ++ args.map(listReferencedIds).flatten
     case App(lam, args, _) =>
-      listCalledLambdas(lam) ++ args.map(listCalledLambdas).flatten
+      listReferencedIds(lam) ++ args.map(listReferencedIds).flatten
     case Def(_, body, _) =>
-      listCalledLambdas(body)
+      listReferencedIds(body)
     case Lambda(_, body, _, _) =>
-      listCalledLambdas(body)
+      listReferencedIds(body)
     case Begin(ins, _) =>
-      ins.map(listCalledLambdas).flatten.toSet
+      ins.map(listReferencedIds).flatten.toSet
     case Cond(cond, pass, fail, _) =>
-      List(cond, pass, fail).map(listCalledLambdas).flatten.toSet
+      List(cond, pass, fail).map(listReferencedIds).flatten.toSet
     case Let(bindings, body, _) =>
-      listCalledLambdas(body) ++ bindings.map(listCalledLambdas).flatten
+      listReferencedIds(body) ++ bindings.map(listReferencedIds).flatten
 
 
 def listDefinedLambdas(node: Ir): Set[String] =

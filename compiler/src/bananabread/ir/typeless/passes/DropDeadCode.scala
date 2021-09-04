@@ -14,7 +14,7 @@ package dropDeadCode
 // dropped.
 def dropUnnecessaryLambdas(nodes: List[Ir]): List[Ir] =
   val called = nodes.foldLeft(Set.empty[String]) { (acc, node) =>
-    acc ++ listCalledLambdas(node)
+    acc ++ listReferencedIds(node)
   }
 
   val defined = nodes.foldLeft(Set.empty[String]) { (acc, node) =>
