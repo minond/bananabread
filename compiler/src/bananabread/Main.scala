@@ -12,7 +12,9 @@ import scala.io.Source
 
 def main(args: Array[String]) =
   val fileName = "./lib/Sample.bb"
-  val code = Source.fromFile(fileName).getLines.mkString("\n")
+  val prelude = module.loadSource("Prelude")
+  val sample = module.loadSource("Sample")
+  val code = prelude + sample
 
   println("~~~~~~~~~~~~~~~~~~~~~~~")
   val res =

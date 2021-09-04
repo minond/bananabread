@@ -4,6 +4,7 @@ package test
 import parsing.language.{Syntax, parse}
 import ir.typeless
 import runtime.Interpreter
+import error.Errors
 import error.pp => errpp
 
 val stdOps = Syntax.withPrefix(0, "-")
@@ -20,36 +21,6 @@ val stdOps = Syntax.withPrefix(0, "-")
                    .withInfix(1, ">")
                    .withPostfix(10, "!")
 
-val prelude =
-  """
-  def +(a, b) =
-    opcode %{
-      load [I32] a
-      load [I32] b
-      add [I32]
-    }
-
-  def -(a, b) =
-    opcode %{
-      load [I32] a
-      load [I32] b
-      sub [I32]
-    }
-
-  def ++(a, b) =
-    opcode %{
-      load [Str] a
-      load [Str] b
-      concat
-    }
-
-  def println(x) =
-    opcode %{
-      load [Str] x
-      println
-    }
-  """
-
 def exprsOf(code: String, syntax: Syntax = stdOps) =
   parse("<test>", code, syntax) match
     case Left(err) => throw Exception(errpp(err, code))
@@ -59,22 +30,26 @@ def astOf(code: String, syntax: Syntax = stdOps) =
   exprsOf(code, syntax).head
 
 def resultOf(code: String, syntax: Syntax = stdOps) =
-  val ast = parse("<stdin>", prelude + code, syntax).getOrElse(???)
-  val ir1 = typeless.lift(ast).getOrElse(???)
-  val ir  = typeless.pass(ir1)
-  // import runtime.instruction.pp
-  // backend.opcode.compile(ir) match
-  //   case Right(xs) =>
-  //     println("==========================")
-  //     println(code)
-  //     println("==========================")
-  //     println(pp(xs))
-  //     println("==========================")
-  //   case Left(err) => println(err)
-  val ins = backend.opcode.compile(ir).getOrElse(???)
-  val interpreter = Interpreter(ins, false, false)
-  interpreter.run
-  interpreter
+  val prelude = module.loadSource("Prelude")
+  val interpreter =
+    for
+      ast <- parse("<stdin>", prelude + code, syntax)
+      ir1 <- typeless.lift(ast)
+      ir   = typeless.pass(ir1)
+      ins <- backend.opcode.compile(ir)
+      interpreter = Interpreter(ins, false, false)
+    yield interpreter
+
+  interpreter match
+    case Left(err: Errors) =>
+      println(errpp(err, prelude + code))
+      ???
+    case Left(err) =>
+      println(s"unhandled error: $err")
+      ???
+    case Right(vm) =>
+      vm.run
+      vm
 
 def stackHeadOf(code: String, syntax: Syntax = stdOps) =
   val ret = resultOf(code, syntax)
