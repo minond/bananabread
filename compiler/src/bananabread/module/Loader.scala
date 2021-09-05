@@ -5,10 +5,11 @@ package module
 import scala.io.Source
 
 
+def readFile(path: String) =
+  Source.fromFile(path).getLines.mkString("\n")
+
 def loadSource(name: String) =
-  Source.fromFile(internalPath(name))
-        .getLines
-        .mkString("\n")
+  readFile(internalPath(name))
 
 def internalPath(name: String) =
   s"./lib/$name.bb"

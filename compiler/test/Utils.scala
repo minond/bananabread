@@ -7,6 +7,10 @@ import runtime.Interpreter
 import error.Errors
 import error.pp => errpp
 
+import java.io.{File, ByteArrayOutputStream}
+
+
+
 val stdOps = Syntax.withPrefix(0, "-")
                    .withPrefix(0, "∀")
                    .withPrefix(0, "*")
@@ -54,3 +58,22 @@ def resultOf(code: String, syntax: Syntax = stdOps) =
 def stackHeadOf(code: String, syntax: Syntax = stdOps) =
   val ret = resultOf(code, syntax)
   ret.stack.get(ret.registers.esp.value - 1)
+
+def outputOf(code: String) =
+  val buff = ByteArrayOutputStream()
+  Console.withOut(buff) {
+    resultOf(code)
+  }
+  buff.toString.trim
+
+def expectedOutput(code: String) =
+  val lines = code.split("\n").toList
+  // 2 to exclude the line itself plus the blank line right beneath it.
+  val start = lines.indexOf("// Expected output") + 2
+  val section = lines.slice(start, lines.size)
+  section.map(_.stripPrefix("// ")).mkString("\n").trim
+
+def internalTestProgramPaths() =
+  File("./test/programs").listFiles
+    .filter(_.isFile)
+    .map(_.toString)
