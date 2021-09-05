@@ -77,3 +77,4 @@ def internalTestProgramPaths() =
   File("./test/programs").listFiles
     .filter(_.isFile)
     .map(_.toString)
+    .filter(!_.endsWith(".swp"))
