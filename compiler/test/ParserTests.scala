@@ -75,3 +75,11 @@ class ParserTests extends AnyFlatSpec with should.Matchers:
   it should "correctly order operators in a complex equation" in {
     astOf("3 + 1 / 4 * 1 + 9") shouldEqual "(+ (+ 3 (/ 1 (* 4 1))) 9)"
   }
+
+  it should "parse quoted strings" in {
+    astOf(""""hi there"""") shouldEqual """"hi there""""
+  }
+
+  it should "parse block strings" in {
+    astOf("""%{hi there}""") shouldEqual """"hi there""""
+  }

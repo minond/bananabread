@@ -300,13 +300,17 @@ def nextToken(
   case '%' if !ignorePString =>
     tail.headOption match
       case Some('{', _) =>
-        val str = takeWhile(skip(tail), not(is('}')))
-        if tail.isEmpty
-        then Left(UnclosedStringErr(loc))
-        else if tail.next._1 != '}'
+        val str = takeWhile(skip(tail), aint('}'))
+        if tail.isEmpty || tail.next._1 != '}'
         then Left(UnclosedStringErr(loc))
         else Right(Str(str.mkString, loc))
       case _ => nextToken(head, tail, loc, syntax, ignorePString=true)
+
+  case '"' =>
+    val str = takeWhile(tail, aint('"'))
+    if tail.isEmpty || tail.next._1 != '"'
+    then Left(UnclosedStringErr(loc))
+    else Right(Str(str.mkString, loc))
 
   case '\'' =>
     val symbol = takeWhile(tail, isSymbolTail).mkString

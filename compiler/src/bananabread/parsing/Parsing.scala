@@ -21,6 +21,7 @@ def flpreds[T](preds: Seq[Pred[T]], id: Boolean = true)(cond: Predcond) =
 def ge[T <: Char](x: T) = (c: T) => c >= x
 def le[T <: Char](x: T) = (c: T) => c <= x
 def is[T <: Char](x: T) = (c: T) => c == x
+def aint[T <: Char](x: T) = (c: T) => c != x
 def oneof[T <: Char](xs: T*) = (c: T) => xs.contains(c)
 def not[T <: Char](f: Pred[T]) = flpreds(Seq(f))(_ && !_)
 def and[T <: Char](fs: Pred[T]*) = flpreds(fs)(_ && _)
