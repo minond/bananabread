@@ -16,25 +16,41 @@ def main(args: Array[String]) =
   val sample = module.loadSource("Sample")
   val code = prelude + sample
 
-  println("~~~~~~~~~~~~~~~~~~~~~~~")
+  val flagPrintOpcodes = args.contains("print-opcodes")
+  val flagPrintTypes = args.contains("print-types")
+  val flagPrintState = args.contains("print-state")
+  val flagDebug = args.contains("debug")
+
+  val doDebug = flagDebug
+  val doPrintOpcodes = flagPrintOpcodes || flagDebug
+  val doPrintTypes = flagPrintTypes || flagDebug
+  val doPrintState = flagPrintState || flagDebug
+
   val res =
     for
       ast <- parse(fileName, code)
       ir1 <- typeless.lift(ast)
       ir   = typeless.pass(ir1)
       ins <- backend.opcode.compile(ir)
-      _    = println("~~~~~~~~~~~~~~~~~~~~~~~")
-      _    = println(pp(ins))
-      _    = println("~~~~~~~~~~~~~~~~~~~~~~~")
-      _    = typechecker.infer(ir).map { tys =>
-               ir.zip(tys._1).foreach {
-                 case (typeless.Def(name, _, _), ty) => println(s"$name: $ty")
-                 case (ir, ty) => println(s"$ir: $ty")
-               }
+
+      _    = if doPrintOpcodes then
                println("~~~~~~~~~~~~~~~~~~~~~~~")
-             }
+               println(pp(ins))
+               println("~~~~~~~~~~~~~~~~~~~~~~~")
+
+      _    = if doPrintTypes then
+               typechecker.infer(ir).map { tys =>
+                 println("~~~~~~~~~~~~~~~~~~~~~~~")
+                 ir.zip(tys._1).foreach {
+                   case (typeless.Def(name, _, _), ty) => println(s"$name: $ty")
+                   case (ir, ty) => println(s"$ir: $ty")
+                 }
+                 println("~~~~~~~~~~~~~~~~~~~~~~~")
+               }
+
       vm   = Interpreter(ins)
-      _   <- if args.headOption == Some("debug")
+
+      _   <- if doDebug
              then vm.debugging.stepping.run
              else vm.run
     yield
@@ -42,7 +58,9 @@ def main(args: Array[String]) =
 
   res match
     case Right(vm) =>
-      println("~~~~~~~~~~~~~~~~~~~~~~~")
-      vm.printState
+      if doPrintState then
+        println("~~~~~~~~~~~~~~~~~~~~~~~")
+        vm.printState
+        println("~~~~~~~~~~~~~~~~~~~~~~~")
     case Left(err: Errors) => println(errpp(err, code))
     case Left(err) => println(s"unhandled error: $err")
