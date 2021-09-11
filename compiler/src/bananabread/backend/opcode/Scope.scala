@@ -51,6 +51,8 @@ class Scope(val module: String, env: Map[String, Ir], parent: Option[Scope]):
   def subscope(suffix: String) =
     Scope(s"$module.$suffix", Map.empty, Some(this))
 
+  def forked[R](fn: Scope => R) =
+    fn(Scope(module, Map.empty, Some(this)))
   def forked[R](module: String)(fn: Scope => R) =
     fn(Scope(module, Map.empty, Some(this)))
 

@@ -113,6 +113,7 @@ def generateCall(scope: Scope, lambda: Ir, args: List[Ir]): Result = lambda matc
   case id: typeless.Id   => generateCallId(scope, args, id)
   case app: typeless.App => generateCallApp(scope, args, app)
   case _: typeless.Let   => generateCallResultOf(scope, args, lambda)
+  case _: typeless.Cond  => generateCallResultOf(scope, args, lambda)
 
   case _ => Left(BadCallErr(lambda))
 
@@ -197,27 +198,29 @@ def generateCallArgsLoad(scope: Scope, args: List[Ir]): Result =
   }.squished.map(_.flatten)
 
 def generateCond(scope: Scope, cond: Ir, pass: Ir, fail: Ir): Result =
-  val condString = uniqueString(scope, "cond")
-  val thenString = uniqueString(scope, "then")
-  val elseString = uniqueString(scope, "else")
-  val doneString = uniqueString(scope, "done")
+  scope.forked { scope =>
+    val condString = uniqueString(scope, "cond")
+    val thenString = uniqueString(scope, "then")
+    val elseString = uniqueString(scope, "else")
+    val doneString = uniqueString(scope, "done")
 
-  val thenLabel = group(scope, Label(thenString))
-  val elseLabel = group(scope, Label(elseString))
-  val doneLabel = group(scope, Label(doneString))
+    val thenLabel = group(scope, Label(thenString))
+    val elseLabel = group(scope, Label(elseString))
+    val doneLabel = group(scope, Label(doneString))
 
-  val elseJump = group(scope, Jz(elseString))
-  val doneJump = group(scope, Jmp(doneString))
+    val elseJump = group(scope, Jz(elseString))
+    val doneJump = group(scope, Jmp(doneString))
 
-  for
-    condCode <- generate(scope, cond)
-    passCode <- generate(scope, pass)
-    failCode <- generate(scope, fail)
-  yield
-    condCode  ++ elseJump ++              // if
-    thenLabel ++ passCode ++ doneJump ++  // then
-    elseLabel ++ failCode ++              // else
-    doneLabel                             // rest
+    for
+      condCode <- generate(scope, cond)
+      passCode <- generate(scope, pass)
+      failCode <- generate(scope, fail)
+    yield
+      condCode  ++ elseJump ++              // if
+      thenLabel ++ passCode ++ doneJump ++  // then
+      elseLabel ++ failCode ++              // else
+      doneLabel                             // rest
+  }
 
 def generateLet(scope: Scope, bindings: List[typeless.Binding], body: Ir): Result =
   scope.unique { subscope =>
@@ -236,9 +239,9 @@ def generateLet(scope: Scope, bindings: List[typeless.Binding], body: Ir): Resul
 
     for
       lets <- header.squished
-      body <- generate(subscope, body)
+      code <- generate(subscope, body)
     yield
-      regroup(subscope, scope, lets.flatten ++ body)
+      regroup(subscope, scope, lets.flatten ++ code)
   }
 
 def generateDef(scope: Scope, name: String, value: Ir): Result = value match
