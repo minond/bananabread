@@ -306,12 +306,19 @@ def generateStore(scope: Scope, label: String, value: Ir): Result = value match
     case None    => Left(UndeclaredIdentifierErr(id))
 
 def generateBegin(scope: Scope, irs: List[Ir]): Result =
-  scope.forked { scope =>
-    for
-      codes <- irs.map { ir => generate(scope, ir) }.squished
-    yield
-      codes.flatten
-  }
+  for
+    codes <- irs.map { ir => generate(scope, ir) }.squished
+    lref   = generatePushReturnedRef(scope, irs.last)
+  yield
+    codes.flatten ++ lref
+
+/** Generates code for any ir node that ought to be something we return back or
+ *  keep around. Mostly for references of lambdas.
+ */
+def generatePushReturnedRef(scope: Scope, ir: Ir): Output =
+  ir match
+    case lam: typeless.Lambda => group(scope, Push(Scope, value.Id(lam.ptr)))
+    case _ => List.empty
 
 def group(scope: Scope, insts: (Instruction | Label)*): Output =
   group(scope.module, insts:_*)
