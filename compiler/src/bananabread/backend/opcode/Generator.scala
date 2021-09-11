@@ -114,6 +114,7 @@ def generateCall(scope: Scope, lambda: Ir, args: List[Ir]): Result = lambda matc
   case app: typeless.App => generateCallApp(scope, args, app)
   case _: typeless.Let   => generateCallResultOf(scope, args, lambda)
   case _: typeless.Cond  => generateCallResultOf(scope, args, lambda)
+  case _: typeless.Begin => generateCallResultOf(scope, args, lambda)
 
   case _ => Left(BadCallErr(lambda))
 
@@ -305,10 +306,12 @@ def generateStore(scope: Scope, label: String, value: Ir): Result = value match
     case None    => Left(UndeclaredIdentifierErr(id))
 
 def generateBegin(scope: Scope, irs: List[Ir]): Result =
-  for
-    codes <- irs.map { ir => generate(scope, ir) }.squished
-  yield
-    codes.flatten
+  scope.forked { scope =>
+    for
+      codes <- irs.map { ir => generate(scope, ir) }.squished
+    yield
+      codes.flatten
+  }
 
 def group(scope: Scope, insts: (Instruction | Label)*): Output =
   group(scope.module, insts:_*)
