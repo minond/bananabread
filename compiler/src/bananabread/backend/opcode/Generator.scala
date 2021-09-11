@@ -110,9 +110,11 @@ def generateCall(scope: Scope, lambda: Ir, args: List[Ir]): Result = lambda matc
     yield
       call ++ func
 
-  case id: typeless.Id      => generateCallId(scope, args, id)
-  case app: typeless.App    => generateCallApp(scope, args, app)
-  case _                    => Left(BadCallErr(lambda))
+  case id: typeless.Id   => generateCallId(scope, args, id)
+  case app: typeless.App => generateCallApp(scope, args, app)
+  case _: typeless.Let   => generateCallResultOf(scope, args, lambda)
+
+  case _ => Left(BadCallErr(lambda))
 
 def generateOpcode(scope: Scope, tree: OpcodeTree, source: String, loc: Location): Result =
   tree.nodes.map(generateOpcode(scope, _, source, loc)).squished.map(_.flatten)
@@ -165,6 +167,15 @@ def generateCallApp(scope: Scope, args: List[Ir], app: typeless.App): Result =
     mov    = group(scope, Mov(Jm, None))
     call2 <- generateCallWithArgs(scope, args, Call0)
     codes  = call1 ++ mov ++ call2
+  yield
+    codes
+
+def generateCallResultOf(scope: Scope, args: List[Ir], node: typeless.Ir): Result =
+  for
+    body <- generate(scope, node)
+    mov   = group(scope, Mov(Jm, None))
+    call <- generateCallWithArgs(scope, args, Call0)
+    codes = body ++ mov ++ call
   yield
     codes
 
