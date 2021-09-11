@@ -199,29 +199,29 @@ def generateCallArgsLoad(scope: Scope, args: List[Ir]): Result =
   }.squished.map(_.flatten)
 
 def generateCond(scope: Scope, cond: Ir, pass: Ir, fail: Ir): Result =
-  scope.forked { scope =>
-    val condString = uniqueString(scope, "cond")
-    val thenString = uniqueString(scope, "then")
-    val elseString = uniqueString(scope, "else")
-    val doneString = uniqueString(scope, "done")
+  val condString = uniqueString(scope, "cond")
+  val thenString = uniqueString(scope, "then")
+  val elseString = uniqueString(scope, "else")
+  val doneString = uniqueString(scope, "done")
 
-    val thenLabel = group(scope, Label(thenString))
-    val elseLabel = group(scope, Label(elseString))
-    val doneLabel = group(scope, Label(doneString))
+  val thenLabel = group(scope, Label(thenString))
+  val elseLabel = group(scope, Label(elseString))
+  val doneLabel = group(scope, Label(doneString))
 
-    val elseJump = group(scope, Jz(elseString))
-    val doneJump = group(scope, Jmp(doneString))
+  val elseJump = group(scope, Jz(elseString))
+  val doneJump = group(scope, Jmp(doneString))
 
-    for
-      condCode <- generate(scope, cond)
-      passCode <- generate(scope, pass)
-      failCode <- generate(scope, fail)
-    yield
-      condCode  ++ elseJump ++              // if
-      thenLabel ++ passCode ++ doneJump ++  // then
-      elseLabel ++ failCode ++              // else
-      doneLabel                             // rest
-  }
+  for
+    condCode <- generate(scope, cond)
+    passCode <- generate(scope, pass)
+    passRefs  = generatePushReturnedRef(scope, pass)
+    failCode <- generate(scope, fail)
+    failRefs  = generatePushReturnedRef(scope, fail)
+  yield
+    condCode  ++ elseJump ++                          // if
+    thenLabel ++ passCode ++ passRefs ++ doneJump ++  // then
+    elseLabel ++ failCode ++ failRefs ++              // else
+    doneLabel                                         // rest
 
 def generateLet(scope: Scope, bindings: List[typeless.Binding], body: Ir): Result =
   scope.unique { subscope =>
