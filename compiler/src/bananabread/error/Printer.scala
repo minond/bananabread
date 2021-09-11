@@ -95,8 +95,14 @@ def pp(err: Errors, source: String): String = err match
 
   case genop.BadCallErr(tl.Id(id)) =>
     lines(
-      generateRuntimeErrorLine(s"bad call to ${id.lexeme}", id.location, source),
+      generateRuntimeErrorLine(s"bad call to `${id.lexeme}`", id.location, source),
       isolateBadLine(id.location, source),
+    )
+
+  case genop.BadCallErr(node) =>
+    lines(
+      generateRuntimeErrorLine(s"bad call to value of kind ${node.getClass.getSimpleName}", node.expr.location, source),
+      isolateBadLine(node.expr.location, source),
     )
 
   case genop.OpcodeSyntaxErr(err, source) =>
