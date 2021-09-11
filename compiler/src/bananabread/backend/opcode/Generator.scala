@@ -223,6 +223,12 @@ def generateCond(scope: Scope, cond: Ir, pass: Ir, fail: Ir): Result =
     elseLabel ++ failCode ++ failRefs ++              // else
     doneLabel                                         // rest
 
+/** TODO Let expressions are only returning a reference to an annonymous lambda
+  * in their bodies because `generateAnnonLambda` will ensure a reference to
+  * all non-top-level lambdas are pushed on the stack. But this may not always
+  * work. What we should do instead is use `generatePushReturnedRef` like other
+  * expression kinds do.
+  */
 def generateLet(scope: Scope, bindings: List[typeless.Binding], body: Ir): Result =
   scope.unique { subscope =>
     val header = bindings.map { case typeless.Binding(label, value, _) =>
@@ -313,8 +319,8 @@ def generateBegin(scope: Scope, irs: List[Ir]): Result =
     codes.flatten ++ lref
 
 /** Generates code for any ir node that ought to be something we return back or
- *  keep around. Mostly for references of lambdas.
- */
+  * keep around. Mostly for references of lambdas.
+  */
 def generatePushReturnedRef(scope: Scope, ir: Ir): Output =
   ir match
     case lam: typeless.Lambda => group(scope, Push(Scope, value.Id(lam.ptr)))
@@ -327,15 +333,16 @@ def group(section: String, insts: (Instruction | Label)*): Output =
     Grouped(section, inst)
   }
 
-// TODO regroup is a total hack needed because a "scope" is used for both
-// function/variable scoping _and_ instruction grouping. Fix this by tracking
-// blocks separate to scopes and updating Grouped to use this instead.
-//
-// The issue becomes apparent we need to create a new scope and have it stay
-// grouped with other instructions in the same block. We can't do this because
-// creating a new scope puts the instructions in another section in the code.
-// An example of this are `let` expressions which use a subscope but need to be
-// grouped in with the other instructions in the block it was defined in.
+/** TODO regroup is a total hack needed because a "scope" is used for both
+  * function/variable scoping _and_ instruction grouping. Fix this by tracking
+  * blocks separate to scopes and updating Grouped to use this instead.
+  *
+  * The issue becomes apparent we need to create a new scope and have it stay
+  * grouped with other instructions in the same block. We can't do this because
+  * creating a new scope puts the instructions in another section in the code.
+  * An example of this are `let` expressions which use a subscope but need to be
+  * grouped in with the other instructions in the block it was defined in.
+  */
 def regroup(prevScope: Scope, newScope: Scope, output: Output): Output =
   output.map {
     case Grouped(prevScope.module, data) => Grouped(newScope.module, data)
