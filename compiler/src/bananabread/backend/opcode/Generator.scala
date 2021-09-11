@@ -2,6 +2,7 @@ package bananabread
 package backend.opcode
 
 import error._
+import dsl._
 
 import ir.typeless
 import ir.typeless.Ir
@@ -24,6 +25,7 @@ import utils.{safeToInt, squished}
 import scala.util.Random
 import scala.collection.mutable.{Map, Queue}
 import scala.collection.immutable.Map => ImMap
+import scala.language.postfixOps
 
 
 case class Grouped(section: String, data: Instruction | Label)
@@ -136,14 +138,14 @@ def generateOpcode(scope: Scope, expr: OpcodeExpr, source: String, loc: Location
   case InstructionExpr("jz",      None,         List(label), _) => Right(group(scope, Jz(scope.qualified(label))))
   case InstructionExpr("jmp",     None,         List(label), _) => Right(group(scope, Jmp(label)))
   case InstructionExpr("call",    None,         List(label), _) => Right(group(scope, Call(scope.qualified(label))))
-  case InstructionExpr("mov",     Some("Pc"),   Nil,         _) => Right(group(scope, Mov(Pc, None)))
-  case InstructionExpr("mov",     Some("Lr"),   Nil,         _) => Right(group(scope, Mov(Lr, None)))
-  case InstructionExpr("mov",     Some("Jm"),   Nil,         _) => Right(group(scope, Mov(Jm, None)))
-  case InstructionExpr("mov",     Some("Rt"),   Nil,         _) => Right(group(scope, Mov(Rt, None)))
-  case InstructionExpr("mov",     Some("Pc"),   List(str),   _) => withI32(expr, str) { i => group(scope, Mov(Pc, Some(value.I32(i)))) }
-  case InstructionExpr("mov",     Some("Lr"),   List(str),   _) => withI32(expr, str) { i => group(scope, Mov(Lr, Some(value.I32(i)))) }
-  case InstructionExpr("mov",     Some("Jm"),   List(str),   _) => withI32(expr, str) { i => group(scope, Mov(Jm, Some(value.I32(i)))) }
-  case InstructionExpr("mov",     Some("Rt"),   List(str),   _) => withI32(expr, str) { i => group(scope, Mov(Rt, Some(value.I32(i)))) } // XXX May not always be an I32
+  case InstructionExpr("mov",     Some("Pc"),   Nil,         _) => Right(group(scope, mov Pc))
+  case InstructionExpr("mov",     Some("Lr"),   Nil,         _) => Right(group(scope, mov Lr))
+  case InstructionExpr("mov",     Some("Jm"),   Nil,         _) => Right(group(scope, mov Jm))
+  case InstructionExpr("mov",     Some("Rt"),   Nil,         _) => Right(group(scope, mov Rt))
+  case InstructionExpr("mov",     Some("Pc"),   List(str),   _) => withI32(expr, str) { i => group(scope, mov Pc(i)) }
+  case InstructionExpr("mov",     Some("Lr"),   List(str),   _) => withI32(expr, str) { i => group(scope, mov Lr(i)) }
+  case InstructionExpr("mov",     Some("Jm"),   List(str),   _) => withI32(expr, str) { i => group(scope, mov Jm(i)) }
+  case InstructionExpr("mov",     Some("Rt"),   List(str),   _) => withI32(expr, str) { i => group(scope, mov Rt(i)) } // XXX May not always be an I32
   case InstructionExpr("stw",     None,         List("Rt"),  _) => Right(group(scope, Stw(Rt)))
   case InstructionExpr("ldw",     None,         List("Rt"),  _) => Right(group(scope, Ldw(Rt)))
   case InstructionExpr("concat",  None,         Nil,         _) => Right(group(scope, Concat))
@@ -275,24 +277,25 @@ def generateLambda(scope: Scope, params: List[typeless.Id], body: Ir): Result =
   }
 
   val callerInfo = group(scope,
-    Stw(Ebp), // Track old ebp.
-    Stw(Esp), // Load esp.
-    Ldw(Ebp), // And store it in ebp.
-              // TODO do this std+ldw in a single mov inst.
+    stw Ebp, // Track old ebp.
+    stw Esp, // Load esp.
+    ldw Ebp, // And store it in ebp.
+             // TODO do this std+ldw in a single mov inst.
   )
 
-  val ret = group(scope,
-    Ldw(Rt),  // Still using stack conventions, store return value in
-              // rt register while we do some cleanup.
-    Stw(Ebp), // Load ebp.
-    Ldw(Esp), // And store it in esp.
-              // TODO do this std+ldw in a single mov inst.
-    Ldw(Ebp), // Restore the previous ebp value back into that register.
-    Stw(Rt),  // Reload the return value on the stack.
-    Swap,     // Swap return value and return address which are now at
-    Ret)      // top of the stack and return.
+  val retCode = group(scope,
+    ldw Rt,  // Still using stack conventions, store return value in
+             // rt register while we do some cleanup.
+    stw Ebp, // Load ebp.
+    ldw Esp, // And store it in esp.
+             // TODO do this std+ldw in a single mov inst.
+    ldw Ebp, // Restore the previous ebp value back into that register.
+    stw Rt,  // Reload the return value on the stack.
+    swap,    // Swap return value and return address which are now at
+    ret,     // top of the stack and return.
+  )
 
-  generate(scope, body).map(init ++ storeArgs ++ callerInfo ++ _ ++ ret)
+  generate(scope, body).map(init ++ storeArgs ++ callerInfo ++ _ ++ retCode)
 
 def generateStore(scope: Scope, label: String, value: Ir): Result = value match
   case _: typeless.Lambda => Right(group(scope, Store(Ref, scope.qualified(label))))
