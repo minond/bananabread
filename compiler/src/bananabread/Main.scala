@@ -17,12 +17,14 @@ def main(args: Array[String]) =
   val sample = module.loadSource("Sample")
   val code = prelude + sample
 
+  val flagPrintAst = args.contains("print-ast")
   val flagPrintOpcodes = args.contains("print-opcodes")
   val flagPrintTypes = args.contains("print-types")
   val flagPrintState = args.contains("print-state")
   val flagDebug = args.contains("debug")
 
   val doDebug = flagDebug
+  val doPrintAst = flagPrintAst || flagDebug
   val doPrintOpcodes = flagPrintOpcodes || flagDebug
   val doPrintTypes = flagPrintTypes || flagDebug
   val doPrintState = flagPrintState || flagDebug
@@ -30,6 +32,12 @@ def main(args: Array[String]) =
   val res =
     for
       ast <- parse(fileName, code)
+
+      _    = if doPrintAst then
+               println("~~~~~~~~~~~~~~~~~~~~~~~")
+               println(ast)
+               println("~~~~~~~~~~~~~~~~~~~~~~~")
+
       ir1 <- typeless.lift(ast)
       ir   = typeless.pass(ir1)
       ins <- backend.opcode.compile(ir)

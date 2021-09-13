@@ -3,7 +3,7 @@ package parsing
 package ast
 
 import location.{Location, Located, At}
-import utils.Print
+import utils.{Print, groupedIds}
 
 
 case class Tree(val nodes: List[Expr | Stmt])
@@ -44,9 +44,12 @@ case class Let(start: Token, bindings: List[Binding], body: Expr) extends Expr w
 case class Begin(head: Expr, tail: List[Expr]) extends Expr with At(head.location), Print(s"begin ${(head +: tail).mkString(" ")} end")
 
 
-case class Lambda(params: List[Param], body: Expr, tyVars: List[Ty], tyRet: Option[Ty]) extends Expr with At(body.location), Print(s"{${params.mkString(", ")} = ${body}${ppTy(tyRet)}}")
+case class Lambda(params: List[Param], body: Expr, tyVars: List[TyId], tyRet: Option[Ty]) extends Expr with At(body.location), Print(s"{${params.mkString(", ")} = ${body}${ppTy(tyRet)}}")
 case class Param(name: Id, ty: Option[Ty]) extends Token, At(name.location), Print(name.toString + ppTy(ty))
-case class Ty(ty: Id)
+
+sealed trait Ty
+case class TyId(id: Id) extends Ty with Print(id.lexeme)
+case class TyLamda(params: List[Ty], ret: Ty) extends Ty with Print(s"${params.groupedIds} -> $ret")
 
 
 case class Comment(lexeme: String, loc: Location) extends Token, At(loc)
@@ -55,4 +58,6 @@ case class Def(name: Id, value: Expr) extends Stmt, At(name.location), Print(s"d
 
 
 def ppTy(ty: Option[Ty]): String =
-  ty.map(_.ty).map(" : " + _).getOrElse("")
+  ty match
+    case None => ""
+    case Some(ty) => s" : $ty"

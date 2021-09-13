@@ -18,7 +18,7 @@ case class Str(expr: ast.Str) extends Ir with Print(s"(str ${expr.lexeme})"), Pt
 case class Id(expr: ast.Id) extends Ir with Print(s"(id ${expr.lexeme})")
 case class Symbol(expr: ast.Symbol) extends Ir with Print(s"(symbol ${expr.lexeme})"), Ptr("symbol")
 case class App(lambda: Ir, args: List[Ir], expr: Expr) extends Ir with Print(s"(app lambda: ${lambda} args: (${args.mkString(" ")}))")
-case class Lambda(params: List[Id], body: Ir, tyVars: List[ast.Ty], expr: ast.Lambda) extends Ir with Print(s"(lambda params: (${params.mkString(" ")}) body: $body)"), Ptr("lambda")
+case class Lambda(params: List[Id], body: Ir, tyVars: List[ast.TyId], expr: ast.Lambda) extends Ir with Print(s"(lambda params: (${params.mkString(" ")}) body: $body)"), Ptr("lambda")
 case class Cond(cond: Ir, pass: Ir, fail: Ir, expr: Expr) extends Ir with Print(s"(if cond: $cond then: $pass else: $fail)")
 case class Begin(ins: List[Ir], expr: Expr) extends Ir with Print(s"(begin ${ins.mkString(" ")})")
 case class Def(name: ast.Id, value: Ir, expr: Stmt) extends Ir with Print(s"(def $name $value)")

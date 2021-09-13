@@ -24,7 +24,7 @@ def -(a : I32, b : I32) : I32 =
     sub [I32]
   }
 
-def ++(a, b) =
+def ++(a : Str, b : Str) : Str =
   opcode %{
     load [Str] a
     load [Str] b

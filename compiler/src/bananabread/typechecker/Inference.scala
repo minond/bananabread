@@ -55,7 +55,8 @@ def inferDef(label: String, value: Ir, scope: Scope): Scoped[Type] =
     (ty, scope + (label -> ty))
   }
 
-// TODO Unify argTys
+/** TODO Unify argTys
+  */
 def inferApp(app: typeless.App, scope: Scope): Scoped[Type] =
   for
     argTys <- app.args.map { arg => infer(arg, scope) }.squished
@@ -64,13 +65,14 @@ def inferApp(app: typeless.App, scope: Scope): Scoped[Type] =
   yield
     (fnTy.app(argTys.size), scope)
 
-// TODO Handle type variables
+/** TODO Handle type variables
+  */
 def inferLambda(lam: typeless.Lambda, scope: Scope): Scoped[Lambda] =
   for
     paramTys <- inferLambdaParams(lam, scope)
-    retTys   <- inferLambdaRets(paramTys, lam, scope)
+    retTy    <- inferLambdaRet(paramTys, lam, scope)
   yield
-    (Lambda(paramTys, retTys), scope)
+    (Lambda(paramTys, retTy), scope)
 
 def inferLambdaParams(lam: typeless.Lambda, scope: Scope): Inferred[List[Type]] =
   val tags = lam.expr.params.map(_.ty)
@@ -89,12 +91,13 @@ def inferLambdaParams(lam: typeless.Lambda, scope: Scope): Inferred[List[Type]] 
       Left(err)
   }
 
-// TODO Substitute type variables
-def inferLambdaRets(paramTys: List[Type], lam: typeless.Lambda, scope: Scope): Inferred[List[Type]] =
+/** TODO Substitute type variables
+  */
+def inferLambdaRet(paramTys: List[Type], lam: typeless.Lambda, scope: Scope): Inferred[Type] =
   lam.expr.tyRet match
     case Some(tag) =>
       parseType(lam.tyVars, tag) match
-        case Right(ty) => Right(List(ty))
+        case Right(ty) => Right(ty)
         case Left(err) => Left(err)
 
     case None =>
@@ -106,7 +109,7 @@ def inferLambdaRets(paramTys: List[Type], lam: typeless.Lambda, scope: Scope): I
       for
         ty <- infer(lam.body, lexicalScope)
       yield
-        List(ty._1)
+        ty._1
 
 def inferCond(cond: typeless.Cond, scope: Scope): Scoped[Type] =
   for
@@ -138,14 +141,22 @@ def fresh() =
   Var(ids.next.head)
 
 
-def parseType(tyVars: List[ast.Ty], node: ast.Ty): Either[UnknowTypeErr, Type] =
-  node.ty.lexeme match
-    case ty if tyVars.map(_.ty.lexeme).contains(ty) => Right(fresh())
-    case "I32"    => Right(ty.I32)
-    case "Str"    => Right(ty.Str)
-    case "Symbol" => Right(ty.Symbol)
-    case "Bool"   => Right(ty.Bool)
-    case baddie   => Left(UnknowTypeErr(node))
+def parseType(tyVars: List[ast.TyId], node: ast.Ty): Either[UnknowTypeErr, Type] =
+  node match
+    case node @ ast.TyId(id) =>
+      id.lexeme match
+        case ty if tyVars.map(_.id.lexeme).contains(ty) => Right(fresh())
+        case "I32"    => Right(ty.I32)
+        case "Str"    => Right(ty.Str)
+        case "Symbol" => Right(ty.Symbol)
+        case "Bool"   => Right(ty.Bool)
+        case baddie   => Left(UnknowTypeErr(node))
+    case ast.TyLamda(params, retTy) =>
+      for
+        parsedParams <- params.map { param => parseType(tyVars, param) }.squished
+        parsedRet    <- parseType(tyVars, retTy)
+      yield
+        Lambda(parsedParams, parsedRet)
 
 
 extension (ty: Type)

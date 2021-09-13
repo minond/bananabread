@@ -78,3 +78,10 @@ def lookahead(head: Token, tail: Tokens): Token =
 def is(token: Token, word: String) = token match
   case id: Id => id.lexeme == word
   case _ => false
+
+
+extension (token: Token)
+  def lexemeIs(lexeme: String): Boolean =
+    token match
+      case Id(id, _) => id == lexeme
+      case _ => false

@@ -68,7 +68,7 @@ def parsePrimary(head: Token, tail: Tokens, syntax: Syntax): Parsed[Expr] =
 def parseLambda(start: Token, tail: Tokens, syntax: Syntax): Parsed[Lambda] =
   for
     tyVars <- if lookahead(start, tail).isAn[OpenSquareBraket]
-              then parseByUntilWith[Comma, CloseSquareBraket, Ty](tail.next, tail, syntax, parseTyVar)
+              then parseByUntilWith[Comma, CloseSquareBraket, TyId](tail.next, tail, syntax, parseTyVar)
               else Right(List.empty)
     params <- parseParams(tail.next, tail, syntax)
     tyRet  <- parseOptionalTy(start, tail, syntax)
@@ -111,14 +111,27 @@ def parseParam(head: Token, tail: Tokens, syntax: Syntax): Parsed[Param] =
 def parseOptionalTy(head: Token, tail: Tokens, syntax: Syntax): Parsed[Option[Ty]] =
   tail.headOption match
     case Some(_: Colon) =>
-      eat[Id](tail.next, tail).map { id => Some(Ty(id)) }
-
+      parseTy(tail.next, tail, syntax).map(Some(_))
     case _ =>
       Right(None)
 
-def parseTyVar(head: Token, tail: Tokens, syntax: Syntax): Parsed[Ty] =
+def parseTy(head: Token, tail: Tokens, syntax: Syntax): Parsed[Ty] =
+  eat[Id](head, tail).flatMap { id =>
+    if lookahead(id, tail).lexemeIs("->")
+    then // T -> R
+      for
+        retTy <- parseTy(tail.next, tail, syntax)
+      yield
+        TyLamda(List(TyId(id)), retTy)
+    else // T
+      Right(TyId(id))
+  }
+
+/** TODO This needs to be able to parse complex type expression, like `X < Y`.
+  */
+def parseTyVar(head: Token, tail: Tokens, syntax: Syntax): Parsed[TyId] =
   head match
-    case id: Id => Right(Ty(id))
+    case id: Id => Right(TyId(id))
     case _      => Left(UnexpectedTokenErr(head))
 
 def parseCond(start: Token, tail: Tokens, syntax: Syntax): Parsed[Cond] =

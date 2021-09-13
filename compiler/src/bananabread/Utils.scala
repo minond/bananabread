@@ -20,6 +20,13 @@ extension [T](xs: List[T])
     }
 
 
+extension (strs: List[{ def toString(): String }])
+  def groupedIds =
+    if strs.size == 1
+    then strs.head
+    else s"(${strs.mkString(", ")})"
+
+
 extension [L, R](eithers: List[Either[L, R]])
   def squished: Either[L, List[R]] =
     eithers.iterator.squished

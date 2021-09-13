@@ -1,4 +1,4 @@
-def loop(i, fn) =
+def loop(i : I32, fn : I32 -> Void) : Void =
   if i
   then begin
     fn(i)
@@ -8,8 +8,8 @@ def loop(i, fn) =
 
 
 loop(10,
-  (func (y) =
-    func (x) =
+  (func (y : I32) =
+    func (x : I32) =
       begin
         println(y)
         println(x)
