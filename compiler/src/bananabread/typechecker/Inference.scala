@@ -149,6 +149,7 @@ def parseType(tyVars: List[ast.TyId], node: ast.Ty): Either[UnknowTypeErr, Type]
         case "I32"    => Right(ty.I32)
         case "Str"    => Right(ty.Str)
         case "Symbol" => Right(ty.Symbol)
+        case "Void"   => Right(ty.Void)
         case "Bool"   => Right(ty.Bool)
         case baddie   => Left(UnknowTypeErr(node))
     case ast.TyLamda(params, retTy) =>
