@@ -32,7 +32,6 @@ def main(args: Array[String]) =
   val res =
     for
       ast <- parse(fileName, code)
-
       _    = if doPrintAst then
                println("~~~~~~~~~~~~~~~~~~~~~~~")
                println(ast)
@@ -40,22 +39,20 @@ def main(args: Array[String]) =
 
       ir1 <- typeless.lift(ast)
       ir   = typeless.pass(ir1)
-      ins <- backend.opcode.compile(ir)
+      tys <- typechecker.infer(ir)
+      _    = if doPrintTypes then
+               println("~~~~~~~~~~~~~~~~~~~~~~~")
+               ir.zip(tys._1).foreach {
+                 case (typeless.Def(name, _, _), ty) => println(s"$name: $ty")
+                 case (ir, ty) => println(s"$ir: $ty")
+               }
+               println("~~~~~~~~~~~~~~~~~~~~~~~")
 
+      ins <- backend.opcode.compile(ir)
       _    = if doPrintOpcodes then
                println("~~~~~~~~~~~~~~~~~~~~~~~")
                println(pp(ins))
                println("~~~~~~~~~~~~~~~~~~~~~~~")
-
-      _    = if doPrintTypes then
-               typechecker.infer(ir).map { tys =>
-                 println("~~~~~~~~~~~~~~~~~~~~~~~")
-                 ir.zip(tys._1).foreach {
-                   case (typeless.Def(name, _, _), ty) => println(s"$name: $ty")
-                   case (ir, ty) => println(s"$ir: $ty")
-                 }
-                 println("~~~~~~~~~~~~~~~~~~~~~~~")
-               }
 
       vm   = Interpreter(ins)
     yield

@@ -116,8 +116,8 @@ def pp(err: Errors, source: String): String = err match
 
   case typechecker.UnknowTypeErr(tag) =>
     lines(
-      generateTypeErrorLine(s"unknown type `${tag.ty.lexeme}`", tag.ty.location, source),
-      isolateBadLine(tag.ty.location, source),
+      generateTypeErrorLine(s"unknown type `${tag.id.lexeme}`", tag.id.location, source),
+      isolateBadLine(tag.id.location, source),
     )
 
   case typechecker.LookupErr(label, ir) =>
