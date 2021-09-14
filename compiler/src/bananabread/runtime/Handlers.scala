@@ -155,7 +155,7 @@ def handleLdw(op: Ldw, state: State): Dispatch =
 
 def handleLoad(op: Load, state: State): Dispatch = state.frames.curr.get(op.label) match
   case None =>
-    const(op, op.label, state) { value =>
+    pointer(op, op.label, state) { value =>
       state.push(value)
       Cont
     }
@@ -206,6 +206,12 @@ def const(op: Instruction, label: String, state: State)(f: Value => Dispatch): D
   state.constants.get(label) match
     case None => Error(s"missing const: ${label}", op)
     case Some(value) => f(value)
+
+def pointer(op: Instruction, label: String, state: State)(f: Value => Dispatch): Dispatch =
+  (state.constants.get(label), state.labels.get(label)) match
+    case (None, None) => Error(s"invalid pointer: ${label}", op)
+    case (Some(value), _) => f(value)
+    case (_, Some(_)) => f(value.Id(label))
 
 def binI32Op(state: State)(f: (Int, Int) => Int): Option[value.I32] =
   (state.pop, state.pop) match

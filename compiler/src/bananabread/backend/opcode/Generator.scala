@@ -86,7 +86,6 @@ def generateAnnonLambda(scope: Scope, lambda: typeless.Lambda): Result =
     generateLambda(subscope, lambda.params, lambda.body)
       .map(Label(lambda.ptr) +: _)
       .map(_ ++ exposure)
-      .map(_ :+ Value(Ref, lambda.ptr, Id(lambda.ptr)))
   }
 
 def generateCall(scope: Scope, lambda: Ir, args: List[Ir]): Result = lambda match
@@ -258,7 +257,7 @@ def generateDef(scope: Scope, name: String, value: Ir): Result = value match
     scope.define(name, lam)
     scope.scoped(name) { subscope =>
       generateLambda(subscope, lam.params, lam.body)
-        .map(Label(lam.ptr) +: _ :+ Value(Ref, scope.qualified(name), Id(scope.qualified(name))))
+        .map(Label(lam.ptr) +: _)
     }
 
   case _ =>
