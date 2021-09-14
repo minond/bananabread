@@ -1,4 +1,7 @@
 - Implement runtime currying
+- Fully qualify all anonymous functions
+- Module system, imports/exports
+- Move opcode processing into parse phase
 - Parsing errors:
 
     astOf("3 + 1 / 4 * 1 + 9") shouldEqual "(+ (+ 3 (/ 1 (* 4 1))) 9)"
@@ -11,5 +14,3 @@
     it should "correctly order operator with equal precedence 4" in {
       astOf("1 + 2 / 1 * 5 + 7") shouldEqual "(+ (+ 1 (* (/ 2 1) 5)) 7)"
     }
-
-- Fully qualify all anonymous functions
