@@ -1,6 +1,6 @@
 package bananabread
 
-import parsing.language.{tokenize, parse}
+import parsing.language.parse
 import ir.typeless
 import error.Errors
 import error.pp => errpp
