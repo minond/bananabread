@@ -98,6 +98,44 @@ def parseUntil[Until: ClassTag, E](head: Token, tail: Tokens, fn: (Token, Tokens
 
   aux(List.empty[Parsed[E]]).squished
 
+def parseByUntilWith[By: ClassTag, Until: ClassTag, T](
+  head: Token,
+  tail: Tokens,
+  syntax: Syntax,
+  fn: (Token, Tokens, Syntax) => Parsed[T],
+  acc: List[T] = List.empty
+): Parsed[List[T]] =
+  tail.headOption match
+    case Some(_: Until) =>
+      tail.next
+      Right(acc)
+
+    case Some(by: By) =>
+      skip(tail).headOption match
+        case None    => Left(UnexpectedEofErr(head))
+        case Some(_) =>
+          fn(tail.next, tail, syntax).flatMap { t =>
+            parseByUntilWith[By, Until, T](head, tail, syntax, fn, acc :+ t)
+          }
+
+    case Some(_) =>
+      fn(tail.next, tail, syntax).flatMap { t =>
+        parseByUntilWith[By, Until, T](head, tail, syntax, fn, acc :+ t)
+      }
+
+    case None =>
+      Left(UnexpectedEofErr(head))
+
+def parseNext[T](
+  head: Token,
+  tail: Tokens,
+  syntax: Syntax,
+  fn: (Token, Tokens, Syntax) => Parsed[T],
+): Parsed[T] =
+  tail.headOption match
+    case Some(_) => fn(tail.next, tail, syntax)
+    case None    => Left(UnexpectedEofErr(head))
+
 
 extension (token: Token)
   def lexemeIs(lexeme: String): Boolean =

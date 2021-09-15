@@ -74,7 +74,7 @@ def parseLambda(start: Token, tail: Tokens, syntax: Syntax): Parsed[Lambda] =
     params <- parseParams(tail.next, tail, syntax)
     tyRet  <- parseOptionalTy(start, tail, syntax)
     eq     <- eat("=", start, tail)
-    body   <- parseNextExpr(eq, tail, syntax)
+    body   <- parseNext(eq, tail, syntax, parseExpr)
   yield
     Lambda(params, body, tyVars, tyRet)
 
@@ -234,7 +234,6 @@ def parseSpecial(head: Token, tail: Tokens, syntax: Syntax): Parsed[Expr] =
 
 def parseExprCont(currRes: Parsed[Expr], tail: Tokens, syntax: Syntax): Parsed[Expr] =
   currRes.flatMap { curr => parseExprCont(curr, tail, syntax) }
-
 def parseExprCont(curr: Expr, tail: Tokens, syntax: Syntax): Parsed[Expr] =
   tail.headOption match
     case Some(op: Id) if syntax.isPostfix(op) =>
@@ -242,7 +241,7 @@ def parseExprCont(curr: Expr, tail: Tokens, syntax: Syntax): Parsed[Expr] =
       Right(Uniop(op, curr))
 
     case Some(op: Id) if syntax.isInfix(op) =>
-      for rhs <- parseNextExpr(op, skip(tail), syntax)
+      for rhs <- parseNext(op, skip(tail), syntax, parseExpr)
       yield
         rhs match
           case Binop(nextOp, nextLhs, nextRhs) if syntax.isInfix(nextOp) &&
@@ -252,45 +251,12 @@ def parseExprCont(curr: Expr, tail: Tokens, syntax: Syntax): Parsed[Expr] =
           case _ => Binop(op, curr, rhs)
 
     case Some(paren: OpenParen) =>
-      parseExprCont(parseByUntilWith[Comma, CloseParen, Expr](paren, skip(tail), syntax).map { args =>
+      parseExprCont(parseByUntilWith[Comma, CloseParen, Expr](paren, skip(tail), syntax, parseExpr).map { args =>
         App(curr, args)
       }, tail, syntax)
 
     case Some(_) => Right(curr)
     case None => Right(curr)
-
-def parseByUntilWith[By: ClassTag, Until: ClassTag, T](
-  head: Token,
-  tail: Tokens,
-  syntax: Syntax,
-  fn: (Token, Tokens, Syntax) => Parsed[T] = parseExpr,
-  acc: List[T] = List.empty
-): Parsed[List[T]] =
-  tail.headOption match
-    case Some(_: Until) =>
-      tail.next
-      Right(acc)
-
-    case Some(by: By) =>
-      skip(tail).headOption match
-        case None    => Left(UnexpectedEofErr(head))
-        case Some(_) =>
-          fn(tail.next, tail, syntax).flatMap { t =>
-            parseByUntilWith[By, Until, T](head, tail, syntax, fn, acc :+ t)
-          }
-
-    case Some(_) =>
-      fn(tail.next, tail, syntax).flatMap { t =>
-        parseByUntilWith[By, Until, T](head, tail, syntax, fn, acc :+ t)
-      }
-
-    case None =>
-      Left(UnexpectedEofErr(head))
-
-def parseNextExpr(head: Token, tail: Tokens, syntax: Syntax): Parsed[Expr] =
-  tail.headOption match
-    case Some(_) => parseExpr(tail.next, tail, syntax)
-    case None    => Left(UnexpectedEofErr(head))
 
 
 def tokenize(sourceName: String, sourceString: String, syntax: Syntax): Parsed[List[Token]] =
