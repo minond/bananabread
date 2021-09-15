@@ -8,7 +8,6 @@ import ir.typeless
 import ir.typeless.Ir
 
 import parsing.location.Location
-import parsing.opcode.Tree => OpcodeTree
 import parsing.opcode.Expr => OpcodeExpr
 import parsing.opcode.{Instruction => InstructionExpr, Label => LabelExpr}
 
