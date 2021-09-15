@@ -4,6 +4,8 @@ package parsing
 import ast.{Token, Tree, Expr, Stmt, Eof, Id}
 import error._
 
+import utils.squished
+
 import scala.reflect.ClassTag
 
 
@@ -70,6 +72,11 @@ def eat(word: String, head: Token, tail: Tokens): Parsed[Token] =
     case Some(unexpected) => Left(UnexpectedTokenErr(unexpected))
     case None => Left(UnexpectedEofErr(head))
 
+def next(head: Token, tail: Tokens): Token =
+  tail.headOption match
+    case Some(token) => tail.next
+    case None        => Eof(head.location)
+
 def lookahead(head: Token, tail: Tokens): Token =
   tail.headOption match
     case None => Eof(head.location)
@@ -78,6 +85,18 @@ def lookahead(head: Token, tail: Tokens): Token =
 def is(token: Token, word: String) = token match
   case id: Id => id.lexeme == word
   case _ => false
+
+
+def parseUntil[Until: ClassTag, E](head: Token, tail: Tokens, fn: (Token, Tokens) => Parsed[E]): Parsed[List[E]] =
+  def aux(acc: List[Parsed[E]]): List[Parsed[E]] =
+    lookahead(head, tail) match
+      case x: Until            => acc
+      case _ =>
+        fn(head, tail) match
+          case res @ Left(err) => acc :+ res
+          case res @ Right(ok) => aux(acc :+ res)
+
+  aux(List.empty[Parsed[E]]).squished
 
 
 extension (token: Token)

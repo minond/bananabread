@@ -87,7 +87,7 @@ def pp(err: Errors, source: String): String = err match
       isolateBadLine(id.expr.location, source),
     )
 
-  case genop.UnknownUserOpcodeErr(code, source, loc) =>
+  case genop.UnknownUserOpcodeErr(code, loc) =>
     lines(
       generateSyntaxErrorLine(s"invalid opcode", loc, source),
       isolateBadLine(code.location, source),
@@ -104,12 +104,6 @@ def pp(err: Errors, source: String): String = err match
       generateRuntimeErrorLine(s"bad call to value of kind ${node.getClass.getSimpleName}", node.expr.location, source),
       isolateBadLine(node.expr.location, source),
     )
-
-  case genop.OpcodeSyntaxErr(err, source) => // TODO Remove this
-    pp(err, source.lexeme)
-
-  case genop.OpcodeSyntaxErr_(err, node) =>
-    pp(err, node.expr.content)
 
   case runtime.RuntimeErr(msg, ins, codes, registers) =>
     lines(

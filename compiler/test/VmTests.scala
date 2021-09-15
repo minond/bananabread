@@ -175,16 +175,16 @@ class VmTests extends AnyFlatSpec with should.Matchers:
       def x = 123
 
       def jump_test_1() =
-        opcode %{
+        %[[
           jmp jump_test_2_entry
-        }
+        ]]
 
       def jump_test_2() =
-        opcode %{
+        %[[
           halt
         jump_test_2_entry:
           load [Ref] x
-        }
+        ]]
 
       def force_keep = jump_test_2
 

@@ -32,6 +32,7 @@ def infer(node: Ir, scope: Scope): Scoped[Type] = node match
   case _: typeless.Str     => Right((ty.Str, scope))
   case _: typeless.Symbol  => Right((ty.Symbol, scope))
   case _: typeless.Bool    => Right((ty.Bool, scope))
+  case _: typeless.Opcode  => Right((ty.Void, scope))
   case ir: typeless.Id     => inferId(ir, scope)
   case ir: typeless.Begin  => inferBegin(ir, scope)
   case ir: typeless.Def    => inferDef(ir, scope)
@@ -39,7 +40,6 @@ def infer(node: Ir, scope: Scope): Scoped[Type] = node match
   case ir: typeless.Lambda => inferLambda(ir, scope)
   case ir: typeless.Cond   => inferCond(ir, scope)
   case ir: typeless.Let    => inferLet(ir, scope)
-  case ir: typeless.Opcode => ???
 
 def inferId(id: typeless.Id, scope: Scope): Scoped[Type] =
   lookup(id, id.expr.lexeme, scope).map { ty => (ty, scope) }

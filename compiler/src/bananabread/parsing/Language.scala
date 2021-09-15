@@ -57,13 +57,14 @@ def parsePrimary(head: Token, tail: Tokens, syntax: Syntax): Parsed[Expr] =
     case word: Id if is(word, "if")    => parseCond(word, tail, syntax)
     case word: Id if is(word, "let")   => parseLet(word, tail, syntax)
     case word: Id if is(word, "begin") => parseBegin(word, tail, syntax)
-    case paren: OpenParen              => parseGroup(paren, tail, syntax)
+    case head: OpenParen               => parseGroup(head, tail, syntax)
+    case head: Percent                 => parseSpecial(head, tail, syntax)
     case lit: Num    => Right(lit)
     case lit: Str    => Right(lit)
     case lit: Id     => Right(lit)
     case lit: Symbol => Right(lit)
     case lit: Bool   => Right(lit)
-    case unexpected  => Left(UnexpectedTokenErr(unexpected))
+    case unexpected => Left(UnexpectedTokenErr(unexpected))
 
 def parseLambda(start: Token, tail: Tokens, syntax: Syntax): Parsed[Lambda] =
   for
@@ -216,6 +217,21 @@ def parseGroup(paren: Token, tail: Tokens, syntax: Syntax): Parsed[Expr] =
   yield
     inner
 
+def parseSpecial(head: Token, tail: Tokens, syntax: Syntax): Parsed[Expr] =
+  lookahead(head, tail) match
+    case _: OpenSquareBraket =>
+      eat[OpenSquareBraket](tail.next, tail).flatMap { head =>
+        for
+          inst <- parseUntil[CloseSquareBraket, opcode.Expr](head, tail, opcode.parseOpcodeInstruction)
+          _    <- eat[CloseSquareBraket](head, tail)
+          _    <- eat[CloseSquareBraket](head, tail)
+        yield
+          Opcode(inst, head.location)
+      }
+
+    case unexpected =>
+      Left(UnexpectedTokenErr(unexpected))
+
 def parseExprCont(currRes: Parsed[Expr], tail: Tokens, syntax: Syntax): Parsed[Expr] =
   currRes.flatMap { curr => parseExprCont(curr, tail, syntax) }
 
@@ -317,6 +333,8 @@ def nextToken(
         if tail.isEmpty || tail.next._1 != '}'
         then Left(UnclosedStringErr(loc))
         else Right(Str(str.mkString, loc))
+      case Some('[', _) =>
+        Right(Percent(loc))
       case _ => nextToken(head, tail, loc, syntax, ignorePString=true)
 
   case '"' =>

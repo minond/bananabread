@@ -2,6 +2,7 @@ package bananabread
 package parsing
 package opcode
 
+import ast.{Id, Colon}
 import location.{Location, Located, At}
 import error.{SyntaxErr, UnexpectedTokenErr, UnexpectedEofErr, BadNumErr}
 import utils.{Print, isA, asList, squished, safeToInt}
@@ -136,3 +137,58 @@ def eat[T: ClassTag](head: Token, tail: Tokens): Parsed[T] = tail.headOption mat
 
   case Some(bad) => Left(UnexpectedTokenErr(bad))
   case None      => Left(UnexpectedEofErr(head))
+
+
+
+def parseOpcodeInstruction(head: ast.Token, tail: language.Tokens): Parsed[Expr] =
+  parsing.lookahead(head, tail) match
+    case op @ Id("add", _)     => parseOpcodeInstructionWithType(op, tail)
+    case op @ Id("sub", _)     => parseOpcodeInstructionWithType(op, tail)
+    case op @ Id("push", _)    => parseOpcodeInstructionWithTypeAndArg1(op, tail)
+    case op @ Id("load", _)    => parseOpcodeInstructionWithTypeAndArg1(op, tail)
+    case op @ Id("store", _)   => parseOpcodeInstructionWithTypeAndArg1(op, tail)
+    case op @ Id("jz", _)      => parseOpcodeInstructionWithOneArg(op, tail)
+    case op @ Id("jmp", _)     => parseOpcodeInstructionWithOneArg(op, tail)
+    case op @ Id("call", _)    => parseOpcodeInstructionWithOneArg(op, tail)
+    case op @ Id("stw", _)     => parseOpcodeInstructionWithOneArg(op, tail)
+    case op @ Id("ldw", _)     => parseOpcodeInstructionWithOneArg(op, tail)
+    // case op @ Id("mov", _)     => parseMov(op, tail)
+    case op @ Id("concat", _)  => parseOpcodeInstructionWord(op, tail)
+    case op @ Id("println", _) => parseOpcodeInstructionWord(op, tail)
+    case op @ Id("halt", _)    => parseOpcodeInstructionWord(op, tail)
+    case op @ Id("call0", _)   => parseOpcodeInstructionWord(op, tail)
+    case op @ Id("ret", _)     => parseOpcodeInstructionWord(op, tail)
+    case op @ Id("swap", _)    => parseOpcodeInstructionWord(op, tail)
+    case label: Id             => parseOpcodeLabel(label, tail)
+    case unexpected            => Left(UnexpectedTokenErr(unexpected))
+
+def parseOpcodeInstructionWithType(op: Id, tail: language.Tokens): Parsed[Expr] =
+    for
+      ob <- parsing.eat[ast.OpenSquareBraket](tail.next, tail)
+      ty <- parsing.eat[Id](ob, tail)
+      _  <- parsing.eat[ast.CloseSquareBraket](ty, tail)
+    yield
+      Instruction(op.lexeme, Some(ty.lexeme), List.empty, op.location)
+
+def parseOpcodeInstructionWithTypeAndArg1(op: Id, tail: language.Tokens): Parsed[Expr] =
+    for
+      ob   <- parsing.eat[ast.OpenSquareBraket](tail.next, tail)
+      ty   <- parsing.eat[Id](ob, tail)
+      cb   <- parsing.eat[ast.CloseSquareBraket](ty, tail)
+      name <- parsing.eat[Id](cb, tail)
+    yield
+      Instruction(op.lexeme, Some(ty.lexeme), List(name.lexeme), op.location)
+
+def parseOpcodeInstructionWord(op: Id, tail: language.Tokens): Parsed[Expr] =
+  tail.next
+  Right(Instruction(op.lexeme, None, List.empty, op.location))
+
+def parseOpcodeInstructionWithOneArg(op: Id, tail: language.Tokens): Parsed[Expr] =
+  next(tail.next, tail) match
+    case Id(label, _) => Right(Instruction(op.lexeme, None, List(label), op.location))
+    case unexpected   => Left(UnexpectedTokenErr(unexpected))
+
+def parseOpcodeLabel(label: Id, tail: language.Tokens): Parsed[Expr] =
+  next(tail.next, tail) match
+    case _: Colon => Right(Label(label.lexeme, label.location))
+    case unexpected => Left(UnexpectedTokenErr[Colon](unexpected))

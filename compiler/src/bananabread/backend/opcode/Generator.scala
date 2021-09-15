@@ -98,13 +98,6 @@ def generateCall(scope: Scope, lambda: Ir, args: List[Ir]): Result = lambda matc
       case Some(_)                    => Left(BadCallErr(lambda))
       case None                       => Left(UndeclaredIdentifierErr(id))
 
-  case typeless.Id(parsing.ast.Id("opcode", _)) => args match
-    case typeless.Str(node @ parsing.ast.Str(str, loc)) :: Nil =>
-      parsing.opcode.parse("<opcode>", str) match
-        case Right(tr) => generateOpcode(scope, tr, str, loc)
-        case Left(err) => Left(OpcodeSyntaxErr(err, node))
-    case _             => Left(BadCallErr(lambda))
-
   case lam: typeless.Lambda =>
     for
       call <- generateCallLambda(scope, args, lam)
@@ -121,12 +114,8 @@ def generateCall(scope: Scope, lambda: Ir, args: List[Ir]): Result = lambda matc
   case _ => Left(BadCallErr(lambda))
 
 def generateOpcode(scope: Scope, node: typeless.Opcode): Result =
-  parsing.opcode.parse("<opcode>", node.expr.content) match
-    case Right(tr) => generateOpcode(scope, tr, node.expr.content, node.expr.location)
-    case Left(err) => Left(OpcodeSyntaxErr_(err, node))
-def generateOpcode(scope: Scope, tree: OpcodeTree, source: String, loc: Location): Result =
-  tree.nodes.map(generateOpcode(scope, _, source, loc)).squished.map(_.flatten)
-def generateOpcode(scope: Scope, expr: OpcodeExpr, source: String, loc: Location): Result = expr match
+  node.expr.instructions.map(generateOpcode(scope, _, node.expr.location)).squished.map(_.flatten)
+def generateOpcode(scope: Scope, expr: OpcodeExpr, loc: Location): Result = expr match
   case InstructionExpr("add",     Some("I32"),  Nil,         _) => Right(group(scope, Add(I32)))
   case InstructionExpr("sub",     Some("I32"),  Nil,         _) => Right(group(scope, Sub(I32)))
   case InstructionExpr("push",    Some("I32"),  List(str),   _) => withI32(expr, str) { i => group(scope, Push(I32, value.I32(i))) }
@@ -159,7 +148,7 @@ def generateOpcode(scope: Scope, expr: OpcodeExpr, source: String, loc: Location
   case InstructionExpr("ret",     None,         Nil,         _) => Right(group(scope, Ret))
   case InstructionExpr("swap",    None,         Nil,         _) => Right(group(scope, Swap))
   case LabelExpr(label,                                      _) => Right(group(scope, Label(label)))
-  case _                                                        => Left(UnknownUserOpcodeErr(expr, source, loc))
+  case _                                                        => Left(UnknownUserOpcodeErr(expr, loc))
 
 def generateCallId(scope: Scope, args: List[Ir], id: typeless.Id): Result =
   scope.qualified2(id) match

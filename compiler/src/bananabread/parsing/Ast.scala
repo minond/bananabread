@@ -18,6 +18,7 @@ case class Eof(loc: Location) extends Token, At(loc) with Print("<eof>")
 case class Comma(loc: Location) extends Token, At(loc) with Print(",")
 case class Dot(loc: Location) extends Token, At(loc) with Print(".")
 case class Colon(loc: Location) extends Token, At(loc) with Print(":")
+case class Percent(loc: Location) extends Token, At(loc) with Print("%")
 case class OpenParen(loc: Location) extends Token, At(loc) with Print("(")
 case class CloseParen(loc: Location) extends Token, At(loc) with Print(")")
 case class OpenCurlyParen(loc: Location) extends Token, At(loc) with Print("{")
@@ -42,7 +43,7 @@ case class App(lambda: Expr, args: List[Expr]) extends Expr with At(lambda.locat
 case class Cond(start: Token, cond: Expr, pass: Expr, fail: Expr) extends Expr with At(start.location), Print(s"if $cond then $pass else $fail")
 case class Let(start: Token, bindings: List[Binding], body: Expr) extends Expr with At(start.location), Print(s"let ${bindings.mkString(" ")} in $body")
 case class Begin(head: Expr, tail: List[Expr]) extends Expr with At(head.location), Print(s"begin ${(head +: tail).mkString(" ")} end")
-case class Opcode(content: String, loc: Location) extends Expr with At(loc), Print("opcode { ... }")
+case class Opcode(instructions: List[opcode.Expr], loc: Location) extends Expr with At(loc), Print("opcode { ... }")
 
 
 case class Lambda(params: List[Param], body: Expr, tyVars: List[TyId], tyRet: Option[Ty]) extends Expr with At(body.location), Print(s"{${params.mkString(", ")} = ${body}${ppTy(tyRet)}}")
