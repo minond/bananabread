@@ -1,7 +1,7 @@
 - Implement runtime currying
 - Fully qualify all anonymous functions
 - Module system, imports/exports
-- Move opcode processing into parse phase
+- Store tokens in parsed opcode instruction expressions
 - Parsing errors:
 
     astOf("3 + 1 / 4 * 1 + 9") shouldEqual "(+ (+ 3 (/ 1 (* 4 1))) 9)"
