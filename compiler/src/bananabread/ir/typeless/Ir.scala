@@ -21,6 +21,7 @@ case class App(lambda: Ir, args: List[Ir], expr: Expr) extends Ir with Print(s"(
 case class Lambda(params: List[Id], body: Ir, tyVars: List[ast.TyId], expr: ast.Lambda) extends Ir with Print(s"(lambda params: (${params.mkString(" ")}) body: $body)"), Ptr("lambda")
 case class Cond(cond: Ir, pass: Ir, fail: Ir, expr: Expr) extends Ir with Print(s"(if cond: $cond then: $pass else: $fail)")
 case class Begin(ins: List[Ir], expr: Expr) extends Ir with Print(s"(begin ${ins.mkString(" ")})")
+case class Opcode(expr: ast.Opcode) extends Ir with Print("opcode { ... }")
 case class Def(name: ast.Id, value: Ir, expr: Stmt) extends Ir with Print(s"(def $name $value)")
 
 case class Let(bindings: List[Binding], body: Ir, expr: Expr) extends Ir with Print(s"(let bindings: (${bindings.mkString(" ")}) body: $body)")
@@ -45,6 +46,7 @@ def lift(node: Stmt | Expr): Lifted[Ir] = node match
   case expr: ast.False  => Right(False(expr))
   case expr: ast.Id     => Right(Id(expr))
   case expr: ast.Symbol => Right(Symbol(expr))
+  case expr: ast.Opcode => Right(Opcode(expr))
   case expr: ast.App    => liftApp(expr)
   case expr: ast.Lambda => liftLambda(expr)
   case expr: ast.Uniop  => liftUniop(expr)

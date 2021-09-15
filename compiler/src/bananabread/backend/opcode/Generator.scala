@@ -48,6 +48,7 @@ def generate(scope: Scope, node: Ir): Result = node match
   case bool: typeless.Bool  => generatePush(scope, bool, Bool)
   case id: typeless.Id      => generateLoad(scope, id)
   case lam: typeless.Lambda => generateAnnonLambda(scope, lam)
+  case op: typeless.Opcode  => generateOpcode(scope, op)
   case typeless.App(lambda, args, _)      => generateCall(scope, lambda, args)
   case typeless.Cond(cond, pass, fail, _) => generateCond(scope, cond, pass, fail)
   case typeless.Let(bindings, body, _)    => generateLet(scope, bindings, body)
@@ -119,6 +120,10 @@ def generateCall(scope: Scope, lambda: Ir, args: List[Ir]): Result = lambda matc
 
   case _ => Left(BadCallErr(lambda))
 
+def generateOpcode(scope: Scope, node: typeless.Opcode): Result =
+  parsing.opcode.parse("<opcode>", node.expr.content) match
+    case Right(tr) => generateOpcode(scope, tr, node.expr.content, node.expr.location)
+    case Left(err) => Left(OpcodeSyntaxErr_(err, node))
 def generateOpcode(scope: Scope, tree: OpcodeTree, source: String, loc: Location): Result =
   tree.nodes.map(generateOpcode(scope, _, source, loc)).squished.map(_.flatten)
 def generateOpcode(scope: Scope, expr: OpcodeExpr, source: String, loc: Location): Result = expr match
@@ -306,7 +311,8 @@ def generateStore(scope: Scope, label: String, value: Ir): Result = value match
   case _: typeless.Cond   => Right(group(scope, Store(I32, scope.qualified(label)))) /* XXX May not be an I32 */
   case _: typeless.App    => Right(group(scope, Store(I32, scope.qualified(label)))) /* XXX May not be an I32 */
   case _: typeless.Symbol => Right(group(scope, Store(Symbol, scope.qualified(label))))
-  case _: typeless.Def    => Left(CannotStoreDefErr(value))
+  case _: typeless.Def    => Left(CannotStoreErr(value))
+  case _: typeless.Opcode => Left(CannotStoreErr(value))
   case id: typeless.Id => scope.get(id) match
     case Some(v: typeless.Id) if v.expr.lexeme == id.expr.lexeme =>
       Right(group(scope, Store(I32, scope.qualified(label)))) /* XXX May not be an I32 */

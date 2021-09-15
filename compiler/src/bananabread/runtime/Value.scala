@@ -39,3 +39,4 @@ def lift(node: Ir): Value = node match
   case _: typeless.Cond                      => ???
   case _: typeless.Let                       => ???
   case _: typeless.Begin                     => ???
+  case _: typeless.Opcode                    => /* should never be reached */ ???

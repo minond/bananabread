@@ -105,8 +105,11 @@ def pp(err: Errors, source: String): String = err match
       isolateBadLine(node.expr.location, source),
     )
 
-  case genop.OpcodeSyntaxErr(err, source) =>
+  case genop.OpcodeSyntaxErr(err, source) => // TODO Remove this
     pp(err, source.lexeme)
+
+  case genop.OpcodeSyntaxErr_(err, node) =>
+    pp(err, node.expr.content)
 
   case runtime.RuntimeErr(msg, ins, codes, registers) =>
     lines(

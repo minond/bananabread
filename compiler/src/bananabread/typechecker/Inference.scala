@@ -39,6 +39,7 @@ def infer(node: Ir, scope: Scope): Scoped[Type] = node match
   case ir: typeless.Lambda => inferLambda(ir, scope)
   case ir: typeless.Cond   => inferCond(ir, scope)
   case ir: typeless.Let    => inferLet(ir, scope)
+  case ir: typeless.Opcode => ???
 
 def inferId(id: typeless.Id, scope: Scope): Scoped[Type] =
   lookup(id, id.expr.lexeme, scope).map { ty => (ty, scope) }
