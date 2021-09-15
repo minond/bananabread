@@ -62,6 +62,18 @@ def pp(err: Errors, source: String): String = err match
       isolateBadLine(token.location, source),
     )
 
+  case parse.MissingExpectedTokenErr(token, expected) =>
+    lines(
+      generateSyntaxErrorLine(s"expected `$expected` but found `$token`", token.location, source),
+      isolateBadLine(token.location, source),
+    )
+
+  case parse.MissingExpectedTokenAfterErr(after, token, expected) =>
+    lines(
+      generateSyntaxErrorLine(s"expected `$expected` after `$after` but found `$token`", token.location, source),
+      isolateBadLine(after.location, source),
+    )
+
   case genop.BadPushErr(_, node) =>
     node.expr match
       case expr : Expr =>

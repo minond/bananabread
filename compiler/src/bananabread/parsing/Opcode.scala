@@ -4,7 +4,7 @@ package opcode
 
 import ast.{Id, Colon}
 import location.{Location, Located, At}
-import error.{SyntaxErr, UnexpectedTokenErr, UnexpectedEofErr, BadNumErr}
+import error._
 import utils.{Print, isA, asList, squished, safeToInt}
 
 import scala.reflect.ClassTag
@@ -191,4 +191,4 @@ def parseOpcodeInstructionWithOneArg(op: Id, tail: language.Tokens): Parsed[Expr
 def parseOpcodeLabel(label: Id, tail: language.Tokens): Parsed[Expr] =
   next(tail.next, tail) match
     case _: Colon => Right(Label(label.lexeme, label.location))
-    case unexpected => Left(UnexpectedTokenErr[Colon](unexpected))
+    case unexpected => Left(MissingExpectedTokenAfterErr(label, unexpected, Expected.Colon))
