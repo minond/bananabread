@@ -119,18 +119,18 @@ def generateOpcode(scope: Scope, expr: OpcodeExpr, loc: Location): Result = expr
   case InstructionExpr(ast.Id("add", _),     Some(ast.Id("I32", _)),  Nil                   ) => Right(group(scope, Add(I32)))
   case InstructionExpr(ast.Id("sub", _),     Some(ast.Id("I32", _)),  Nil                   ) => Right(group(scope, Sub(I32)))
   case InstructionExpr(ast.Id("push", _),    Some(ast.Id("I32", _)),  List(ast.Id(str, _))  ) => withI32(expr, str) { i => group(scope, Push(I32, value.I32(i))) }
-  case InstructionExpr(ast.Id("push", _),    Some(ast.Id("Str", _)),  List(ast.Id(label, _))) => Right(group(scope, Push(Str, value.Id(scope.qualified(label)))))
-  case InstructionExpr(ast.Id("push", _),    Some(ast.Id("Ref", _)),  List(ast.Id(label, _))) => Right(group(scope, Push(Ref, value.Id(scope.qualified(label)))))
-  case InstructionExpr(ast.Id("load", _),    Some(ast.Id("I32", _)),  List(ast.Id(label, _))) => Right(group(scope, Load(I32, scope.qualified(label))))
-  case InstructionExpr(ast.Id("load", _),    Some(ast.Id("Bool", _)), List(ast.Id(label, _))) => Right(group(scope, Load(Bool, scope.qualified(label))))
-  case InstructionExpr(ast.Id("load", _),    Some(ast.Id("Str", _)),  List(ast.Id(label, _))) => Right(group(scope, Load(Str, scope.qualified(label))))
-  case InstructionExpr(ast.Id("load", _),    Some(ast.Id("Ref", _)),  List(ast.Id(label, _))) => Right(group(scope, Load(Ref, scope.qualified(label))))
-  case InstructionExpr(ast.Id("store", _),   Some(ast.Id("I32", _)),  List(ast.Id(label, _))) => Right(group(scope, Store(I32, scope.qualified(label))))
-  case InstructionExpr(ast.Id("store", _),   Some(ast.Id("Str", _)),  List(ast.Id(label, _))) => Right(group(scope, Store(Str, scope.qualified(label))))
-  case InstructionExpr(ast.Id("store", _),   Some(ast.Id("Ref", _)),  List(ast.Id(label, _))) => Right(group(scope, Store(Ref, scope.qualified(label))))
-  case InstructionExpr(ast.Id("jz", _),      None,                    List(ast.Id(label, _))) => Right(group(scope, Jz(scope.qualified(label))))
+  case InstructionExpr(ast.Id("push", _),    Some(ast.Id("Str", _)),  List(label: ast.Id)   ) => withQualifiedId(scope, label) { id => group(scope, Push(Str, id)) }
+  case InstructionExpr(ast.Id("push", _),    Some(ast.Id("Ref", _)),  List(label: ast.Id)   ) => withQualifiedId(scope, label) { id => group(scope, Push(Ref, id)) }
+  case InstructionExpr(ast.Id("load", _),    Some(ast.Id("I32", _)),  List(label: ast.Id)   ) => withQualifiedLabel(scope, label) { label => group(scope, Load(I32, label)) }
+  case InstructionExpr(ast.Id("load", _),    Some(ast.Id("Bool", _)), List(label: ast.Id)   ) => withQualifiedLabel(scope, label) { label => group(scope, Load(Bool, label)) }
+  case InstructionExpr(ast.Id("load", _),    Some(ast.Id("Str", _)),  List(label: ast.Id)   ) => withQualifiedLabel(scope, label) { label => group(scope, Load(Str, label)) }
+  case InstructionExpr(ast.Id("load", _),    Some(ast.Id("Ref", _)),  List(label: ast.Id)   ) => withQualifiedLabel(scope, label) { label => group(scope, Load(Ref, label)) }
+  case InstructionExpr(ast.Id("store", _),   Some(ast.Id("I32", _)),  List(label: ast.Id)   ) => withQualifiedLabel(scope, label) { label => group(scope, Store(I32, label)) }
+  case InstructionExpr(ast.Id("store", _),   Some(ast.Id("Str", _)),  List(label: ast.Id)   ) => withQualifiedLabel(scope, label) { label => group(scope, Store(Str, label)) }
+  case InstructionExpr(ast.Id("store", _),   Some(ast.Id("Ref", _)),  List(label: ast.Id)   ) => withQualifiedLabel(scope, label) { label => group(scope, Store(Ref, label)) }
+  case InstructionExpr(ast.Id("jz", _),      None,                    List(label: ast.Id)   ) => withQualifiedLabel(scope, label) { label => group(scope, Jz(label)) }
+  case InstructionExpr(ast.Id("call", _),    None,                    List(label: ast.Id)   ) => withQualifiedLabel(scope, label) { label => group(scope, Call(label)) }
   case InstructionExpr(ast.Id("jmp", _),     None,                    List(ast.Id(label, _))) => Right(group(scope, Jmp(label)))
-  case InstructionExpr(ast.Id("call", _),    None,                    List(ast.Id(label, _))) => Right(group(scope, Call(scope.qualified(label))))
   case InstructionExpr(ast.Id("mov", _),     Some(ast.Id("Pc", _)),   Nil                   ) => Right(group(scope, mov Pc))
   case InstructionExpr(ast.Id("mov", _),     Some(ast.Id("Lr", _)),   Nil                   ) => Right(group(scope, mov Lr))
   case InstructionExpr(ast.Id("mov", _),     Some(ast.Id("Jm", _)),   Nil                   ) => Right(group(scope, mov Jm))
@@ -153,7 +153,7 @@ def generateOpcode(scope: Scope, expr: OpcodeExpr, loc: Location): Result = expr
 def generateCallId(scope: Scope, args: List[Ir], id: typeless.Id): Result =
   scope.qualified2(id) match
     case Some(name) => generateCallWithArgs(scope, args, Call(name))
-    case None => Left(LookupErr(id))
+    case None => Left(LookupErr(id.expr))
 
 def generateCallLambda(scope: Scope, args: List[Ir], lambda: typeless.Lambda): Result =
   generateCallWithArgs(scope, args, Call(lambda.ptr))
@@ -354,6 +354,15 @@ def withI32(expr: OpcodeExpr, str: String)(f: Int => Output): Result =
     case Left(_)  => Left(InvalidI32Err(expr))
     case Right(i) => Right(f(i))
 
+def withQualifiedId(scope: Scope, label: ast.Id)(f: value.Id => Output): Result =
+  scope.qualified2(label.lexeme) match
+    case None       => Left(LookupErr(label))
+    case Some(name) => Right(f(value.Id(name)))
+
+def withQualifiedLabel(scope: Scope, label: ast.Id)(f: String => Output): Result =
+  scope.qualified2(label.lexeme) match
+    case None       => Left(LookupErr(label))
+    case Some(name) => Right(f(name))
 
 extension (output: Output)
   def framed: Output =

@@ -95,8 +95,8 @@ def pp(err: Errors, source: String): String = err match
 
   case genop.LookupErr(id) =>
     lines(
-      generateRuntimeErrorLine(s"${id.expr.lexeme} was referenced but not found", id.expr.location, source),
-      isolateBadLine(id.expr.location, source),
+      generateRuntimeErrorLine(s"${id.lexeme} was referenced but not found", id.location, source),
+      isolateBadLine(id.location, source),
     )
 
   case genop.UnknownUserOpcodeErr(code, loc) =>
