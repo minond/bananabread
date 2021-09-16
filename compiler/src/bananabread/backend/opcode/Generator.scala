@@ -20,9 +20,8 @@ import runtime.instruction._
 import runtime.instruction.{Value, Label, Instruction}
 import runtime.instruction.{Bool, Type, I32, Str, Symbol}
 
-import utils.{safeToInt, squished}
+import utils.{safeToInt, squished, genUnique}
 
-import scala.util.Random
 import scala.collection.mutable.{Map, Queue}
 import scala.collection.immutable.Map => ImMap
 import scala.language.postfixOps
@@ -194,10 +193,10 @@ def generateCallArgsLoad(scope: Scope, args: List[Ir]): Result =
   }.squished.map(_.flatten)
 
 def generateCond(scope: Scope, cond: Ir, pass: Ir, fail: Ir): Result =
-  val condString = uniqueString(scope, "cond")
-  val thenString = uniqueString(scope, "then")
-  val elseString = uniqueString(scope, "else")
-  val doneString = uniqueString(scope, "done")
+  val condString = genUnique("cond")
+  val thenString = genUnique("then")
+  val elseString = genUnique("else")
+  val doneString = genUnique("done")
 
   val thenLabel = group(scope, Label(thenString))
   val elseLabel = group(scope, Label(elseString))
@@ -345,9 +344,6 @@ def regroup(prevScope: Scope, newScope: Scope, output: Output): Output =
     case Grouped(prevScope.module, data) => Grouped(newScope.module, data)
     case out                             => out
   }
-
-def uniqueString(scope: Scope, label: String): String =
-  s"$label-${Random.alphanumeric.take(4).mkString}"
 
 def withI32(expr: OpcodeExpr, str: String)(f: Int => Output): Result =
   str.safeToInt match

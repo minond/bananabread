@@ -71,11 +71,14 @@ trait Print(inner: String = ""):
 
 
 val ids = LazyList.from(1).sliding(1)
+def genUnique(str: String) =
+  s"$str-${ids.next.head}"
+
 val ptrs = Map[String, String]()
 def ptrOf(header: String, hash: Int) = ptrs.get(header + hash.toString) match
   case Some(ptr) => ptr
   case None =>
-    val ptr = s"$header-${ids.next.head}"
+    val ptr = genUnique(header)
     ptrs.update(header + hash.toString, ptr)
     ptr
 
