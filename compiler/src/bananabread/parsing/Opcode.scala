@@ -12,8 +12,8 @@ import scala.reflect.ClassTag
 
 
 sealed trait Expr extends Located
-case class Label(label: String, loc: Location) extends Expr, At(loc)
-case class Instruction(opcode: String, ty: Option[String] = None, args: List[String] = List.empty, loc: Location) extends Expr, At(loc)
+case class Label(label: Id) extends Expr, At(label.location)
+case class Instruction(opcode: Id, ty: Option[Id] = None, args: List[Token] = List.empty) extends Expr, At(opcode.location)
 
 
 def parseOpcodeInstruction(head: Token, tail: Tokens): Parsed[Expr] =
@@ -44,7 +44,7 @@ def parseOpcodeInstructionWithType(op: Id, tail: Tokens): Parsed[Expr] =
       ty <- eat[Id](ob, tail)
       _  <- eat[ast.CloseSquareBraket](ty, tail)
     yield
-      Instruction(op.lexeme, Some(ty.lexeme), List.empty, op.location)
+      Instruction(op, Some(ty), List.empty)
 
 def parseOpcodeInstructionWithTypeAndArg1(op: Id, tail: Tokens): Parsed[Expr] =
     for
@@ -53,18 +53,18 @@ def parseOpcodeInstructionWithTypeAndArg1(op: Id, tail: Tokens): Parsed[Expr] =
       cb   <- eat[ast.CloseSquareBraket](ty, tail)
       name <- eat[Id](cb, tail)
     yield
-      Instruction(op.lexeme, Some(ty.lexeme), List(name.lexeme), op.location)
+      Instruction(op, Some(ty), List(name))
 
 def parseOpcodeInstructionWord(op: Id, tail: Tokens): Parsed[Expr] =
   tail.next
-  Right(Instruction(op.lexeme, None, List.empty, op.location))
+  Right(Instruction(op, None, List.empty))
 
 def parseOpcodeInstructionWithOneArg(op: Id, tail: Tokens): Parsed[Expr] =
   next(tail.next, tail) match
-    case Id(label, _) => Right(Instruction(op.lexeme, None, List(label), op.location))
-    case unexpected   => Left(UnexpectedTokenErr(unexpected))
+    case label: Id  => Right(Instruction(op, None, List(label)))
+    case unexpected => Left(UnexpectedTokenErr(unexpected))
 
 def parseOpcodeLabel(label: Id, tail: Tokens): Parsed[Expr] =
   next(tail.next, tail) match
-    case _: Colon => Right(Label(label.lexeme, label.location))
+    case _: Colon => Right(Label(label))
     case unexpected => Left(MissingExpectedTokenAfterErr(label, unexpected, Expected.Colon))
