@@ -66,8 +66,8 @@
 0000000000000065        stw       Esp
 0000000000000066        ldw       Ebp
 0000000000000067        load      I32, main.loop.i
-0000000000000068        jz        else-uTSw
-0000000000000069    then-JM2u:
+0000000000000068        jz        else-wZRe
+0000000000000069    then-sda6:
 0000000000000070        load      I32, main.loop.i
 0000000000000071        call      main.loop.fn
 0000000000000072        load      I32, main.loop.i
@@ -75,11 +75,11 @@
 0000000000000074        call      main.-
 0000000000000075        load      I32, main.loop.fn
 0000000000000076        call      main.loop
-0000000000000077        jmp       done-jxbO
-0000000000000078    else-uTSw:
+0000000000000077        jmp       done-iU2C
+0000000000000078    else-wZRe:
 0000000000000079        push      I32, 0
 0000000000000080        call      main.loop.fn
-0000000000000081    done-jxbO:
+0000000000000081    done-iU2C:
 0000000000000082        ldw       Rt
 0000000000000083        stw       Ebp
 0000000000000084        ldw       Esp
@@ -104,8 +104,3 @@
 0000000000000103        stw       Rt
 0000000000000104        swap
 0000000000000105        ret
-.Ref main.println:  main.println
-.Ref main.-:        main.-
-.Ref main.loop:     main.loop
-.Ref lambda-5:      lambda-5
-.Ref lambda-4:      lambda-4
