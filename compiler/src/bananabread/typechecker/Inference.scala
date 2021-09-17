@@ -12,9 +12,31 @@ import utils.squished
 import scala.reflect.ClassTag
 
 
-type Scope = Map[String, Type]
 type Scoped[T] = Inferred[(T, Scope)]
 type Inferred[T] = Either[InferenceErr, T]
+
+type Scope = Map[String, Type]
+object Scope:
+  def empty: Scope =
+    Map.empty
+
+  def from(params: List[ast.Param], tyScope: TypeScope): Inferred[Scope] =
+    params.foldLeft[Inferred[Scope]](Right(Map.empty)) {
+      case (Left(err), param) => Left(err)
+      case (Right(scope), ast.Param(name, None)) => Right(scope + (name.lexeme -> fresh()))
+      case (Right(scope), ast.Param(name, Some(tag))) =>
+        processType(tag, tyScope) match
+          case Left(err) => Left(err)
+          case Right(ty) => Right(scope + (name.lexeme -> ty))
+    }
+
+type TypeScope = Map[String, Type]
+object TypeScope:
+  def empty: TypeScope =
+    Map.empty
+
+  def from(tyVars: List[ast.TyId]): TypeScope =
+    tyVars.map { tyVar => (tyVar.id.lexeme, fresh()) }.toMap
 
 
 def infer(nodes: List[Ir], scope: Scope = Map.empty): Scoped[List[Type]] =
@@ -69,23 +91,25 @@ def inferApp(app: typeless.App, scope: Scope): Scoped[Type] =
 /** TODO Handle type variables
   */
 def inferLambda(lam: typeless.Lambda, scope: Scope): Scoped[Lambda] =
-  for
-    paramTys <- inferLambdaParams(lam, scope)
-    retTy    <- inferLambdaRet(paramTys, lam, scope)
-  yield
-    (Lambda(paramTys, retTy), scope)
+  val tyScope = TypeScope.from(lam.tyVars)
 
-def inferLambdaParams(lam: typeless.Lambda, scope: Scope): Inferred[List[Type]] =
+  for
+    params <- inferLambdaParams(lam, scope, tyScope)
+    ret    <- inferLambdaRet(params._1, lam, scope, params._2)
+  yield
+    (Lambda(params._1, ret._1), scope)
+
+def inferLambdaParams(lam: typeless.Lambda, scope: Scope, tyScope: TypeScope): Inferred[(List[Type], TypeScope)] =
   val tags = lam.expr.params.map(_.ty)
   val params = lam.params
 
-  params.zip(tags).foldLeft[Inferred[List[Type]]](Right(List.empty)) {
-    case (Right(acc), (param, None)) =>
-      Right(acc :+ fresh())
+  params.zip(tags).foldLeft[Inferred[(List[Type], TypeScope)]](Right((List.empty, tyScope))) {
+    case (Right((acc, _)), (param, None)) =>
+      Right((acc :+ fresh(), tyScope))
 
-    case (Right(acc), (param, Some(tag))) =>
-      parseType(lam.tyVars, tag) match
-        case Right(ty) => Right(acc :+ ty)
+    case (Right((acc, _)), (param, Some(tag))) =>
+      processType(tag, tyScope) match
+        case Right(ty) => Right((acc :+ ty, tyScope))
         case Left(err) => Left(err)
 
     case (Left(err), _) =>
@@ -94,11 +118,11 @@ def inferLambdaParams(lam: typeless.Lambda, scope: Scope): Inferred[List[Type]] 
 
 /** TODO Substitute type variables
   */
-def inferLambdaRet(paramTys: List[Type], lam: typeless.Lambda, scope: Scope): Inferred[Type] =
+def inferLambdaRet(paramTys: List[Type], lam: typeless.Lambda, scope: Scope, tyScope: TypeScope): Inferred[(Type, TypeScope)] =
   lam.expr.tyRet match
     case Some(tag) =>
-      parseType(lam.tyVars, tag) match
-        case Right(ty) => Right(ty)
+      processType(tag, tyScope) match
+        case Right(ty) => Right((ty, tyScope))
         case Left(err) => Left(err)
 
     case None =>
@@ -110,7 +134,7 @@ def inferLambdaRet(paramTys: List[Type], lam: typeless.Lambda, scope: Scope): In
       for
         ty <- infer(lam.body, lexicalScope)
       yield
-        ty._1
+        (ty._1, tyScope)
 
 def inferCond(cond: typeless.Cond, scope: Scope): Scoped[Type] =
   for
@@ -142,21 +166,21 @@ def fresh() =
   Var(ids.next.head)
 
 
-def parseType(tyVars: List[ast.TyId], node: ast.Ty): Either[UnknowTypeErr, Type] =
-  node match
+def processType(tag: ast.Ty, tyScope: TypeScope): Either[UnknowTypeErr, Type] =
+  tag match
     case node @ ast.TyId(id) =>
-      id.lexeme match
-        case ty if tyVars.map(_.id.lexeme).contains(ty) => Right(fresh())
-        case "I32"    => Right(ty.I32)
-        case "Str"    => Right(ty.Str)
-        case "Symbol" => Right(ty.Symbol)
-        case "Void"   => Right(ty.Void)
-        case "Bool"   => Right(ty.Bool)
-        case baddie   => Left(UnknowTypeErr(node))
+      (id.lexeme, tyScope.get(id.lexeme)) match
+        case (_, Some(ty)) => Right(ty)
+        case ("I32", _)    => Right(ty.I32)
+        case ("Str", _)    => Right(ty.Str)
+        case ("Symbol", _) => Right(ty.Symbol)
+        case ("Void", _)   => Right(ty.Void)
+        case ("Bool", _)   => Right(ty.Bool)
+        case (baddie, _)   => Left(UnknowTypeErr(node))
     case ast.TyLamda(params, retTy) =>
       for
-        parsedParams <- params.map { param => parseType(tyVars, param) }.squished
-        parsedRet    <- parseType(tyVars, retTy)
+        parsedParams <- params.map { param => processType(param, tyScope) }.squished
+        parsedRet    <- processType(retTy, tyScope)
       yield
         Lambda(parsedParams, parsedRet)
 
