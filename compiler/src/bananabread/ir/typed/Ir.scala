@@ -162,4 +162,27 @@ def liftBegin(node: typeless.Begin, scope: Scope): Lifted[(Begin, Scope)] =
     (Begin(liftedIns, expr, ty), scope)
 
 def liftLet(node: typeless.Let, scope: Scope): Lifted[(Let, Scope)] =
-  ???
+  val bindings = node.bindings
+  val body = node.body
+  val expr = node.expr
+
+  for
+    liftedBindingsRes <- bindings.foldLeft[Lifted[(List[(typeless.Binding, Ir)], Scope)]](Right((List.empty, scope))) {
+      case (Left(err), _) => Left(err)
+      case (Right((acc, scope)), binding) =>
+        for
+          value <- lift(binding.value, scope).map(_._1)
+          ty = (binding.label.lexeme -> value.ty)
+        yield
+          (acc :+ (binding, value), scope + ty)
+    }
+
+    liftedParams = liftedBindingsRes._1
+    lexicalScope = liftedBindingsRes._2
+
+    liftedBody <- lift(body, lexicalScope).map(_._1)
+    liftedBindings = liftedParams.map { (binding, ir) =>
+      Binding(binding.label, ir, binding.expr, ir.ty)
+    }
+  yield
+    (Let(liftedBindings, liftedBody, expr, liftedBody.ty), scope)
