@@ -5,8 +5,8 @@ package typed
 import error._
 import parsing.ast
 import parsing.ast.{Expr, Stmt}
-import typechecker.{ty, infer, Scope, TypeScope}
-import typechecker.ty.Type
+import typechecker.{ty, infer, signature, Scope, TypeScope}
+import typechecker.ty.{Type, Void}
 import typechecker.error.InferenceErr
 
 import utils.squished
@@ -52,6 +52,16 @@ def lift(nodes: List[typeless.Ir]): Lifted[List[Ir]] =
       }
   }.map(_._1)
 def lift(node: typeless.Ir, scope: Scope): Lifted[(Ir, Scope)] = node match
+  case typeless.Def(name, value: typeless.Lambda, expr) =>
+    for
+      sig <- signature(value)
+      subScope = scope + (name.lexeme -> sig)
+      lifted <- lift(value, subScope).map { (lifted, _) =>
+        (Def(name, lifted, expr, lifted.ty), scope + (name.lexeme -> lifted.ty))
+      }
+    yield
+      lifted
+
   case typeless.Def(name, value, expr) =>
     lift(value, scope).map { (lifted, _) =>
       (Def(name, lifted, expr, lifted.ty), scope + (name.lexeme -> lifted.ty))
@@ -102,3 +112,13 @@ def lift(node: typeless.Ir, scope: Scope): Lifted[(Ir, Scope)] = node match
 
   case typeless.Num(expr) =>
     Right((Num(expr, ty.I32), scope))
+
+  case typeless.Begin(ins, expr) =>
+    for
+      liftedRes <- ins.map(lift(_, scope)).squished
+      liftedIns = liftedRes.map(_._1)
+      ty = if liftedIns.isEmpty
+           then Void
+           else liftedIns.last.ty
+    yield
+      (Begin(liftedIns, expr, ty), scope)

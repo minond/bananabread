@@ -156,6 +156,35 @@ def inferLet(let: typeless.Let, scope: Scope): Scoped[Type] =
   infer(let.body, subscope)
 
 
+def signature(lam: typeless.Lambda): Inferred[ty.Lambda] =
+  for
+    params <- signatureLambdaParams(lam, TypeScope.from(lam.tyVars))
+    ret    <- signatureLambdaRet(lam, params._2)
+  yield
+    Lambda(params._1, ret._1)
+
+def signatureLambdaParams(lam: typeless.Lambda, tyScope: TypeScope): Inferred[(List[Type], TypeScope)] =
+  lam.params.foldLeft[Inferred[(List[Type], TypeScope)]](Right((List.empty, tyScope))) {
+    case (Left(err), param) => Left(err)
+    case (Right((tys, scope)), ast.Param(name, None)) =>
+      val ty = fresh()
+      Right((tys :+ ty, scope + (name.lexeme -> ty)))
+    case (Right((tys, scope)), ast.Param(name, Some(tag))) =>
+      processType(tag, scope) match
+        case Left(err) => Left(err)
+        case Right(ty) => Right((tys :+ ty, scope + (name.lexeme -> ty)))
+  }
+
+def signatureLambdaRet(lam: typeless.Lambda, tyScope: TypeScope): Inferred[(Type, TypeScope)] =
+  lam.expr.tyRet match
+    case Some(tag) =>
+      processType(tag, tyScope) match
+        case Right(ty) => Right((ty, tyScope))
+        case Left(err) => Left(err)
+    case None =>
+      Right((fresh(), tyScope))
+
+
 def lookup(ir: Ir, label: String, scope: Scope): Either[LookupErr, Type] =
   scope.get(label) match
     case None => Left(LookupErr(label, ir))

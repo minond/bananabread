@@ -127,8 +127,8 @@ def generateOpcode(scope: Scope, expr: OpcodeExpr, loc: Location): Result = expr
   case InstructionExpr(ast.Id("store", _),   Some(ast.Id("I32", _)),  List(label: ast.Id)   ) => withQualifiedLabel(scope, label) { label => group(scope, Store(I32, label)) }
   case InstructionExpr(ast.Id("store", _),   Some(ast.Id("Str", _)),  List(label: ast.Id)   ) => withQualifiedLabel(scope, label) { label => group(scope, Store(Str, label)) }
   case InstructionExpr(ast.Id("store", _),   Some(ast.Id("Ref", _)),  List(label: ast.Id)   ) => withQualifiedLabel(scope, label) { label => group(scope, Store(Ref, label)) }
-  case InstructionExpr(ast.Id("jz", _),      None,                    List(label: ast.Id)   ) => withQualifiedLabel(scope, label) { label => group(scope, Jz(label)) }
   case InstructionExpr(ast.Id("call", _),    None,                    List(label: ast.Id)   ) => withQualifiedLabel(scope, label) { label => group(scope, Call(label)) }
+  case InstructionExpr(ast.Id("jz", _),      None,                    List(ast.Id(label, _))) => Right(group(scope, Jz(label)))
   case InstructionExpr(ast.Id("jmp", _),     None,                    List(ast.Id(label, _))) => Right(group(scope, Jmp(label)))
   case InstructionExpr(ast.Id("mov", _),     Some(ast.Id("Pc", _)),   Nil                   ) => Right(group(scope, mov Pc))
   case InstructionExpr(ast.Id("mov", _),     Some(ast.Id("Lr", _)),   Nil                   ) => Right(group(scope, mov Lr))
