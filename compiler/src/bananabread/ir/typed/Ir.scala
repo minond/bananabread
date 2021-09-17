@@ -37,3 +37,68 @@ case class Def(name: ast.Id, value: Ir, expr: Stmt, ty: Type) extends Ir
 
 case class Let(bindings: List[Binding], body: Ir, expr: Expr, ty: Type) extends Ir
 case class Binding(label: ast.Id, value: Ir, expr: ast.Binding, ty: Type)
+
+case class True(expr: ast.True) extends Ir, OfType(ty.Bool)
+case class False(expr: ast.False) extends Ir, OfType(ty.Bool)
+
+
+def lift(nodes: List[typeless.Ir]): Lifted[List[Ir]] =
+  nodes.foldLeft[Lifted[(List[Ir], Scope)]](Right((List.empty, Scope.empty))) {
+    case (Left(err), _) =>
+      Left(err)
+    case (Right((acc, scope)), node) =>
+      lift(node, scope).map { (ir, nextScope) =>
+        (acc :+ ir, nextScope)
+      }
+  }.map(_._1)
+def lift(node: typeless.Ir, scope: Scope): Lifted[(Ir, Scope)] = node match
+  case typeless.Def(name, value, expr) =>
+    lift(value, scope).map { (lifted, _) =>
+      (Def(name, lifted, expr, lifted.ty), scope + (name.lexeme -> lifted.ty))
+    }
+
+  case node @ typeless.Lambda(params, body, tyVars, expr) =>
+    for
+      inferredRes <- infer(node, scope)
+      (ty, _) = inferredRes
+      tyScope = TypeScope.from(tyVars)
+      inferredScope <- Scope.from(params, tyScope)
+      liftedRes <- lift(body, scope ++ inferredScope)
+      (liftedBody, _) = liftedRes
+    yield
+      (Lambda(params, liftedBody, tyVars, expr, ty), scope)
+
+  case typeless.Opcode(expr) =>
+    Right((Opcode(expr), scope))
+
+  case node @ typeless.Cond(cond, pass, fail, expr) =>
+    for
+      inferredRes <- infer(node, scope)
+      (ty, _) = inferredRes
+      liftedResCond <- lift(cond, scope)
+      (liftedCond, _) = liftedResCond
+      liftedResPass <- lift(pass, scope)
+      (liftedPass, _) = liftedResPass
+      liftedResFail <- lift(fail, scope)
+      (liftedFail, _) = liftedResFail
+    yield
+      (Cond(liftedCond, liftedPass, liftedFail, expr, ty), scope)
+
+  case node @ typeless.Id(expr) =>
+    scope.get(expr.lexeme) match
+      case None => Left(UndeclaredIdentifierErr(node))
+      case Some(ty) => Right(Id(expr, ty), scope)
+
+  case node @ typeless.App(lam, args, expr) =>
+    for
+      liftedLamRes <- lift(lam, scope)
+      (liftedLam, _) = liftedLamRes
+      liftedArgsRes <- args.map(lift(_, scope)).squished
+      liftedArgs = liftedArgsRes.map(_._1)
+      inferredRes <- infer(node, scope)
+      (sig, _) = inferredRes
+    yield
+      (App(liftedLam, liftedArgs, expr, sig), scope)
+
+  case typeless.Num(expr) =>
+    Right((Num(expr, ty.I32), scope))
