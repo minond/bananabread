@@ -13,6 +13,7 @@ import utils.squished
 
 
 type Lifted[T] = Either[LiftErr | InferenceErr, T]
+type Scoped[T] = Lifted[(T, Scope)]
 
 
 sealed trait Ir {
@@ -43,7 +44,7 @@ case class False(expr: ast.False) extends Ir, OfType(ty.Bool)
 
 
 def lift(nodes: List[typeless.Ir]): Lifted[List[Ir]] =
-  nodes.foldLeft[Lifted[(List[Ir], Scope)]](Right((List.empty, Scope.empty))) {
+  nodes.foldLeft[Scoped[List[Ir]]](Right((List.empty, Scope.empty))) {
     case (Left(err), _) =>
       Left(err)
     case (Right((acc, scope)), node) =>
@@ -51,7 +52,7 @@ def lift(nodes: List[typeless.Ir]): Lifted[List[Ir]] =
         (acc :+ ir, nextScope)
       }
   }.map(_._1)
-def lift(node: typeless.Ir, scope: Scope): Lifted[(Ir, Scope)] = node match
+def lift(node: typeless.Ir, scope: Scope): Scoped[Ir] = node match
   case typeless.Str(expr)    => Right((Str(expr), scope))
   case typeless.Symbol(expr) => Right((Symbol(expr), scope))
   case typeless.True(expr)   => Right((True(expr), scope))
@@ -66,19 +67,19 @@ def lift(node: typeless.Ir, scope: Scope): Lifted[(Ir, Scope)] = node match
   case node: typeless.Begin  => liftBegin(node, scope)
   case node: typeless.Let    => liftLet(node, scope)
 
-def liftId(node: typeless.Id, scope: Scope): Lifted[(Ir, Scope)] =
+def liftId(node: typeless.Id, scope: Scope): Scoped[Ir] =
   val expr = node.expr
 
   scope.get(expr.lexeme) match
     case None => Left(UndeclaredIdentifierErr(node))
     case Some(ty) => Right(Id(expr, ty), scope)
 
-def liftDef(node: typeless.Def, scope: Scope): Lifted[(Def, Scope)] =
+def liftDef(node: typeless.Def, scope: Scope): Scoped[Def] =
   node.value match
     case value: typeless.Lambda => liftDefLambda(node, value, scope)
     case value                  => liftDefValue(node, value, scope)
 
-def liftDefLambda(node: typeless.Def, value: typeless.Lambda, scope: Scope): Lifted[(Def, Scope)] =
+def liftDefLambda(node: typeless.Def, value: typeless.Lambda, scope: Scope): Scoped[Def] =
   val name = node.name
   val expr = node.expr
 
@@ -91,7 +92,7 @@ def liftDefLambda(node: typeless.Def, value: typeless.Lambda, scope: Scope): Lif
   yield
     lifted
 
-def liftDefValue(node: typeless.Def, value: typeless.Ir, scope: Scope): Lifted[(Def, Scope)] =
+def liftDefValue(node: typeless.Def, value: typeless.Ir, scope: Scope): Scoped[Def] =
   val name = node.name
   val expr = node.expr
 
@@ -99,7 +100,7 @@ def liftDefValue(node: typeless.Def, value: typeless.Ir, scope: Scope): Lifted[(
     (Def(name, lifted, expr, lifted.ty), scope + (name.lexeme -> lifted.ty))
   }
 
-def liftLambda(node: typeless.Lambda, scope: Scope): Lifted[(Lambda, Scope)] =
+def liftLambda(node: typeless.Lambda, scope: Scope): Scoped[Lambda] =
   val tyVars = node.tyVars
   val params = node.params
   val body = node.body
@@ -115,7 +116,7 @@ def liftLambda(node: typeless.Lambda, scope: Scope): Lifted[(Lambda, Scope)] =
   yield
     (Lambda(params, liftedBody, tyVars, expr, ty), scope)
 
-def liftApp(node: typeless.App, scope: Scope): Lifted[(App, Scope)] =
+def liftApp(node: typeless.App, scope: Scope): Scoped[App] =
   val lambda = node.lambda
   val args = node.args
   val expr = node.expr
@@ -130,7 +131,7 @@ def liftApp(node: typeless.App, scope: Scope): Lifted[(App, Scope)] =
   yield
     (App(liftedLam, liftedArgs, expr, sig), scope)
 
-def liftCond(node: typeless.Cond, scope: Scope): Lifted[(Cond, Scope)] =
+def liftCond(node: typeless.Cond, scope: Scope): Scoped[Cond] =
   val cond = node.cond
   val pass = node.pass
   val fail = node.fail
@@ -148,7 +149,7 @@ def liftCond(node: typeless.Cond, scope: Scope): Lifted[(Cond, Scope)] =
   yield
     (Cond(liftedCond, liftedPass, liftedFail, expr, ty), scope)
 
-def liftBegin(node: typeless.Begin, scope: Scope): Lifted[(Begin, Scope)] =
+def liftBegin(node: typeless.Begin, scope: Scope): Scoped[Begin] =
   val ins = node.ins
   val expr = node.expr
 
@@ -161,13 +162,13 @@ def liftBegin(node: typeless.Begin, scope: Scope): Lifted[(Begin, Scope)] =
   yield
     (Begin(liftedIns, expr, ty), scope)
 
-def liftLet(node: typeless.Let, scope: Scope): Lifted[(Let, Scope)] =
+def liftLet(node: typeless.Let, scope: Scope): Scoped[Let] =
   val bindings = node.bindings
   val body = node.body
   val expr = node.expr
 
   for
-    liftedBindingsRes <- bindings.foldLeft[Lifted[(List[(typeless.Binding, Ir)], Scope)]](Right((List.empty, scope))) {
+    liftedBindingsRes <- bindings.foldLeft[Scoped[List[(typeless.Binding, Ir)]]](Right((List.empty, scope))) {
       case (Left(err), _) => Left(err)
       case (Right((acc, scope)), binding) =>
         for
