@@ -258,13 +258,13 @@ def generateDef(scope: Scope, name: String, value: Ir): Result = value match
     generate(scope, value)
       .map(_ ++ group(scope, Store(I32, scope.qualified(name))))
 
-def generateLambda(scope: Scope, params: List[typeless.Id], body: Ir): Result =
+def generateLambda(scope: Scope, params: List[ast.Param], body: Ir): Result =
   val init = group(scope,
     FrameInit(params.size),
   )
 
-  val storeArgs = params.reverse.flatMap { case param @ typeless.Id(label) =>
-    scope.define(param, param)
+  val storeArgs = params.reverse.flatMap { case param @ ast.Param(expr @ ast.Id(label, _), _) =>
+    scope.define(param, typeless.Id(expr))
     group(scope, Swap, Store(I32, scope.qualified(label)))
   }
 

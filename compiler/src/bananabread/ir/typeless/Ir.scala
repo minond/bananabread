@@ -18,7 +18,7 @@ case class Str(expr: ast.Str) extends Ir with Print(s"(str ${expr.lexeme})"), Pt
 case class Id(expr: ast.Id) extends Ir with Print(s"(id ${expr.lexeme})")
 case class Symbol(expr: ast.Symbol) extends Ir with Print(s"(symbol ${expr.lexeme})"), Ptr("symbol")
 case class App(lambda: Ir, args: List[Ir], expr: Expr) extends Ir with Print(s"(app lambda: ${lambda} args: (${args.mkString(" ")}))")
-case class Lambda(params: List[Id], body: Ir, tyVars: List[ast.TyId], expr: ast.Lambda) extends Ir with Print(s"(lambda params: (${params.mkString(" ")}) body: $body)"), Ptr("lambda")
+case class Lambda(params: List[ast.Param], body: Ir, tyVars: List[ast.TyId], expr: ast.Lambda) extends Ir with Print(s"(lambda params: (${params.mkString(" ")}) body: $body)"), Ptr("lambda")
 case class Cond(cond: Ir, pass: Ir, fail: Ir, expr: Expr) extends Ir with Print(s"(if cond: $cond then: $pass else: $fail)")
 case class Begin(ins: List[Ir], expr: Expr) extends Ir with Print(s"(begin ${ins.mkString(" ")})")
 case class Opcode(expr: ast.Opcode) extends Ir with Print("opcode { ... }")
@@ -65,13 +65,9 @@ def liftApp(app: ast.App): Lifted[App] =
 
 def liftLambda(lambda: ast.Lambda): Lifted[Lambda] =
   for
-    paramsIr <- lambda.params.map(_.name).map(lift).squished
-    bodyIr   <- lift(lambda.body)
+    bodyIr <- lift(lambda.body)
   yield
-    paramsIr.onlys[Id] match
-      case Right(ids) =>
-        Lambda(ids, bodyIr, lambda.tyVars, lambda)
-      case _ => return Left(BadParamIdErr(paramsIr))
+    Lambda(lambda.params, bodyIr, lambda.tyVars, lambda)
 
 def liftUniop(app: ast.Uniop): Lifted[App] =
   for

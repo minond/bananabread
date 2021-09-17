@@ -44,6 +44,7 @@ class Scope(val module: String, env: Map[String, Ir], parent: Option[Scope]):
 
   def define(bi: Binding): Unit = define(bi.label.lexeme, bi.value)
   def define(id: ast.Id, ir: Ir): Unit = define(id.lexeme, ir)
+  def define(id: ast.Param, ir: Ir): Unit = define(id.name.lexeme, ir)
   def define(id: typeless.Id, ir: Ir): Unit = define(id.expr.lexeme, ir)
   def define(label: String, ir: Ir): Unit =
     env.update(label, ir)
