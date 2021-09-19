@@ -1,7 +1,7 @@
 package bananabread
 package backend.opcode.error
 
-import ir.typeless.{Ir, Id, Opcode}
+import ir.typed.{Ir, Id, Opcode}
 import parsing.ast
 import parsing.ast.Str
 import parsing.error.SyntaxErr

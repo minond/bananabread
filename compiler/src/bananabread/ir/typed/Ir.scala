@@ -5,11 +5,11 @@ package typed
 import error._
 import parsing.ast
 import parsing.ast.{Expr, Stmt}
-import typechecker.{ty, infer, signature, Scope, TypeScope}
+import typechecker.{ty, infer, expect, signature, fresh, Scope, TypeScope}
 import typechecker.ty.{Type, Void}
 import typechecker.error.InferenceErr
 
-import utils.squished
+import utils.{squished, Ptr, PtrWith}
 
 
 type Lifted[T] = Either[LiftErr | InferenceErr, T]
@@ -26,21 +26,24 @@ trait OfType(typ: Type) {
 }
 
 case class Num(expr: ast.Num, ty: Type) extends Ir
-case class Str(expr: ast.Str) extends Ir, OfType(ty.Str)
-case class Id(expr: Expr, ty: Type) extends Ir
-case class Symbol(expr: ast.Symbol) extends Ir, OfType(ty.Symbol)
+case class Str(expr: ast.Str) extends Ir, OfType(ty.Str) with PtrWith("str", () => expr.lexeme.hashCode)
+case class Id(expr: ast.Id, ty: Type) extends Ir
+case class Symbol(expr: ast.Symbol) extends Ir, OfType(ty.Symbol) with Ptr("symbol")
 case class App(lambda: Ir, args: List[Ir], expr: Expr, ty: Type) extends Ir
-case class Lambda(params: List[ast.Param], body: Ir, tyVars: List[ast.TyId], expr: Expr, ty: Type) extends Ir
 case class Cond(cond: Ir, pass: Ir, fail: Ir, expr: Expr, ty: Type) extends Ir
 case class Begin(ins: List[Ir], expr: Expr, ty: Type) extends Ir
 case class Opcode(expr: ast.Opcode) extends Ir, OfType(ty.Void)
 case class Def(name: ast.Id, value: Ir, expr: Stmt, ty: Type) extends Ir
 
+case class Lambda(params: List[Param], body: Ir, tyVars: List[ast.TyId], expr: Expr, ty: Type) extends Ir with Ptr("lambda")
+case class Param(name: ast.Id, ty: Type)
+
 case class Let(bindings: List[Binding], body: Ir, expr: Expr, ty: Type) extends Ir
 case class Binding(label: ast.Id, value: Ir, expr: ast.Binding, ty: Type)
 
-case class True(expr: ast.True) extends Ir, OfType(ty.Bool)
-case class False(expr: ast.False) extends Ir, OfType(ty.Bool)
+sealed trait Bool extends Ir
+case class True(expr: ast.True) extends Bool, OfType(ty.Bool)
+case class False(expr: ast.False) extends Bool, OfType(ty.Bool)
 
 
 def lift(nodes: List[typeless.Ir]): Lifted[List[Ir]] =
@@ -108,13 +111,15 @@ def liftLambda(node: typeless.Lambda, scope: Scope): Scoped[Lambda] =
 
   for
     inferredRes <- infer(node, scope)
-    (ty, _) = inferredRes
+    (unknownTy, _) = inferredRes
+    lamTy <- unknownTy.expect[ty.Lambda](node)
     tyScope = TypeScope.from(tyVars)
     inferredScope <- Scope.from(params, tyScope)
     liftedRes <- lift(body, scope ++ inferredScope)
     (liftedBody, _) = liftedRes
+    liftedParams = params.zip(lamTy.in).map { (param, ty) => Param(param.name, ty) }
   yield
-    (Lambda(params, liftedBody, tyVars, expr, ty), scope)
+    (Lambda(liftedParams, liftedBody, tyVars, expr, lamTy), scope)
 
 def liftApp(node: typeless.App, scope: Scope): Scoped[App] =
   val lambda = node.lambda
@@ -171,8 +176,10 @@ def liftLet(node: typeless.Let, scope: Scope): Scoped[Let] =
     liftedBindingsRes <- bindings.foldLeft[Scoped[List[(typeless.Binding, Ir)]]](Right((List.empty, scope))) {
       case (Left(err), _) => Left(err)
       case (Right((acc, scope)), binding) =>
+        val recursiveScope =
+          scope + (binding.label.lexeme -> fresh())
         for
-          value <- lift(binding.value, scope).map(_._1)
+          value <- lift(binding.value, recursiveScope).map(_._1)
           ty = (binding.label.lexeme -> value.ty)
         yield
           (acc :+ (binding, value), scope + ty)

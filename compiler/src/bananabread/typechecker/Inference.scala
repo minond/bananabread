@@ -3,6 +3,7 @@ package typechecker
 
 import error._
 import ty._
+import unification.Substitution
 import ir.typeless
 import ir.typeless.Ir
 import parsing.ast
@@ -78,13 +79,23 @@ def inferDef(label: String, value: Ir, scope: Scope): Scoped[Type] =
     (ty, scope + (label -> ty))
   }
 
-/** TODO Unify argTys
+/** TODO Move substitution higher up call chain.
   */
 def inferApp(app: typeless.App, scope: Scope): Scoped[Type] =
+  val sub = Substitution.empty
+
   for
-    argTys <- app.args.map { arg => infer(arg, scope) }.squished
+    inferredArgs <- app.args.map { arg => infer(arg, scope) }.squished
+    argTys = inferredArgs.map(_._1)
+    freshLam = Lambda(argTys, fresh())
     called <- infer(app.lambda, scope)
-    fnTy   <- called._1.expect[Lambda](app.lambda)
+    calledTy = called._1
+    _ <- sub.unify(calledTy, freshLam)
+    culprit = if app.args.isEmpty
+              then app
+              else app.args.head
+    unifiedTy <- sub(calledTy, culprit)
+    fnTy   <- unifiedTy.expect[Lambda](app.lambda)
   yield
     (fnTy.app(argTys.size), scope)
 
@@ -136,15 +147,21 @@ def inferLambdaRet(paramTys: List[Type], lam: typeless.Lambda, scope: Scope, tyS
       yield
         (ty._1, tyScope)
 
+/** TODO Move substitution higher up call chain.
+  *
+  * TODO Ensure condTy unifies with Bool.
+  */
 def inferCond(cond: typeless.Cond, scope: Scope): Scoped[Type] =
+  val sub = Substitution.empty
+
   for
     condTy <- infer(cond.cond, scope)
-    _      <- condTy._1.ensure(Bool, cond.cond)
     passTy <- infer(cond.pass, scope)
     failTy <- infer(cond.fail, scope)
-    _      <- failTy._1.ensure(passTy._1, cond.fail)
+    _      <- sub.unify(passTy._1, failTy._1)
+    exprTy <- sub(failTy._1, cond.fail)
   yield
-    (passTy._1, scope)
+    (exprTy, scope)
 
 def inferLet(let: typeless.Let, scope: Scope): Scoped[Type] =
   val subscope = let.bindings.foldLeft(scope) { (scope, binding) =>

@@ -29,7 +29,7 @@ class VmTests extends AnyFlatSpec with should.Matchers:
               func () =
                 func () =
                   func () =
-                    func (x) = x + x
+                    func (x : I32) = x + x
       in
         f()()()()(4)
       """
@@ -40,7 +40,7 @@ class VmTests extends AnyFlatSpec with should.Matchers:
     stackHeadOf(
       """
       let
-        count_down = func (x) =
+        count_down = func (x : I32) : I32 =
           if x
           then count_down(x - 1)
           else x
@@ -123,9 +123,9 @@ class VmTests extends AnyFlatSpec with should.Matchers:
         base = 1
 
         start =
-          func (a) =
-            func (b) =
-              func (c) =
+          func (a : I32) =
+            func (b : I32) =
+              func (c : I32) =
                 a + b + c + base
 
         a = start(2)
@@ -148,9 +148,9 @@ class VmTests extends AnyFlatSpec with should.Matchers:
       def base = 10
 
       def start =
-        func (a) =
-          func (b) =
-            func (c) =
+        func (a : I32) =
+          func (b : I32) =
+            func (c : I32) =
               a + b + c + base
 
       def a = start(2)
@@ -196,7 +196,7 @@ class VmTests extends AnyFlatSpec with should.Matchers:
   it should "pass annonymous functions as arguments" in {
     stackHeadOf(
       """
-      def gen(f, a) =
+      def gen(f : I32 -> I32, a : I32) : I32 -> I32 =
         func(b) =
           f(a, b)
 
@@ -208,7 +208,7 @@ class VmTests extends AnyFlatSpec with should.Matchers:
   it should "pass defined functions as arguments" in {
     stackHeadOf(
       """
-      def gen(f, a) =
+      def gen(f : I32 -> I32, a : I32) : I32 -> I32 =
         func(b) =
           f(a, b)
 
@@ -222,7 +222,7 @@ class VmTests extends AnyFlatSpec with should.Matchers:
   it should "pass defined function values as arguments" in {
     stackHeadOf(
       """
-      def gen(f, a) =
+      def gen(f : I32 -> I32, a : I32) : I32 -> I32 =
         func(b) =
           f(a, b)
 

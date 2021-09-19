@@ -3,7 +3,7 @@ package test
 
 import parsing.Syntax
 import parsing.language.parse
-import ir.typeless
+import ir.{typeless, typed}
 import runtime.Interpreter
 import error.Errors
 import error.pp => errpp
@@ -39,9 +39,10 @@ def resultOf(code: String, syntax: Syntax = stdOps) =
   val interpreter =
     for
       ast <- parse("<stdin>", prelude + code, syntax)
-      ir1 <- typeless.lift(ast)
-      ir   = typeless.pass(ir1)
-      ins <- backend.opcode.compile(ir)
+      ir0 <- typeless.lift(ast)
+      ir1  = typeless.pass(ir0)
+      ir2 <- typed.lift(ir1)
+      ins <- backend.opcode.compile(ir2)
       interpreter = Interpreter(ins, false, false)
     yield interpreter
 

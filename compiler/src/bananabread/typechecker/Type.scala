@@ -21,4 +21,7 @@ case class Lambda(in: List[Type], out: Type) extends Type with Print(s"${in.grou
 
   def curry(c: Int): Lambda =
     Lambda(in.drop(c), out)
+
+  def zip(other: Lambda) =
+    in.zip(other.in) :+ (out, other.out)
 }

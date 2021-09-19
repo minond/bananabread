@@ -6,7 +6,7 @@ import parsing.error => parse
 import runtime.error => runtime
 import typechecker.error => typechecker
 
-import ir.typeless => tl
+import ir.typed
 import parsing.location.Location
 import parsing.ast.{Def, Expr}
 import bananabread.runtime.instruction.{Instruction, Code, Label, Value, pp => inspp}
@@ -105,7 +105,7 @@ def pp(err: Errors, source: String): String = err match
       isolateBadLine(code.location, source),
     )
 
-  case genop.BadCallErr(tl.Id(id)) =>
+  case genop.BadCallErr(typed.Id(id, _)) =>
     lines(
       generateRuntimeErrorLine(s"bad call to `${id.lexeme}`", id.location, source),
       isolateBadLine(id.location, source),
@@ -135,6 +135,12 @@ def pp(err: Errors, source: String): String = err match
       isolateBadLine(ir.expr.location, source),
     )
 
+  case typechecker.UnunifiedTypeVarErr(_, ir) =>
+    lines(
+      generateTypeErrorNearLine(s"unable to unify expression, perhaps a type annotation is missing", ir.expr.location, source),
+      isolateBadLine(ir.expr.location, source),
+    )
+
   case _ =>
     err.toString
 
@@ -149,6 +155,9 @@ def generateOpcodeErrorLine(message: String) =
 
 def generateTypeErrorLine(message: String, loc: Location, source: String) =
   s"${BOLD}type error: ${message} in ${generateCoordinates(loc, source)}${RESET}"
+
+def generateTypeErrorNearLine(message: String, loc: Location, source: String) =
+  s"${BOLD}type error: ${message} near ${generateCoordinates(loc, source)}${RESET}"
 
 def generateCoordinates(loc: Location, source: String) =
   val (row, col) = offsetToRowAndCol(loc.offset, source)

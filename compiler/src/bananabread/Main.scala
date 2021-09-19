@@ -1,7 +1,7 @@
 package bananabread
 
 import parsing.language.parse
-import ir.typeless
+import ir.{typeless, typed}
 import error.Errors
 import error.pp => errpp
 import runtime.Interpreter
@@ -37,18 +37,15 @@ def main(args: Array[String]) =
                println(ast)
                println("~~~~~~~~~~~~~~~~~~~~~~~")
 
-      ir1 <- typeless.lift(ast)
-      ir   = typeless.pass(ir1)
-      tys <- typechecker.infer(ir)
-      _    = if doPrintTypes then
-               println("~~~~~~~~~~~~~~~~~~~~~~~")
-               ir.zip(tys._1).foreach {
-                 case (typeless.Def(name, _, _), ty) => println(s"$name: $ty")
-                 case (ir, ty) => println(s"$ir: $ty")
+      ir0 <- typeless.lift(ast)
+      ir1  = typeless.pass(ir0)
+      ir2 <- typed.lift(ir1)
+         _ = if doPrintTypes then
+               ir2.foreach { ir =>
+                 println(s"${ir.expr} : ${ir.ty}")
                }
-               println("~~~~~~~~~~~~~~~~~~~~~~~")
 
-      ins <- backend.opcode.compile(ir)
+      ins <- backend.opcode.compile(ir2)
       _    = if doPrintOpcodes then
                println("~~~~~~~~~~~~~~~~~~~~~~~")
                println(pp(ins))
