@@ -73,7 +73,7 @@ def generatePush(scope: Scope, node: Ir, ty: Type): Result = (ty, node) match
     Left(BadPushErr(ty, node))
 
 def generateLoad(scope: Scope, id: typed.Id): Result = scope.get(id) match
-  case Some(_) => Right(group(scope, Load(I32, scope.qualified(id))))
+  case Some(_) => Right(group(scope, Load(toRuntimeType(id.ty), scope.qualified(id))))
   case None    => Left(UndeclaredIdentifierErr(id))
 
 def generateAnnonLambda(scope: Scope, lambda: typed.Lambda): Result =
@@ -186,7 +186,7 @@ def generateCallArgsLoad(scope: Scope, args: List[Ir]): Result =
       // TODO Fully qualify all anonymous functions
       generate(scope, lam).map { lamop =>
         scope.define(lam.ptr, lam)
-        group(scope, Load(I32, lam.ptr)) ++ lamop
+        group(scope, Load(Ref, lam.ptr)) ++ lamop
       }
     case arg =>
       generate(scope, arg)
@@ -265,7 +265,7 @@ def generateLambda(scope: Scope, params: List[typed.Param], body: Ir): Result =
 
   val storeArgs = params.reverse.flatMap { case param @ typed.Param(expr @ ast.Id(label, _), ty) =>
     scope.define(param, typed.Id(expr, ty))
-    group(scope, Swap, Store(I32, scope.qualified(label)))
+    group(scope, Swap, Store(toRuntimeType(ty), scope.qualified(label)))
   }
 
   val callerInfo = group(scope,
@@ -289,21 +289,23 @@ def generateLambda(scope: Scope, params: List[typed.Param], body: Ir): Result =
 
   generate(scope, body).map(init ++ storeArgs ++ callerInfo ++ _ ++ retCode)
 
-def generateStore(scope: Scope, label: String, value: Ir): Result = value match
-  case _: typed.Lambda => Right(group(scope, Store(Ref, scope.qualified(label))))
-  case _: typed.Num    => Right(group(scope, Store(I32, scope.qualified(label))))
-  case _: typed.Str    => Right(group(scope, Store(Str, scope.qualified(label))))
-  case _: typed.Bool   => Right(group(scope, Store(Bool, scope.qualified(label))))
-  case _: typed.Begin  => Right(group(scope, Store(I32, scope.qualified(label)))) /* XXX May not be an I32 */
-  case _: typed.Let    => Right(group(scope, Store(I32, scope.qualified(label)))) /* XXX May not be an I32 */
-  case _: typed.Cond   => Right(group(scope, Store(I32, scope.qualified(label)))) /* XXX May not be an I32 */
-  case _: typed.App    => Right(group(scope, Store(I32, scope.qualified(label)))) /* XXX May not be an I32 */
-  case _: typed.Symbol => Right(group(scope, Store(Symbol, scope.qualified(label))))
-  case _: typed.Def    => Left(CannotStoreErr(value))
-  case _: typed.Opcode => Left(CannotStoreErr(value))
-  case id: typed.Id => scope.get(id) match
+def generateStore(scope: Scope, label: String, value: Ir): Result = (value, toRuntimeType(value.ty)) match
+  case (_: typed.Def, ty)    => Left(CannotStoreErr(value))
+  case (_: typed.Opcode, ty) => Left(CannotStoreErr(value))
+
+  case (_: typed.Lambda, ty) => Right(group(scope, Store(ty, scope.qualified(label))))
+  case (_: typed.Num, ty)    => Right(group(scope, Store(ty, scope.qualified(label))))
+  case (_: typed.Str, ty)    => Right(group(scope, Store(ty, scope.qualified(label))))
+  case (_: typed.Bool, ty)   => Right(group(scope, Store(ty, scope.qualified(label))))
+  case (_: typed.Begin, ty)  => Right(group(scope, Store(ty, scope.qualified(label))))
+  case (_: typed.Let, ty)    => Right(group(scope, Store(ty, scope.qualified(label))))
+  case (_: typed.Cond, ty)   => Right(group(scope, Store(ty, scope.qualified(label))))
+  case (_: typed.App, ty)    => Right(group(scope, Store(ty, scope.qualified(label))))
+  case (_: typed.Symbol, ty) => Right(group(scope, Store(ty, scope.qualified(label))))
+
+  case (id: typed.Id, ty) => scope.get(id) match
     case Some(v: typed.Id) if v.expr.lexeme == id.expr.lexeme =>
-      Right(group(scope, Store(I32, scope.qualified(label)))) /* XXX May not be an I32 */
+      Right(group(scope, Store(ty, scope.qualified(label))))
     case Some(v) => generateStore(scope, label, v)
     case None    => Left(UndeclaredIdentifierErr(id))
 

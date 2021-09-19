@@ -3,6 +3,7 @@ package runtime
 package instruction
 
 import value.Value
+import typechecker.ty
 import register.Register
 
 
@@ -15,6 +16,19 @@ case object Bool extends Type
 case object Symbol extends Type
 case object Scope extends Type
 case object Const extends Type
+
+
+/** TODO Find a corresponding runtime type for Void
+  */
+def toRuntimeType(typ: ty.Type): Type = typ match
+  case ty.I32 => I32
+  case ty.Str => Str
+  case ty.Symbol => Symbol
+  case ty.Bool => Bool
+  case ty.Void => ???
+  case _: ty.Tuple => Ref
+  case _: ty.Lambda => Ref
+  case _: ty.Var => Ref
 
 
 case class Label(label: String)
