@@ -8,8 +8,8 @@ def loop(i : I32, fn : I32 -> Void) : Void =
 
 
 loop(10,
-  (func (y : I32) =
-    func (x : I32) =
+  (func (y : I32) : Void =
+    func (x : I32) : Void =
       begin
         println(y)
         println(x)
