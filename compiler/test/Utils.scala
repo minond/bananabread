@@ -11,7 +11,6 @@ import error.pp => errpp
 import java.io.{File, ByteArrayOutputStream}
 
 
-
 val stdOps = Syntax.withPrefix(0, "-")
                    .withPrefix(0, "∀")
                    .withPrefix(0, "*")

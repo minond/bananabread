@@ -141,6 +141,12 @@ def pp(err: Errors, source: String): String = err match
       isolateBadLine(ir.expr.location, source),
     )
 
+  case typechecker.UnificationErr(expected, got, ir) =>
+    lines(
+      generateTypeErrorLine(s"expected value of type `$expected` but got value of type `$got`", ir.expr.location, source),
+      isolateBadLine(ir.expr.location, source),
+    )
+
   case _ =>
     err.toString
 

@@ -90,7 +90,7 @@ def inferApp(app: typeless.App, scope: Scope): Scoped[Type] =
     freshLam = Lambda(argTys, fresh())
     called <- infer(app.lambda, scope)
     calledTy = called._1
-    _ <- sub.unify(calledTy, freshLam)
+    _ <- sub.unify(calledTy, freshLam, app)
     culprit = if app.args.isEmpty
               then app
               else app.args.head
@@ -158,7 +158,7 @@ def inferCond(cond: typeless.Cond, scope: Scope): Scoped[Type] =
     condTy <- infer(cond.cond, scope)
     passTy <- infer(cond.pass, scope)
     failTy <- infer(cond.fail, scope)
-    _      <- sub.unify(passTy._1, failTy._1)
+    _      <- sub.unify(passTy._1, failTy._1, cond.fail)
     exprTy <- sub(failTy._1, cond.fail)
   yield
     (exprTy, scope)

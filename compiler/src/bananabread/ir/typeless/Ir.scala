@@ -60,8 +60,11 @@ def liftApp(app: ast.App): Lifted[App] =
   for
     lambdaIr <- lift(app.lambda)
     argsIrs  <- app.args.map(lift).squished
+    expr      = if app.args.isEmpty
+                then app
+                else app.args.head
   yield
-    App(lambdaIr, argsIrs, app)
+    App(lambdaIr, argsIrs, expr)
 
 def liftLambda(lambda: ast.Lambda): Lifted[Lambda] =
   for
