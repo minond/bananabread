@@ -1,4 +1,3 @@
-- Implement runtime currying
 - Fully qualify all anonymous functions
 - Module system, imports/exports
 - Parsing errors:
