@@ -19,6 +19,9 @@ case object Const extends Type
 
 
 /** TODO Find a corresponding runtime type for Void
+  *
+  * TODO Var should not be passed into this method. Once polymorphic types are
+  * made concret the ty.Var match should go away.
   */
 def toRuntimeType(typ: ty.Type): Type = typ match
   case ty.I32 => I32

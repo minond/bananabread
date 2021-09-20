@@ -40,55 +40,51 @@ object TypeScope:
     tyVars.map { tyVar => (tyVar.id.lexeme, fresh()) }.toMap
 
 
-def infer(nodes: List[Ir], scope: Scope = Map.empty): Scoped[List[Type]] =
+def infer(nodes: List[Ir], scope: Scope, sub: Substitution): Scoped[List[Type]] =
   nodes.foldLeft[Scoped[List[Type]]](Right((List.empty, scope))) {
     case (Left(err), _) =>
       Left(err)
     case (Right((tys, scope)), node) =>
-      infer(node, scope) match
+      infer(node, scope, sub) match
         case Left(err) => Left(err)
         case Right((ty, next)) =>
           Right((tys :+ ty, next))
   }
-def infer(node: Ir, scope: Scope): Scoped[Type] = node match
+def infer(node: Ir, scope: Scope, sub: Substitution): Scoped[Type] = node match
   case _: typeless.Num     => Right((ty.I32, scope))
   case _: typeless.Str     => Right((ty.Str, scope))
   case _: typeless.Symbol  => Right((ty.Symbol, scope))
   case _: typeless.Bool    => Right((ty.Bool, scope))
   case _: typeless.Opcode  => Right((ty.Void, scope))
-  case ir: typeless.Id     => inferId(ir, scope)
-  case ir: typeless.Begin  => inferBegin(ir, scope)
-  case ir: typeless.Def    => inferDef(ir, scope)
-  case ir: typeless.App    => inferApp(ir, scope)
-  case ir: typeless.Lambda => inferLambda(ir, scope)
-  case ir: typeless.Cond   => inferCond(ir, scope)
-  case ir: typeless.Let    => inferLet(ir, scope)
+  case ir: typeless.Id     => inferId(ir, scope, sub)
+  case ir: typeless.Begin  => inferBegin(ir, scope, sub)
+  case ir: typeless.Def    => inferDef(ir, scope, sub)
+  case ir: typeless.App    => inferApp(ir, scope, sub)
+  case ir: typeless.Lambda => inferLambda(ir, scope, sub)
+  case ir: typeless.Cond   => inferCond(ir, scope, sub)
+  case ir: typeless.Let    => inferLet(ir, scope, sub)
 
-def inferId(id: typeless.Id, scope: Scope): Scoped[Type] =
+def inferId(id: typeless.Id, scope: Scope, sub: Substitution): Scoped[Type] =
   lookup(id, id.expr.lexeme, scope).map { ty => (ty, scope) }
 
-def inferBegin(begin: typeless.Begin, scope: Scope): Scoped[Type] =
-  infer(begin.ins.last, scope)
+def inferBegin(begin: typeless.Begin, scope: Scope, sub: Substitution): Scoped[Type] =
+  infer(begin.ins.last, scope, sub)
 
-def inferDef(defIr: typeless.Def, scope: Scope): Scoped[Type] =
-  inferDef(defIr.name.lexeme, defIr.value, scope)
-def inferDef(bindingIr: typeless.Binding, scope: Scope): Scoped[Type] =
-  inferDef(bindingIr.label.lexeme, bindingIr.value, scope)
-def inferDef(label: String, value: Ir, scope: Scope): Scoped[Type] =
-  infer(value, scope).map { (ty, scope) =>
+def inferDef(defIr: typeless.Def, scope: Scope, sub: Substitution): Scoped[Type] =
+  inferDef(defIr.name.lexeme, defIr.value, scope, sub)
+def inferDef(bindingIr: typeless.Binding, scope: Scope, sub: Substitution): Scoped[Type] =
+  inferDef(bindingIr.label.lexeme, bindingIr.value, scope, sub)
+def inferDef(label: String, value: Ir, scope: Scope, sub: Substitution): Scoped[Type] =
+  infer(value, scope, sub).map { (ty, scope) =>
     (ty, scope + (label -> ty))
   }
 
-/** TODO Move substitution higher up call chain.
-  */
-def inferApp(app: typeless.App, scope: Scope): Scoped[Type] =
-  val sub = Substitution.empty
-
+def inferApp(app: typeless.App, scope: Scope, sub: Substitution): Scoped[Type] =
   for
-    inferredArgs <- app.args.map { arg => infer(arg, scope) }.squished
+    inferredArgs <- app.args.map { arg => infer(arg, scope, sub) }.squished
     argTys = inferredArgs.map(_._1)
     freshLam = Lambda(argTys, fresh())
-    called <- infer(app.lambda, scope)
+    called <- infer(app.lambda, scope, sub)
     calledTy = called._1
     _ <- sub.unify(calledTy, freshLam, app)
     culprit = if app.args.isEmpty
@@ -101,16 +97,21 @@ def inferApp(app: typeless.App, scope: Scope): Scoped[Type] =
 
 /** TODO Handle type variables
   */
-def inferLambda(lam: typeless.Lambda, scope: Scope): Scoped[Lambda] =
+def inferLambda(lam: typeless.Lambda, scope: Scope, sub: Substitution): Scoped[Lambda] =
   val tyScope = TypeScope.from(lam.tyVars)
 
   for
-    params <- inferLambdaParams(lam, scope, tyScope)
-    ret    <- inferLambdaRet(params._1, lam, scope, params._2)
+    params <- inferLambdaParams(lam, scope, sub, tyScope)
+    ret    <- inferLambdaRet(params._1, lam, scope, sub, params._2)
   yield
     (Lambda(params._1, ret._1), scope)
 
-def inferLambdaParams(lam: typeless.Lambda, scope: Scope, tyScope: TypeScope): Inferred[(List[Type], TypeScope)] =
+def inferLambdaParams(
+  lam: typeless.Lambda,
+  scope: Scope,
+  sub: Substitution,
+  tyScope: TypeScope,
+): Inferred[(List[Type], TypeScope)] =
   val tags = lam.expr.params.map(_.ty)
   val params = lam.params
 
@@ -129,7 +130,13 @@ def inferLambdaParams(lam: typeless.Lambda, scope: Scope, tyScope: TypeScope): I
 
 /** TODO Substitute type variables
   */
-def inferLambdaRet(paramTys: List[Type], lam: typeless.Lambda, scope: Scope, tyScope: TypeScope): Inferred[(Type, TypeScope)] =
+def inferLambdaRet(
+  paramTys: List[Type],
+  lam: typeless.Lambda,
+  scope: Scope,
+  sub: Substitution,
+  tyScope: TypeScope,
+): Inferred[(Type, TypeScope)] =
   lam.expr.tyRet match
     case Some(tag) =>
       processType(tag, tyScope) match
@@ -143,34 +150,30 @@ def inferLambdaRet(paramTys: List[Type], lam: typeless.Lambda, scope: Scope, tyS
         .foldLeft(scope) { case (scope, (name, ty)) => scope + (name -> ty) }
 
       for
-        ty <- infer(lam.body, lexicalScope)
+        ty <- infer(lam.body, lexicalScope, sub)
       yield
         (ty._1, tyScope)
 
-/** TODO Move substitution higher up call chain.
-  *
-  * TODO Ensure condTy unifies with Bool.
+/** TODO Ensure condTy unifies with Bool.
   */
-def inferCond(cond: typeless.Cond, scope: Scope): Scoped[Type] =
-  val sub = Substitution.empty
-
+def inferCond(cond: typeless.Cond, scope: Scope, sub: Substitution): Scoped[Type] =
   for
-    condTy <- infer(cond.cond, scope)
-    passTy <- infer(cond.pass, scope)
-    failTy <- infer(cond.fail, scope)
+    condTy <- infer(cond.cond, scope, sub)
+    passTy <- infer(cond.pass, scope, sub)
+    failTy <- infer(cond.fail, scope, sub)
     _      <- sub.unify(passTy._1, failTy._1, cond.fail)
     exprTy <- sub(failTy._1, cond.fail)
   yield
     (exprTy, scope)
 
-def inferLet(let: typeless.Let, scope: Scope): Scoped[Type] =
+def inferLet(let: typeless.Let, scope: Scope, sub: Substitution): Scoped[Type] =
   val subscope = let.bindings.foldLeft(scope) { (scope, binding) =>
-    inferDef(binding, scope) match
+    inferDef(binding, scope, sub) match
       case Right((_, scope)) => scope
       case Left(err) => return Left(err)
   }
 
-  infer(let.body, subscope)
+  infer(let.body, subscope, sub)
 
 
 def signature(lam: typeless.Lambda): Inferred[ty.Lambda] =
