@@ -15,7 +15,7 @@ def main(args: Array[String]) =
   val fileName = "./lib/Sample.bb"
   val prelude = module.loadSource("Prelude")
   val sample = module.loadSource("Sample")
-  val code = prelude + sample
+  val code = prelude + "\n\n" + sample
 
   val flagPrintAst = args.contains("print-ast")
   val flagPrintOpcodes = args.contains("print-opcodes")

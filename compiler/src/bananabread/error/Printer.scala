@@ -5,8 +5,11 @@ import backend.opcode.error => genop
 import parsing.error => parse
 import runtime.error => runtime
 import typechecker.error => typechecker
+import ir.typeless.error => typelessIr
+import ir.typed.error => typedIr
 
 import ir.typed
+import ir.typeless
 import parsing.location.Location
 import parsing.ast.{Def, Expr}
 import bananabread.runtime.instruction.{Instruction, Code, Label, Value, pp => inspp}
@@ -23,6 +26,8 @@ type Errors = parse.SyntaxErr
             | genop.GeneratorErr
             | runtime.RuntimeErr
             | typechecker.InferenceErr
+            | typelessIr.LiftErr
+            | typedIr.LiftErr
 
 
 def pp(err: Errors, source: String): String = err match
@@ -147,8 +152,14 @@ def pp(err: Errors, source: String): String = err match
       isolateBadLine(ir.expr.location, source),
     )
 
+  case typedIr.UndeclaredIdentifierErr(typeless.Id(id)) =>
+    lines(
+      generateTypeErrorLine(s"undeclared identifier `$id`", id.location, source),
+      isolateBadLine(id.location, source),
+    )
+
   case _ =>
-    err.toString
+    s"${err.getClass.getCanonicalName}: ${err}"
 
 def generateSyntaxErrorLine(message: String, loc: Location, source: String) =
   s"${BOLD}syntax error: ${message} in ${generateCoordinates(loc, source)}${RESET}"
