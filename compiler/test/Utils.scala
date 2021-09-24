@@ -5,8 +5,7 @@ import parsing.Syntax
 import parsing.language.parse
 import ir.{typeless, typed}
 import runtime.Interpreter
-import error.Errors
-import error.pp => errpp
+import error.Err
 
 import java.io.{File, ByteArrayOutputStream}
 
@@ -27,7 +26,7 @@ val stdOps = Syntax.withPrefix(0, "-")
 
 def exprsOf(code: String, syntax: Syntax = stdOps) =
   parse("<test>", code, syntax) match
-    case Left(err) => throw Exception(errpp(err, code))
+    case Left(err) => throw Exception(printer.pp(err, code))
     case Right(expr) => expr.nodes.map(_.toString)
 
 def astOf(code: String, syntax: Syntax = stdOps) =
@@ -46,8 +45,8 @@ def resultOf(code: String, syntax: Syntax = stdOps) =
     yield interpreter
 
   interpreter match
-    case Left(err: Errors) =>
-      println(errpp(err, prelude + code))
+    case Left(err: Err) =>
+      println(printer.pp(err, prelude + code))
       ???
     case Left(err) =>
       println(s"unhandled error: $err")

@@ -62,7 +62,7 @@ def main(args: Array[String]) =
   res match
     case Failure(ex: Exception) if ex.getMessage == "quit" =>
     case Failure(ex) => throw ex
-    case Success(Left(err: Errors)) => println(errpp(err, code))
+    case Success(Left(err: Err)) => println(printer.pp(err, code))
     case Success(Left(err)) => println(s"unhandled error: $err")
     case Success(Right(vm)) =>
       if doPrintState then
