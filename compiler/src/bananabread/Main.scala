@@ -1,13 +1,9 @@
 package bananabread
 
-import parsing.language.parse
-import ir.{typeless, typed}
-import error.Errors
-import error.pp => errpp
+import error.Err
 import runtime.Interpreter
-import runtime.instruction.pp
+import printer.pp
 
-import scala.io.Source
 import scala.util.{Try, Success, Failure}
 
 
@@ -62,7 +58,7 @@ def main(args: Array[String]) =
   res match
     case Failure(ex: Exception) if ex.getMessage == "quit" =>
     case Failure(ex) => throw ex
-    case Success(Left(err: Err)) => println(printer.pp(err, code))
+    case Success(Left(err: Err)) => println(pp(err, code))
     case Success(Left(err)) => println(s"unhandled error: $err")
     case Success(Right(vm)) =>
       if doPrintState then

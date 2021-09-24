@@ -1,12 +1,12 @@
 package bananabread
 package printer
+package errors
 
 import ir.typed
 import ir.typeless
 import parsing.ast
 import parsing.location.Location
 import runtime.instruction
-import runtime.instruction.pp => inspp
 
 import error.Err
 import backend.opcode.error => genopErr
@@ -219,9 +219,9 @@ def isolateBadOpcode(pc: Int, codes: List[instruction.Code]) =
   bads.foldLeft[List[String]](List.empty) {
     case (acc, (line, index)) =>
       val code = line match
-        case op: instruction.Value       => inspp(op)
-        case op: instruction.Label       => s"    ${inspp(op)}"
-        case op: instruction.Instruction => s"        ${inspp(op)}"
+        case op: instruction.Value       => instructions.pp(op)
+        case op: instruction.Label       => s"    ${instructions.pp(op)}"
+        case op: instruction.Instruction => s"        ${instructions.pp(op)}"
       val formatted =
         if index == pc
         then s"${BOLD}${code}${RESET}"

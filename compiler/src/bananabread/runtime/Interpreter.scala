@@ -4,8 +4,9 @@ package runtime
 import error._
 import register.{Registers, Esp}
 import memory.Stack
-import instruction.{Code, Instruction, labels, constants, pp}
+import instruction.{Code, Instruction, labels, constants}
 import value.Value
+import printer.pp
 
 
 sealed trait Dispatch
