@@ -38,8 +38,9 @@ def parse(sourceName: String, tokens: Tokens, syntax: Syntax): Parsed[Tree] =
 
 def parseTop(head: Token, tail: Tokens, syntax: Syntax): Parsed[Stmt | Expr] =
   head match
-    case _ if is(head, "def") => parseDef(head, tail, syntax)
-    case _ => parseExpr(head, tail, syntax)
+    case _ if is(head, "module") => parseModule(head, tail, syntax)
+    case _ if is(head, "def")    => parseDef(head, tail, syntax)
+    case _                       => parseExpr(head, tail, syntax)
 
 def parseExpr(head: Token, tail: Tokens, syntax: Syntax): Parsed[Expr] =
   head match
@@ -151,6 +152,12 @@ def parseLet(start: Token, tail: Tokens, syntax: Syntax): Parsed[Let] =
     body     <- parseExpr(tail.next, tail, syntax)
   yield
     Let(start, bindings, body)
+
+def parseModule(start: Token, tail: Tokens, syntax: Syntax): Parsed[Module] =
+  for
+    name  <- eat[Id](start, tail)
+  yield
+    Module(name, List.empty)
 
 def parseDef(start: Token, tail: Tokens, syntax: Syntax): Parsed[Def] =
   for
