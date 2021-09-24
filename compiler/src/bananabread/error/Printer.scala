@@ -11,6 +11,7 @@ import ir.typed.error => typedIr
 import ir.typed
 import ir.typeless
 import parsing.location.Location
+import parsing.ast
 import parsing.ast.{Def, Expr}
 import bananabread.runtime.instruction.{Instruction, Code, Label, Value, pp => inspp}
 
@@ -22,15 +23,7 @@ val SourcePadding = 5
 val OpcodePadding = 10
 
 
-type Errors = parse.SyntaxErr
-            | genop.GeneratorErr
-            | runtime.RuntimeErr
-            | typechecker.InferenceErr
-            | typelessIr.LiftErr
-            | typedIr.LiftErr
-
-
-def pp(err: Errors, source: String): String = err match
+def pp(err: Err, source: String): String = err match
   case parse.BadNumErr(_, location) =>
     lines(
       generateSyntaxErrorLine(s"bad number", location, source),
@@ -91,6 +84,8 @@ def pp(err: Errors, source: String): String = err match
           generateRuntimeErrorLine(s"bad push, `${stmt.value}` is not a valid runtime value", stmt.value.location, source),
           isolateBadLine(stmt.value.location, source),
         )
+      case _ : (ast.Module | ast.Import) =>
+        ???
 
   case genop.UndeclaredIdentifierErr(id) =>
     lines(
