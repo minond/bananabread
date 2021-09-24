@@ -85,8 +85,11 @@ def pp(err: Err, source: String): String = err match
           generateRuntimeErrorLine(s"bad push, `${stmt.value}` is not a valid runtime value", stmt.value.location, source),
           isolateBadLine(stmt.value.location, source),
         )
-      case _: (ast.Module | ast.Import) =>
-        ???
+      case node: (ast.Module | ast.Import) =>
+        lines(
+          generateInternalErrorLine(s"unable to process code", node.location, source),
+          isolateBadLine(node.location, source),
+        )
 
   case genopErr.UndeclaredIdentifierErr(id) =>
     lines(
