@@ -8,6 +8,10 @@ import utils.{Print, groupedIds}
 
 case class Tree(val nodes: List[Expr | Stmt])
 
+object Tree:
+  def empty =
+    Tree(List.empty)
+
 
 sealed trait Token extends Located
 sealed trait Expr extends Located

@@ -9,39 +9,22 @@ import scala.util.{Try, Success, Failure}
 
 def main(args: Array[String]) =
   val fileName = "./lib/Sample.bb"
-  val prelude = module.loadSource("Prelude")
-  val sample = module.loadSource("Sample")
+  val prelude = program.loadSource("Prelude")
+  val sample = program.loadSource("Sample")
   val code = prelude + "\n\n" + sample
 
-  val flagPrintAst = args.contains("print-ast")
   val flagPrintOpcodes = args.contains("print-opcodes")
-  val flagPrintTypes = args.contains("print-types")
   val flagPrintState = args.contains("print-state")
   val flagDebug = args.contains("debug")
 
   val doDebug = flagDebug
-  val doPrintAst = flagPrintAst || flagDebug
   val doPrintOpcodes = flagPrintOpcodes || flagDebug
-  val doPrintTypes = flagPrintTypes || flagDebug
   val doPrintState = flagPrintState || flagDebug
 
   val res = Try {
     for
-      ast <- parse(fileName, code)
-      _    = if doPrintAst then
-               println("~~~~~~~~~~~~~~~~~~~~~~~")
-               println(ast)
-               println("~~~~~~~~~~~~~~~~~~~~~~~")
-
-      ir0 <- typeless.lift(ast)
-      ir1  = typeless.pass(ir0)
-      ir2 <- typed.lift(ir1)
-         _ = if doPrintTypes then
-               ir2.foreach { ir =>
-                 println(s"${ir.expr} : ${ir.ty}")
-               }
-
-      ins <- backend.opcode.compile(ir2)
+      ir <- program.load(fileName, code)
+      ins <- backend.opcode.compile(ir)
       _    = if doPrintOpcodes then
                println("~~~~~~~~~~~~~~~~~~~~~~~")
                println(pp(ins))

@@ -7,8 +7,8 @@ import matchers._
 
 
 class ProgramTests extends AnyFlatSpec with should.Matchers:
-  for program <- internalTestProgramPaths() do
-    it should s"execute $program" in {
-      val test = module.readFile(program)
+  for path <- internalTestProgramPaths() do
+    it should s"execute $path" in {
+      val test = program.readFile(path)
       outputOf(test) shouldEqual expectedOutput(test)
     }

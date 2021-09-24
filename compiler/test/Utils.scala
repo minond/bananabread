@@ -32,15 +32,12 @@ def exprsOf(code: String, syntax: Syntax = stdOps) =
 def astOf(code: String, syntax: Syntax = stdOps) =
   exprsOf(code, syntax).head
 
-def resultOf(code: String, syntax: Syntax = stdOps) =
-  val prelude = module.loadSource("Prelude")
+def resultOf(code: String) =
+  val prelude = program.loadSource("Prelude")
   val interpreter =
     for
-      ast <- parse("<stdin>", prelude + code, syntax)
-      ir0 <- typeless.lift(ast)
-      ir1  = typeless.pass(ir0)
-      ir2 <- typed.lift(ir1)
-      ins <- backend.opcode.compile(ir2)
+      ir <- program.load("<test>", prelude + code)
+      ins <- backend.opcode.compile(ir)
       interpreter = Interpreter(ins, false, false)
     yield interpreter
 
@@ -55,8 +52,8 @@ def resultOf(code: String, syntax: Syntax = stdOps) =
       vm.run
       vm
 
-def stackHeadOf(code: String, syntax: Syntax = stdOps) =
-  val ret = resultOf(code, syntax)
+def stackHeadOf(code: String) =
+  val ret = resultOf(code)
   ret.stack.get(ret.registers.esp.value - 1)
 
 def outputOf(code: String) =
