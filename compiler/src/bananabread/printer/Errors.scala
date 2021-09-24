@@ -18,6 +18,7 @@ import ir.typed.error => typedIrErr
 
 import scala.io.AnsiColor.{BOLD, RESET}
 
+
 val GRAY = String("\u001B[37m")
 
 val SourcePadding = 5

@@ -5,7 +5,6 @@ package instructions
 
 import runtime.instruction._
 
-
 def pp(codes: List[Code]): String =
   codes.zipWithIndex.map {
     case (op: Value, _) => pp(op)
