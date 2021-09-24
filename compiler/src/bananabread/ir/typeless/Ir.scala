@@ -55,6 +55,8 @@ def lift(node: Stmt | Expr): Lifted[Ir] = node match
   case expr: ast.Let    => liftLet(expr)
   case expr: ast.Begin  => liftBegin(expr)
   case stmt: ast.Def    => liftDef(stmt)
+  case _: ast.Module    => Left(LiftinTheUnliftableErr(node))
+  case _: ast.Import    => Left(LiftinTheUnliftableErr(node))
 
 def liftApp(app: ast.App): Lifted[App] =
   for
