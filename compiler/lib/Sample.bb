@@ -1,5 +1,7 @@
 module Sample
 
+import Prelude
+
 def loop(i : I32, fn : I32 -> Void) : Void =
   if i
   then begin

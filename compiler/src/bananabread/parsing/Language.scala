@@ -39,6 +39,7 @@ def parse(sourceName: String, tokens: Tokens, syntax: Syntax): Parsed[Tree] =
 def parseTop(head: Token, tail: Tokens, syntax: Syntax): Parsed[Stmt | Expr] =
   head match
     case _ if is(head, "module") => parseModule(head, tail, syntax)
+    case _ if is(head, "import") => parseImport(head, tail, syntax)
     case _ if is(head, "def")    => parseDef(head, tail, syntax)
     case _                       => parseExpr(head, tail, syntax)
 
@@ -153,11 +154,33 @@ def parseLet(start: Token, tail: Tokens, syntax: Syntax): Parsed[Let] =
   yield
     Let(start, bindings, body)
 
+/** TODO Parse exposing part.
+  */
 def parseModule(start: Token, tail: Tokens, syntax: Syntax): Parsed[Module] =
   for
-    name  <- eat[Id](start, tail)
+    ref <- parseRef(start, tail, syntax)
   yield
-    Module(name, List.empty)
+    Module(ref, List.empty)
+
+/** TODO Parse exposing part.
+  */
+def parseImport(start: Token, tail: Tokens, syntax: Syntax): Parsed[Import] =
+  for
+    ref <- parseRef(start, tail, syntax)
+  yield
+    Import(ref, List.empty)
+
+/** TODO Parse alias part.
+  */
+def parseRef(start: Token, tail: Tokens, syntax: Syntax): Parsed[Ref] =
+  for
+    ids <- parseByWith[Dot, Id](start, tail, parseId)
+    path = Id(ids.map(_.lexeme).mkString("."), ids.head.location)
+  yield
+    Ref(path, None)
+
+def parseId(head: Token, tail: Tokens): Parsed[Id] =
+  eat[Id](head, tail)
 
 def parseDef(start: Token, tail: Tokens, syntax: Syntax): Parsed[Def] =
   for

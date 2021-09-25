@@ -13,7 +13,7 @@ def load(fileName: String): Either[Err, List[Ir]] =
 def load(fileName: String, code: String): Either[Err, List[Ir]] =
   for
     nodes <- parsing.language.parse(fileName, code)
-    (_, tree) = parsing.program.structure(nodes)
+    (_, _, tree) = parsing.program.structure(nodes)
     ir0 <- typeless.lift(tree)
     ir1  = typeless.pass(ir0)
     ir2 <- typed.lift(ir1)

@@ -87,8 +87,26 @@ def is(token: Token, word: String) = token match
   case _ => false
 
 
-def parseUntil[Until: ClassTag, E](head: Token, tail: Tokens, fn: (Token, Tokens) => Parsed[E]): Parsed[List[E]] =
-  def aux(acc: List[Parsed[E]]): List[Parsed[E]] =
+def parseByWith[By: ClassTag, T](
+  head: Token,
+  tail: Tokens,
+  fn: (Token, Tokens) => Parsed[T],
+  acc: List[T] = List.empty
+): Parsed[List[T]] =
+  fn(head, tail).flatMap { item =>
+    lookahead(head, tail) match
+      case _: By =>
+        parseByWith(tail.next, tail, fn, acc :+ item)
+      case _ =>
+        Right(acc :+ item)
+  }
+
+def parseUntil[Until: ClassTag, T](
+  head: Token,
+  tail: Tokens,
+  fn: (Token, Tokens) => Parsed[T]
+): Parsed[List[T]] =
+  def aux(acc: List[Parsed[T]]): List[Parsed[T]] =
     lookahead(head, tail) match
       case x: Until            => acc
       case _ =>
@@ -96,7 +114,7 @@ def parseUntil[Until: ClassTag, E](head: Token, tail: Tokens, fn: (Token, Tokens
           case res @ Left(err) => acc :+ res
           case res @ Right(ok) => aux(acc :+ res)
 
-  aux(List.empty[Parsed[E]]).squished
+  aux(List.empty[Parsed[T]]).squished
 
 def parseByUntilWith[By: ClassTag, Until: ClassTag, T](
   head: Token,

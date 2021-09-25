@@ -61,8 +61,8 @@ case class TyLamda(params: List[Ty], ret: Ty) extends Ty with Print(s"${params.g
 
 case class Def(name: Id, value: Expr) extends Stmt, At(name.location), Print(s"def $name = $value")
 
-case class Module(name: Id, exports: List[Ref]) extends Stmt, At(name.location), Print(s"module $name")
-case class Import(name: Ref, imports: List[Ref]) extends Stmt, At(name.id.location), Print(s"import ${name.id}")
+case class Module(name: Ref, exposing: List[Ref]) extends Stmt, At(name.id.location), Print(s"module ${name.id}")
+case class Import(name: Ref, exposing: List[Ref]) extends Stmt, At(name.id.location), Print(s"import ${name.id}")
 case class Ref(id: Id, alias: Option[Id])
 
 case class Comment(lexeme: String, loc: Location) extends Token, At(loc)
