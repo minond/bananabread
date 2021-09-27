@@ -23,7 +23,8 @@ def main(args: Array[String]) =
 
   val res = Try {
     for
-      ir <- program.load(fileName, code)
+      sources <- program.load(fileName, code)
+      ir <- program.lift(sources.head)
       ins <- backend.opcode.compile(ir)
       _    = if doPrintOpcodes then
                println("~~~~~~~~~~~~~~~~~~~~~~~")

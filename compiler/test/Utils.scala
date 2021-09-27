@@ -36,7 +36,8 @@ def resultOf(code: String) =
   val prelude = program.loadSource("Prelude")
   val interpreter =
     for
-      ir <- program.load("<test>", prelude + code)
+      sources <- program.load("<test>", prelude + code)
+      ir <- program.lift(sources.head)
       ins <- backend.opcode.compile(ir)
       interpreter = Interpreter(ins, false, false)
     yield interpreter
