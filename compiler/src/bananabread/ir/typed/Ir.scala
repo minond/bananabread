@@ -77,8 +77,12 @@ def liftId(node: linked.Id, scope: Scope, sub: Substitution): Scoped[Ir] =
   val expr = node.expr
 
   scope.get(expr.lexeme) match
-    case None => Left(UndeclaredIdentifierErr(node))
-    case Some(ty) => Right(Id(expr, ty), scope)
+    case None =>
+      // Should be unreachable since linked IR is catching any undeclared
+      // variables.
+      Left(UndeclaredIdentifierErr(node))
+    case Some(ty) =>
+      Right(Id(expr, ty), scope)
 
 def liftDef(node: linked.Def, scope: Scope, sub: Substitution): Scoped[Def] =
   node.value match

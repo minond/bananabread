@@ -153,12 +153,6 @@ def pp(err: Err, source: String): String = err match
       isolateBadLine(ir.expr.location, source),
     )
 
-  case typedIrErr.UndeclaredIdentifierErr(linked.Id(id, _)) =>
-    lines(
-      generateTypeErrorLine(s"undeclared identifier `$id`", id.location, source),
-      isolateBadLine(id.location, source),
-    )
-
   case typelessIrErr.LiftinTheUnliftableErr(node) =>
     lines(
       generateInternalErrorLine(s"unable to process code", node.location, source),
@@ -169,6 +163,12 @@ def pp(err: Err, source: String): String = err match
     lines(
       generateRuntimeErrorLine(s"${node.expr.lexeme} was referenced but not found", node.expr.location, source),
       isolateBadLine(node.expr.location, source),
+    )
+
+  case typedIrErr.UndeclaredIdentifierErr(linked.Id(id, _)) =>
+    lines(
+      generateTypeErrorLine(s"undeclared identifier `$id`", id.location, source),
+      isolateBadLine(id.location, source),
     )
 
   case _ =>
