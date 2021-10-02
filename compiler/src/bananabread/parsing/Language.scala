@@ -9,8 +9,6 @@ import utils.{isAn, squished, without}
 import scala.reflect.ClassTag
 
 
-type Tokens = BufferedIterator[Token]
-
 def parse(sourceName: String, sourceString: String): Parsed[Tree] =
   parse(sourceName, sourceString, Syntax())
 def parse(sourceName: String, sourceString: String, syntax: Syntax): Parsed[Tree] =
@@ -154,21 +152,31 @@ def parseLet(start: Token, tail: Tokens, syntax: Syntax): Parsed[Let] =
   yield
     Let(start, bindings, body)
 
-/** TODO Parse exposing part.
-  */
 def parseModule(start: Token, tail: Tokens, syntax: Syntax): Parsed[Module] =
   for
     ref <- parseRef(start, tail, syntax)
+    exposing <- parseMaybeExposed(start, tail, syntax)
   yield
-    Module(ref, List.empty)
+    Module(ref, exposing)
 
-/** TODO Parse exposing part.
-  */
 def parseImport(start: Token, tail: Tokens, syntax: Syntax): Parsed[Import] =
   for
     ref <- parseRef(start, tail, syntax)
+    exposing <- parseMaybeExposed(start, tail, syntax)
   yield
-    Import(ref, List.empty)
+    Import(ref, exposing)
+
+def parseMaybeExposed(start: Token, tail: Tokens, syntax: Syntax): Parsed[List[Ref]] =
+  if is(lookahead(start, tail), "exposing")
+  then parseExposed(tail.next, tail, syntax)
+  else Right(List.empty)
+
+def parseExposed(start: Token, tail: Tokens, syntax: Syntax): Parsed[List[Ref]] =
+  for
+    _ <- eat[OpenParen](start, tail)
+    exposed <- parseByUntilWith[Comma, CloseParen, Ref](start, tail, syntax, parseRefId)
+  yield
+    exposed
 
 /** TODO Parse alias part.
   */
@@ -178,6 +186,11 @@ def parseRef(start: Token, tail: Tokens, syntax: Syntax): Parsed[Ref] =
     path = Id(ids.map(_.lexeme).mkString("."), ids.head.location)
   yield
     Ref(path, None)
+
+def parseRefId(head: Token, tail: Tokens, syntax: Syntax): Parsed[Ref] =
+  head match
+    case id: Id => Right(Ref(id, None))
+    case unexpected => Left(UnexpectedTokenErr(unexpected))
 
 def parseId(head: Token, tail: Tokens): Parsed[Id] =
   eat[Id](head, tail)

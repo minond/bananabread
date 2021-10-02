@@ -6,6 +6,7 @@ import parsing.error => parse
 import runtime.error => runtime
 import typechecker.error => typechecker
 import ir.typeless.error => typelessIr
+import ir.linked.error => linkedIr
 import ir.typed.error => typedIr
 
 type Err = parse.SyntaxErr
@@ -13,4 +14,5 @@ type Err = parse.SyntaxErr
          | runtime.RuntimeErr
          | typechecker.InferenceErr
          | typelessIr.LiftErr
+         | linkedIr.LiftErr
          | typedIr.LiftErr

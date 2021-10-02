@@ -1,6 +1,6 @@
 module Sample
 
-import Prelude
+import Prelude exposing (-, println)
 
 def loop(i : I32, fn : I32 -> Void) : Void =
   if i

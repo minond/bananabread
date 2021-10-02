@@ -15,6 +15,7 @@ import runtime.error => runtimeErr
 import typechecker.error => typecheckerErr
 import ir.typeless.error => typelessIrErr
 import ir.typed.error => typedIrErr
+import ir.linked.error => linkedIrErr
 
 import scala.io.AnsiColor.{BOLD, RESET}
 
@@ -162,6 +163,12 @@ def pp(err: Err, source: String): String = err match
     lines(
       generateInternalErrorLine(s"unable to process code", node.location, source),
       isolateBadLine(node.location, source),
+    )
+
+  case linkedIrErr.UndeclaredIdentifierErr(node) =>
+    lines(
+      generateRuntimeErrorLine(s"${node.expr.lexeme} was referenced but not found", node.expr.location, source),
+      isolateBadLine(node.expr.location, source),
     )
 
   case _ =>

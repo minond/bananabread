@@ -2,7 +2,7 @@ package bananabread
 package program
 
 import parsing.ast
-import ir.{typed, typeless}
+import ir.{typed, typeless, linked}
 import ir.typed.{Ir, Lifted}
 import error.Err
 import utils.squished
@@ -33,6 +33,13 @@ def lift(source: SourceFile): Either[Err, List[Ir]] =
   yield
     ir2
 
+def findSourceFile(ref: ast.Ref, sources: List[SourceFile]): Option[SourceFile] =
+  sources.find {
+    case SourceFile(Some(module), _, _) =>
+      module.name.id.lexeme == ref.id.lexeme
+    case _ =>
+      false
+  }
 
 def readFile(path: String) =
   Source.fromFile(path).getLines.mkString("\n")
