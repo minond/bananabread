@@ -3,7 +3,7 @@ package printer
 package errors
 
 import ir.typed
-import ir.typeless
+import ir.linked
 import parsing.ast
 import parsing.location.Location
 import runtime.instruction
@@ -153,7 +153,7 @@ def pp(err: Err, source: String): String = err match
       isolateBadLine(ir.expr.location, source),
     )
 
-  case typedIrErr.UndeclaredIdentifierErr(typeless.Id(id)) =>
+  case typedIrErr.UndeclaredIdentifierErr(linked.Id(id, _)) =>
     lines(
       generateTypeErrorLine(s"undeclared identifier `$id`", id.location, source),
       isolateBadLine(id.location, source),

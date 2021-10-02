@@ -3,7 +3,7 @@ package typechecker
 package error
 
 import ty._
-import ir.typeless.Ir
+import ir.linked.Ir
 import parsing.ast
 
 

@@ -24,6 +24,7 @@ def main(args: Array[String]) =
   val res = Try {
     for
       sources <- program.load(fileName, code)
+      // _ <- program.lift2(sources)
       ir <- program.lift(sources.head)
       ins <- backend.opcode.compile(ir)
       _    = if doPrintOpcodes then

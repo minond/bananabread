@@ -5,7 +5,7 @@ package unification
 
 import ty._
 import error._
-import ir.typeless
+import ir.linked
 
 import utils.squished
 
@@ -26,7 +26,7 @@ class Substitution:
   private[unification] def set(v: Var, ty: Type) = Right(data.update(v, ty))
   private[unification] def get(v: Var) = data(v)
 
-  def unify(a: Type, b: Type, node: typeless.Ir): Attempt =
+  def unify(a: Type, b: Type, node: linked.Ir): Attempt =
     (a, b) match
       case (_, _) if a == b => Right(())
       case (v1: Var, v2: Var) => unifyVarVar(this, v1, v2, node)
@@ -36,7 +36,7 @@ class Substitution:
       case (a: Lambda, b: Lambda) => unifyLambdaLambda(this, a, b, node)
       case _ => Left(UnificationErr(a, b, node))
 
-  def apply(ty: Type, node: typeless.Ir): Applied =
+  def apply(ty: Type, node: linked.Ir): Applied =
     ty match
       case v: Var if has(v) => Right(get(v))
       case v: Var => Left(UnunifiedTypeVarErr(v, node))
@@ -50,7 +50,7 @@ class Substitution:
 /** TODO Current var applications aren't enough, need to be more like
   * bisquit's.
   */
-def unifyVarVar(sub: Substitution, a: Var, b: Var, node: typeless.Ir): Attempt =
+def unifyVarVar(sub: Substitution, a: Var, b: Var, node: linked.Ir): Attempt =
   if sub.has(a)
   then sub.unify(b, sub.get(a), node)
   else if sub.has(b)
@@ -59,10 +59,10 @@ def unifyVarVar(sub: Substitution, a: Var, b: Var, node: typeless.Ir): Attempt =
 
 /** TODO Ensure arity match
   */
-def unifyLambdaLambda(sub: Substitution, a: Lambda, b: Lambda, node: typeless.Ir): Attempt =
+def unifyLambdaLambda(sub: Substitution, a: Lambda, b: Lambda, node: linked.Ir): Attempt =
   a.zip(b).map { (a, b) => sub.unify(a, b, node) }.squished
 
-def applyLambda(sub: Substitution, lam: Lambda, node: typeless.Ir): Applied =
+def applyLambda(sub: Substitution, lam: Lambda, node: linked.Ir): Applied =
   for
     in <- lam.in.map(sub(_, node)).squished
     out <- sub(lam.out, node)

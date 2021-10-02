@@ -25,13 +25,32 @@ def load(fileName: String, code: String): Either[Err, List[SourceFile]] =
     SourceFile(module, imports, tree) +: rest.flatten
 
 
+def lift2(sources: List[SourceFile]): Either[Err, Program] =
+  val main = sources.head
+  val importedSources = main.imports.map { stmt => findSourceFile(stmt.name, sources) }.flatten
+  println("importedSources")
+  println(importedSources)
+
+  // if importedSources.isEmpty
+  // then lift(main)
+
+  val liftedImports =
+    if importedSources.isEmpty
+    then List.empty
+    else lift2(importedSources)
+  println("liftedImports")
+  println(liftedImports)
+
+  ???
+
 def lift(source: SourceFile): Either[Err, List[Ir]] =
   for
     ir0 <- typeless.lift(source.tree)
     ir1  = typeless.pass(ir0)
-    ir2 <- typed.lift(ir1)
+    ir2 <- linked.lift(ir1, source.imports)
+    ir3 <- typed.lift(ir2)
   yield
-    ir2
+    ir3
 
 def findSourceFile(ref: ast.Ref, sources: List[SourceFile]): Option[SourceFile] =
   sources.find {
