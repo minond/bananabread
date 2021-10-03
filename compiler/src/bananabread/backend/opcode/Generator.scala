@@ -264,7 +264,7 @@ def generateLambda(scope: Scope, params: List[typed.Param], body: Ir): Result =
   )
 
   val storeArgs = params.reverse.flatMap { case param @ typed.Param(expr @ ast.Id(label, _), ty) =>
-    scope.define(param, typed.Id(expr, ty))
+    scope.define(param, typed.Id(expr, ty, None))
     group(scope, Swap, Store(toRuntimeType(ty), scope.qualified(label)))
   }
 

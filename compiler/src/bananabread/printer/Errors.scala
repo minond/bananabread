@@ -111,7 +111,7 @@ def pp(err: Err, source: String): String = err match
       isolateBadLine(code.location, source),
     )
 
-  case genopErr.BadCallErr(typed.Id(id, _)) =>
+  case genopErr.BadCallErr(typed.Id(id, _, _)) =>
     lines(
       generateRuntimeErrorLine(s"bad call to `${id.lexeme}`", id.location, source),
       isolateBadLine(id.location, source),

@@ -29,7 +29,7 @@ trait OfType(typ: Type) {
 
 case class Num(expr: ast.Num, ty: Type) extends Ir
 case class Str(expr: ast.Str) extends Ir, OfType(ty.Str) with PtrWith("str", () => expr.lexeme.hashCode)
-case class Id(expr: ast.Id, ty: Type) extends Ir
+case class Id(expr: ast.Id, ty: Type, source: Option[ast.Import]) extends Ir
 case class Symbol(expr: ast.Symbol) extends Ir, OfType(ty.Symbol) with Ptr("symbol")
 case class App(lambda: Ir, args: List[Ir], expr: Expr, ty: Type) extends Ir
 case class Cond(cond: Ir, pass: Ir, fail: Ir, expr: Expr, ty: Type) extends Ir
@@ -82,9 +82,9 @@ def liftId(node: linked.Id, scope: Scope, sub: Substitution, space: ModuleSpace)
     case (None, None) =>
       Left(UndeclaredIdentifierErr(node))
     case (_, Some(ir)) =>
-      Right(Id(expr, ir.ty), scope)
+      Right(Id(expr, ir.ty, node.source), scope)
     case (Some(ty), _) =>
-      Right(Id(expr, ty), scope)
+      Right(Id(expr, ty, node.source), scope)
 
 def liftDef(node: linked.Def, scope: Scope, sub: Substitution, space: ModuleSpace): Scoped[Def] =
   node.value match
