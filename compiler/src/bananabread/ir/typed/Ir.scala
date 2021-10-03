@@ -5,6 +5,7 @@ package typed
 import error._
 import parsing.ast
 import parsing.ast.{Expr, Stmt}
+import program.{ModuleSpace, search}
 import typechecker.{ty, infer, expect, signature, fresh, Scope, TypeScope}
 import typechecker.ty.{Type, Void}
 import typechecker.error.InferenceErr
@@ -47,126 +48,127 @@ case class True(expr: ast.True) extends Bool, OfType(ty.Bool)
 case class False(expr: ast.False) extends Bool, OfType(ty.Bool)
 
 
-def lift(nodes: List[linked.Ir]): Lifted[List[Ir]] =
+def lift(nodes: List[linked.Ir], space: ModuleSpace): Lifted[List[Ir]] =
   val sub = Substitution.empty
 
   nodes.foldLeft[Scoped[List[Ir]]](Right((List.empty, Scope.empty))) {
     case (Left(err), _) =>
       Left(err)
     case (Right((acc, scope)), node) =>
-      lift(node, scope, sub).map { (ir, nextScope) =>
+      lift(node, scope, sub, space).map { (ir, nextScope) =>
         (acc :+ ir, nextScope)
       }
   }.map(_._1)
-def lift(node: linked.Ir, scope: Scope, sub: Substitution): Scoped[Ir] = node match
+def lift(node: linked.Ir, scope: Scope, sub: Substitution, space: ModuleSpace): Scoped[Ir] = node match
   case linked.Str(expr)    => Right((Str(expr), scope))
   case linked.Symbol(expr) => Right((Symbol(expr), scope))
   case linked.True(expr)   => Right((True(expr), scope))
   case linked.False(expr)  => Right((False(expr), scope))
   case linked.Opcode(expr) => Right((Opcode(expr), scope))
   case linked.Num(expr)    => Right((Num(expr, ty.I32), scope))
-  case node: linked.Def    => liftDef(node, scope, sub)
-  case node: linked.Id     => liftId(node, scope, sub)
-  case node: linked.Lambda => liftLambda(node, scope, sub)
-  case node: linked.App    => liftApp(node, scope, sub)
-  case node: linked.Cond   => liftCond(node, scope, sub)
-  case node: linked.Begin  => liftBegin(node, scope, sub)
-  case node: linked.Let    => liftLet(node, scope, sub)
+  case node: linked.Def    => liftDef(node, scope, sub, space)
+  case node: linked.Id     => liftId(node, scope, sub, space)
+  case node: linked.Lambda => liftLambda(node, scope, sub, space)
+  case node: linked.App    => liftApp(node, scope, sub, space)
+  case node: linked.Cond   => liftCond(node, scope, sub, space)
+  case node: linked.Begin  => liftBegin(node, scope, sub, space)
+  case node: linked.Let    => liftLet(node, scope, sub, space)
 
-def liftId(node: linked.Id, scope: Scope, sub: Substitution): Scoped[Ir] =
+def liftId(node: linked.Id, scope: Scope, sub: Substitution, space: ModuleSpace): Scoped[Ir] =
   val expr = node.expr
+  val label = expr.lexeme
 
-  scope.get(expr.lexeme) match
-    case None =>
-      // Should be unreachable since linked IR is catching any undeclared
-      // variables.
+  (scope.get(label), space.search(node.source, label)) match
+    case (None, None) =>
       Left(UndeclaredIdentifierErr(node))
-    case Some(ty) =>
+    case (_, Some(ir)) =>
+      Right(Id(expr, ir.ty), scope)
+    case (Some(ty), _) =>
       Right(Id(expr, ty), scope)
 
-def liftDef(node: linked.Def, scope: Scope, sub: Substitution): Scoped[Def] =
+def liftDef(node: linked.Def, scope: Scope, sub: Substitution, space: ModuleSpace): Scoped[Def] =
   node.value match
-    case value: linked.Lambda => liftDefLambda(node, value, scope, sub)
-    case value                => liftDefValue(node, value, scope, sub)
+    case value: linked.Lambda => liftDefLambda(node, value, scope, sub, space)
+    case value                => liftDefValue(node, value, scope, sub, space)
 
-def liftDefLambda(node: linked.Def, value: linked.Lambda, scope: Scope, sub: Substitution): Scoped[Def] =
+def liftDefLambda(node: linked.Def, value: linked.Lambda, scope: Scope, sub: Substitution, space: ModuleSpace): Scoped[Def] =
   val name = node.name
   val expr = node.expr
 
   for
     sig <- signature(value)
     subScope = scope + (name.lexeme -> sig)
-    lifted <- lift(value, subScope, sub).map { (lifted, _) =>
+    lifted <- lift(value, subScope, sub, space).map { (lifted, _) =>
       (Def(name, lifted, expr, lifted.ty), scope + (name.lexeme -> lifted.ty))
     }
   yield
     lifted
 
-def liftDefValue(node: linked.Def, value: linked.Ir, scope: Scope, sub: Substitution): Scoped[Def] =
+def liftDefValue(node: linked.Def, value: linked.Ir, scope: Scope, sub: Substitution, space: ModuleSpace): Scoped[Def] =
   val name = node.name
   val expr = node.expr
 
-  lift(value, scope, sub).map { (lifted, _) =>
+  lift(value, scope, sub, space).map { (lifted, _) =>
     (Def(name, lifted, expr, lifted.ty), scope + (name.lexeme -> lifted.ty))
   }
 
-def liftLambda(node: linked.Lambda, scope: Scope, sub: Substitution): Scoped[Lambda] =
+def liftLambda(node: linked.Lambda, scope: Scope, sub: Substitution, space: ModuleSpace): Scoped[Lambda] =
   val tyVars = node.tyVars
   val params = node.params
   val body = node.body
   val expr = node.expr
 
   for
-    inferredRes <- infer(node, scope, sub)
+    inferredRes <- infer(node, scope, sub, space)
     (unknownTy, _) = inferredRes
     lamTy <- unknownTy.expect[ty.Lambda](node)
     tyScope = TypeScope.from(tyVars)
     inferredScope <- Scope.from(params, tyScope)
-    liftedRes <- lift(body, scope ++ inferredScope, sub)
+    liftedRes <- lift(body, scope ++ inferredScope, sub, space)
     (liftedBody, _) = liftedRes
     liftedParams = params.zip(lamTy.in).map { (param, ty) => Param(param.name, ty) }
   yield
     (Lambda(liftedParams, liftedBody, tyVars, expr, lamTy), scope)
 
-def liftApp(node: linked.App, scope: Scope, sub: Substitution): Scoped[App] =
+def liftApp(node: linked.App, scope: Scope, sub: Substitution, space: ModuleSpace): Scoped[App] =
   val lambda = node.lambda
   val args = node.args
   val expr = node.expr
 
   for
-    liftedLamRes <- lift(lambda, scope, sub)
+    liftedLamRes <- lift(lambda, scope, sub, space)
     (liftedLam, _) = liftedLamRes
-    liftedArgsRes <- args.map(lift(_, scope, sub)).squished
+    liftedArgsRes <- args.map(lift(_, scope, sub, space)).squished
     liftedArgs = liftedArgsRes.map(_._1)
-    inferredRes <- infer(node, scope, sub)
+    inferredRes <- infer(node, scope, sub, space)
     (sig, _) = inferredRes
   yield
     (App(liftedLam, liftedArgs, expr, sig), scope)
 
-def liftCond(node: linked.Cond, scope: Scope, sub: Substitution): Scoped[Cond] =
+def liftCond(node: linked.Cond, scope: Scope, sub: Substitution, space: ModuleSpace): Scoped[Cond] =
   val cond = node.cond
   val pass = node.pass
   val fail = node.fail
   val expr = node.expr
 
   for
-    inferredRes <- infer(node, scope, sub)
+    inferredRes <- infer(node, scope, sub, space)
     (ty, _) = inferredRes
-    liftedResCond <- lift(cond, scope, sub)
+    liftedResCond <- lift(cond, scope, sub, space)
     (liftedCond, _) = liftedResCond
-    liftedResPass <- lift(pass, scope, sub)
+    liftedResPass <- lift(pass, scope, sub, space)
     (liftedPass, _) = liftedResPass
-    liftedResFail <- lift(fail, scope, sub)
+    liftedResFail <- lift(fail, scope, sub, space)
     (liftedFail, _) = liftedResFail
   yield
     (Cond(liftedCond, liftedPass, liftedFail, expr, ty), scope)
 
-def liftBegin(node: linked.Begin, scope: Scope, sub: Substitution): Scoped[Begin] =
+def liftBegin(node: linked.Begin, scope: Scope, sub: Substitution, space: ModuleSpace): Scoped[Begin] =
   val ins = node.ins
   val expr = node.expr
 
   for
-    liftedRes <- ins.map(lift(_, scope, sub)).squished
+    liftedRes <- ins.map(lift(_, scope, sub, space)).squished
     liftedIns = liftedRes.map(_._1)
     ty = if liftedIns.isEmpty
          then Void
@@ -174,7 +176,7 @@ def liftBegin(node: linked.Begin, scope: Scope, sub: Substitution): Scoped[Begin
   yield
     (Begin(liftedIns, expr, ty), scope)
 
-def liftLet(node: linked.Let, scope: Scope, sub: Substitution): Scoped[Let] =
+def liftLet(node: linked.Let, scope: Scope, sub: Substitution, space: ModuleSpace): Scoped[Let] =
   val bindings = node.bindings
   val body = node.body
   val expr = node.expr
@@ -186,7 +188,7 @@ def liftLet(node: linked.Let, scope: Scope, sub: Substitution): Scoped[Let] =
         val recursiveScope =
           scope + (binding.label.lexeme -> fresh())
         for
-          value <- lift(binding.value, recursiveScope, sub).map(_._1)
+          value <- lift(binding.value, recursiveScope, sub, space).map(_._1)
           ty = (binding.label.lexeme -> value.ty)
         yield
           (acc :+ (binding, value), scope + ty)
@@ -195,7 +197,7 @@ def liftLet(node: linked.Let, scope: Scope, sub: Substitution): Scoped[Let] =
     liftedParams = liftedBindingsRes._1
     lexicalScope = liftedBindingsRes._2
 
-    liftedBody <- lift(body, lexicalScope, sub).map(_._1)
+    liftedBody <- lift(body, lexicalScope, sub, space).map(_._1)
     liftedBindings = liftedParams.map { (binding, ir) =>
       Binding(binding.label, ir, binding.expr, ir.ty)
     }
