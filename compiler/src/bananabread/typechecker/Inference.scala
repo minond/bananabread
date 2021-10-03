@@ -210,8 +210,8 @@ def signatureLambdaRet(lam: linked.Lambda, tyScope: TypeScope): Inferred[(Type, 
 
 def lookup(ir: Ir, label: String, source: Option[ast.Import], scope: Scope, space: ModuleSpace): Either[LookupErr, Type] =
   (scope.get(label), space.search(source, label)) match
-    case (None, None)  => println(s"BBBBBBBBBBBBBBB"); Left(LookupErr(label, ir))
-    case (_, Some(ir)) => println(s"AAAAAAAAAAAAAAA $label ${ir.ty}"); Right(ir.ty)
+    case (None, None)  => Left(LookupErr(label, ir))
+    case (_, Some(ir)) => Right(ir.ty)
     case (Some(ty), _) => Right(ty)
 
 val ids = LazyList.from(1).sliding(1)
