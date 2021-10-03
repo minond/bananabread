@@ -87,7 +87,7 @@ def inferApp(app: linked.App, scope: Scope, sub: Substitution, space: ModuleSpac
     freshLam = Lambda(argTys, fresh())
     called <- infer(app.lambda, scope, sub, space)
     calledTy = called._1
-    _ <- sub.unify(calledTy, freshLam, app)
+    _ <- sub.unify(freshLam, calledTy, app)
     culprit = if app.args.isEmpty
               then app
               else app.args.head
