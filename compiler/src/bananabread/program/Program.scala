@@ -2,7 +2,8 @@ package bananabread
 package program
 
 import parsing.ast
-import ir.typed
+import ir.{typed, typeless, linked, stitched}
+import error.Err
 
 
 case class SourceFile(module: Option[ast.Module], imports: List[ast.Import], tree: ast.Tree)
@@ -38,3 +39,40 @@ object ModuleSpace:
     from(Name(name), ir)
   def from(name: Name, ir: List[typed.Ir]): ModuleSpace =
     Map(name -> Module(name, ir))
+
+
+def lift(source: SourceFile): Either[Err, List[stitched.Ir]] =
+  for
+    preludeCode <- load("Prelude")
+    preludeIr   <- lift0(preludeCode.head)
+    space = ModuleSpace.from("Prelude", preludeIr)
+
+    ir0 <- typeless.lift(source.tree)
+    ir1  = typeless.pass(ir0)
+    ir2 <- linked.lift(ir1, source.imports)
+    ir3 <- typed.lift(ir2, space)
+    ir4 <- stitched.lift(ir3, space)
+  yield
+    ir4
+
+def lift0(source: SourceFile): Either[Err, List[typed.Ir]] =
+  for
+    ir0 <- typeless.lift(source.tree)
+    ir1 <- linked.lift(ir0, source.imports)
+    ir2 <- typed.lift(ir1, ModuleSpace.empty)
+  yield
+    ir2
+
+// def lift1(sources: List[SourceFile]): Either[Err, Program] =
+//   val main = sources.head
+//   val importedSources = main.imports.map { stmt => findSourceFile(stmt.name, sources) }.flatten
+//
+//   // if importedSources.isEmpty
+//   // then lift(main)
+//
+//   val liftedImports =
+//     if importedSources.isEmpty
+//     then List.empty
+//     else lift2(importedSources)
+//
+//   ???
