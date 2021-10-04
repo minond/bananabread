@@ -2,8 +2,7 @@ package bananabread
 package program
 
 import parsing.ast
-import ir.{typed, typeless, linked}
-import ir.typed.{Ir, Lifted}
+import ir.{typed, typeless, linked, stitched}
 import error.Err
 import utils.squished
 
@@ -25,30 +24,39 @@ def load(fileName: String, code: String): Either[Err, List[SourceFile]] =
     SourceFile(module, imports, tree) +: rest.flatten
 
 
-def lift2(sources: List[SourceFile]): Either[Err, Program] =
-  val main = sources.head
-  val importedSources = main.imports.map { stmt => findSourceFile(stmt.name, sources) }.flatten
-  println("importedSources")
-  println(importedSources)
+// def lift2(sources: List[SourceFile]): Either[Err, Program] =
+//   val main = sources.head
+//   val importedSources = main.imports.map { stmt => findSourceFile(stmt.name, sources) }.flatten
+//
+//   // if importedSources.isEmpty
+//   // then lift(main)
+//
+//   val liftedImports =
+//     if importedSources.isEmpty
+//     then List.empty
+//     else lift2(importedSources)
+//
+//   ???
 
-  // if importedSources.isEmpty
-  // then lift(main)
-
-  val liftedImports =
-    if importedSources.isEmpty
-    then List.empty
-    else lift2(importedSources)
-  println("liftedImports")
-  println(liftedImports)
-
-  ???
-
-def lift(source: SourceFile): Either[Err, List[Ir]] =
+def lift(source: SourceFile): Either[Err, List[stitched.Ir]] =
   for
+    preludeCode <- load("Prelude")
+    preludeIr   <- lift0(preludeCode.head)
+    space = ModuleSpace.from("Prelude", preludeIr)
     ir0 <- typeless.lift(source.tree)
     ir1  = typeless.pass(ir0)
     ir2 <- linked.lift(ir1, source.imports)
-    ir3 <- typed.lift(ir2)
+    ir3 <- typed.lift(ir2, space)
+    ir4 <- stitched.lift(ir3, space)
+  yield
+    ir4
+
+def lift0(source: SourceFile): Either[Err, List[typed.Ir]] =
+  for
+    ir0 <- typeless.lift(source.tree)
+    // ir1  = typeless.pass(ir0) // TODO Move passes to stitched Ir
+    ir2 <- linked.lift(ir0, source.imports)
+    ir3 <- typed.lift(ir2, ModuleSpace.empty)
   yield
     ir3
 
