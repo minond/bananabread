@@ -2,6 +2,7 @@ package bananabread
 package program
 
 import parsing.ast
+import loader.load
 import ir.{typed, typeless, linked, stitched}
 import error.Err
 
@@ -43,9 +44,9 @@ object ModuleSpace:
 
 def lift(source: SourceFile): Either[Err, List[stitched.Ir]] =
   for
-    preludeCode <- load("Prelude")
-    preludeIr   <- lift0(preludeCode.head)
-    space = ModuleSpace.from("Prelude", preludeIr)
+    preludeCode <- load("Prelude")                 // XXX This needs to be moved
+    preludeIr   <- lift0(preludeCode.head)         // XXX This needs to be moved
+    space = ModuleSpace.from("Prelude", preludeIr) // XXX This needs to be moved
 
     ir0 <- typeless.lift(source.tree)
     ir1  = typeless.pass(ir0)

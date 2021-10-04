@@ -1,11 +1,16 @@
 package bananabread
-package program
+package loader
 
-import bananabread.error.Err
+import error._
 import parsing.ast
+import program.SourceFile
 import utils.squished
 
 import scala.io.Source
+
+
+type Err = LoadErr
+         | parsing.error.SyntaxErr
 
 
 def load(ref: ast.Ref): Either[Err, List[SourceFile]] =

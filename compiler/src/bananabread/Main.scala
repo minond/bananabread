@@ -9,7 +9,7 @@ import scala.util.{Try, Success, Failure}
 
 def main(args: Array[String]) =
   val fileName = "./lib/Sample.bb"
-  val code = program.loadSource("Sample")
+  val code = loader.loadSource("Sample")
 
   val flagPrintOpcodes = args.contains("print-opcodes")
   val flagPrintState = args.contains("print-state")
@@ -21,7 +21,7 @@ def main(args: Array[String]) =
 
   val res = Try {
     for
-      sources <- program.load(fileName, code)
+      sources <- loader.load(fileName, code)
       ir <- program.lift(sources.head)
       ins <- backend.opcode.compile(ir)
       _    = if doPrintOpcodes then
