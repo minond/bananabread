@@ -38,37 +38,3 @@ object ModuleSpace:
     from(Name(name), ir)
   def from(name: Name, ir: List[typed.Ir]): ModuleSpace =
     Map(name -> Module(name, ir))
-
-// case class ModuleSpace(modules: Map[Name, Module]):
-//   def withModule(name: Name, module: Module) =
-//     ModuleSpace(modules + (name -> module))
-//
-
-
-// case class Program(main: Module, modules: ModuleSpace)
-//
-//
-//
-// object Module:
-//   def make(stmt: Option[ast.Module], imports: List[ast.Import], ir: List[typed.Ir]) =
-//     Module(
-//       Name(stmt.map(_.name.id.lexeme).getOrElse("main")),
-//       imports.map(Import.make),
-//       ir,
-//       stmt
-//     )
-//
-//
-// case class Import(
-//   name: Name,
-//   exposing: List[Name],
-//   stmt: ast.Import,
-// )
-//
-// object Import:
-//   def make(stmt: ast.Import) =
-//     Import(
-//       Name(stmt.name.id.lexeme),
-//       stmt.exposing.map { node => Name(node.id.lexeme) },
-//       stmt
-//     )
