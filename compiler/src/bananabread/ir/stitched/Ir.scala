@@ -54,28 +54,15 @@ type Stitched = Lifted[Stitch]
 
 case class Stitch(inline: List[Ir], top: List[Ir]):
   def stitch = top ++ inline
+  def above(node: Ir) = Stitch(this.inline, top :+ node)
+  def above(nodes: List[Ir]) = Stitch(this.inline, top ++ nodes)
   def add(other: Stitch) =
     Stitch(this.inline ++ other.inline, this.top ++ other.top)
 object Stitch:
-  def empty = Stitch(List.empty[Ir], List.empty[Ir])
-
-def inlined(node: Ir): Stitch =
-  Stitch(List(node), List.empty[Ir])
-def inlined(nodes: List[Ir]): Stitch =
-  Stitch(nodes, List.empty[Ir])
-def topped(node: Ir): Stitch =
-  Stitch(List.empty[Ir], List(node))
-def topped(nodes: List[Ir]): Stitch =
-  Stitch(List.empty[Ir], nodes)
-
-def stitchedInlined(node: Ir): Stitched =
-  Right(inlined(node))
-def stitchedInlined(nodes: List[Ir]): Stitched =
-  Right(inlined(nodes))
-def stitchedTop(node: Ir): Stitched =
-  Right(topped(node))
-def stitchedTop(nodes: List[Ir]): Stitched =
-  Right(topped(nodes))
+  def empty =
+    Stitch(List.empty[Ir], List.empty[Ir])
+  def inlined(node: Ir) = Stitch(List(node), List.empty)
+  def inlined(nodes: List[Ir]) = Stitch(nodes, List.empty)
 
 
 extension (stitches: List[Stitch])
@@ -100,12 +87,12 @@ def lift(nodes: List[typed.Ir], space: ModuleSpace): Lifted[List[Ir]] =
       lift(node, space).map { stitch => acc.add(stitch) }
   }.map(_.stitch)
 def lift(node: typed.Ir, space: ModuleSpace): Stitched = node match
-  case typed.Str(expr)     => stitchedInlined(Str(expr))
-  case typed.Symbol(expr)  => stitchedInlined(Symbol(expr))
-  case typed.True(expr)    => stitchedInlined(True(expr))
-  case typed.False(expr)   => stitchedInlined(False(expr))
-  case typed.Opcode(expr)  => stitchedInlined(Opcode(expr))
-  case typed.Num(expr, ty) => stitchedInlined(Num(expr, ty))
+  case typed.Str(expr)     => Right(Stitch.inlined(Str(expr)))
+  case typed.Symbol(expr)  => Right(Stitch.inlined(Symbol(expr)))
+  case typed.True(expr)    => Right(Stitch.inlined(True(expr)))
+  case typed.False(expr)   => Right(Stitch.inlined(False(expr)))
+  case typed.Opcode(expr)  => Right(Stitch.inlined(Opcode(expr)))
+  case typed.Num(expr, ty) => Right(Stitch.inlined(Num(expr, ty)))
   case node: typed.Def     => liftDef(node, space)
   case node: typed.Id      => liftId(node, space)
   case node: typed.Lambda  => liftLambda(node, space)
@@ -123,12 +110,12 @@ def liftId(node: typed.Id, space: ModuleSpace): Stitched =
   val id = Id(expr, ty, Source(source))
 
   (source, space.search(source, label)) match
-    case (None, _) => stitchedInlined(id)
+    case (None, _) => Right(Stitch.inlined(id))
     case (Some(_), Some(definition)) =>
       for
         liftedDef <- lift(definition, space)
       yield
-        Stitch(List(id), liftedDef.stitch)
+        Stitch.inlined(id).above(liftedDef.stitch)
     case (Some(home), None) =>
       Left(MissingSourceErr(node))
 
@@ -142,7 +129,7 @@ def liftDef(node: typed.Def, space: ModuleSpace): Stitched =
     liftedValueRes <- lift(value, space)
     liftedValue <- liftedValueRes.inline.single(value)
   yield
-    Stitch(List(Def(name, liftedValue, expr, ty)), liftedValueRes.top)
+    Stitch.inlined(Def(name, liftedValue, expr, ty)).above(liftedValueRes.top)
 
 def liftLambda(node: typed.Lambda, space: ModuleSpace): Stitched =
   val tyVars = node.tyVars
@@ -156,7 +143,7 @@ def liftLambda(node: typed.Lambda, space: ModuleSpace): Stitched =
     liftedBody <- liftedBodyRes.inline.single(body)
     liftedParams = params.map { p => Param(p.name, p.ty) }
   yield
-    Stitch(List(Lambda(liftedParams, liftedBody, tyVars, expr, ty)), liftedBodyRes.top)
+    Stitch.inlined(Lambda(liftedParams, liftedBody, tyVars, expr, ty)).above(liftedBodyRes.top)
 
 def liftApp(node: typed.App, space: ModuleSpace): Stitched =
   val lambda = node.lambda
@@ -172,7 +159,7 @@ def liftApp(node: typed.App, space: ModuleSpace): Stitched =
     liftedArgs = liftedArgsRes.map(_.inline).flatten
     top        = liftedLamRes.top ++ liftedArgsRes.map(_.top).flatten
   yield
-    Stitch(List(App(liftedLam, liftedArgs, expr, ty)), top)
+    Stitch.inlined(App(liftedLam, liftedArgs, expr, ty)).above(top)
 
 def liftCond(node: typed.Cond, space: ModuleSpace): Stitched =
   val cond = node.cond
@@ -192,7 +179,7 @@ def liftCond(node: typed.Cond, space: ModuleSpace): Stitched =
 
     top = liftedCondRes.top ++ liftedPassRes.top ++ liftedFailRes.top
   yield
-    Stitch(List(Cond(inlineCond, inlinePass, inlineFail, expr, ty)), top)
+    Stitch.inlined(Cond(inlineCond, inlinePass, inlineFail, expr, ty)).above(top)
 
 def liftBegin(node: typed.Begin, space: ModuleSpace): Stitched =
   val ins = node.ins
@@ -203,7 +190,7 @@ def liftBegin(node: typed.Begin, space: ModuleSpace): Stitched =
     liftedRes <- ins.map(lift(_, space)).squished
     restitched = liftedRes.flat
   yield
-    Stitch(List(Begin(restitched.inline, expr, ty)), restitched.top)
+    Stitch.inlined(Begin(restitched.inline, expr, ty)).above(restitched.top)
 
 def liftLet(node: typed.Let, space: ModuleSpace): Stitched =
   val bindings = node.bindings
@@ -232,4 +219,4 @@ def liftLet(node: typed.Let, space: ModuleSpace): Stitched =
 
     top = liftedBodyRes.top ++ liftedBindingsRes.map(_.top).flatten
   yield
-    Stitch(List(Let(liftedBindings, liftedBody, expr, ty)), top)
+    Stitch.inlined(Let(liftedBindings, liftedBody, expr, ty)).above(top)
