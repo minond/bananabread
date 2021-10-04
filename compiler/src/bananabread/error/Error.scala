@@ -8,6 +8,7 @@ import typechecker.error => typechecker
 import ir.typeless.error => typelessIr
 import ir.linked.error => linkedIr
 import ir.typed.error => typedIr
+import ir.stitched.error => stitchedIr
 
 type Err = parse.SyntaxErr
          | genop.GeneratorErr
@@ -16,3 +17,4 @@ type Err = parse.SyntaxErr
          | typelessIr.LiftErr
          | linkedIr.LiftErr
          | typedIr.LiftErr
+         | stitchedIr.LiftErr

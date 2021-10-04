@@ -5,8 +5,8 @@ import parsing.ast
 import error._
 import dsl._
 
-import ir.typed
-import ir.typed.Ir
+import ir.stitched
+import ir.stitched.{Ir, Source}
 
 import parsing.location.Location
 import parsing.opcode.Expr => OpcodeExpr
@@ -41,42 +41,42 @@ def generate(scope: Scope, nodes: List[Ir]): Result =
   nodes.map { node => generate(scope, node) }.squished
        .map { inst => inst.flatten }
 def generate(scope: Scope, node: Ir): Result = node match
-  case num: typed.Num    => generatePush(scope, num, I32)
-  case str: typed.Str    => generatePush(scope, str, Str)
-  case sym: typed.Symbol => generatePush(scope, sym, Symbol)
-  case bool: typed.Bool  => generatePush(scope, bool, Bool)
-  case id: typed.Id      => generateLoad(scope, id)
-  case lam: typed.Lambda => generateAnnonLambda(scope, lam)
-  case op: typed.Opcode  => generateOpcode(scope, op)
-  case typed.App(lambda, args, _, _)      => generateCall(scope, lambda, args)
-  case typed.Cond(cond, pass, fail, _, _) => generateCond(scope, cond, pass, fail)
-  case typed.Let(bindings, body, _, _)    => generateLet(scope, bindings, body)
-  case typed.Begin(irs,_ , _)             => generateBegin(scope, irs)
-  case typed.Def(name, value, _, _)       => generateDef(scope, name.lexeme, value)
+  case num: stitched.Num    => generatePush(scope, num, I32)
+  case str: stitched.Str    => generatePush(scope, str, Str)
+  case sym: stitched.Symbol => generatePush(scope, sym, Symbol)
+  case bool: stitched.Bool  => generatePush(scope, bool, Bool)
+  case id: stitched.Id      => generateLoad(scope, id)
+  case lam: stitched.Lambda => generateAnnonLambda(scope, lam)
+  case op: stitched.Opcode  => generateOpcode(scope, op)
+  case stitched.App(lambda, args, _, _)      => generateCall(scope, lambda, args)
+  case stitched.Cond(cond, pass, fail, _, _) => generateCond(scope, cond, pass, fail)
+  case stitched.Let(bindings, body, _, _)    => generateLet(scope, bindings, body)
+  case stitched.Begin(irs,_ , _)             => generateBegin(scope, irs)
+  case stitched.Def(name, value, _, _)       => generateDef(scope, name.lexeme, value)
 
 def generatePush(scope: Scope, node: Ir, ty: Type): Result = (ty, node) match
-  case (I32, num: typed.Num) =>
+  case (I32, num: stitched.Num) =>
     num.expr.lexeme.safeToInt match
       case Left(_)  => Left(BadPushErr(ty, node))
       case Right(i) => Right(group(scope, Push(I32, value.I32(i))))
-  case (Bool, _: typed.True) =>
+  case (Bool, _: stitched.True) =>
     Right(group(scope, Push(Bool, value.True)))
-  case (Bool, _: typed.False) =>
+  case (Bool, _: stitched.False) =>
     Right(group(scope, Push(Bool, value.False)))
-  case (Str, str: typed.Str) =>
+  case (Str, str: stitched.Str) =>
     Right(Value(Str, str.ptr, value.Str(str.expr.lexeme)) +:
           group(scope, Push(Const, value.Id(str.ptr))))
-  case (Symbol, sym: typed.Symbol) =>
+  case (Symbol, sym: stitched.Symbol) =>
     Right(Value(Symbol, sym.ptr, value.Symbol(sym.expr.lexeme)) +:
           group(scope, Push(Const, value.Id(sym.ptr))))
   case _ =>
     Left(BadPushErr(ty, node))
 
-def generateLoad(scope: Scope, id: typed.Id): Result = scope.get(id) match
+def generateLoad(scope: Scope, id: stitched.Id): Result = scope.get(id) match
   case Some(_) => Right(group(scope, Load(toRuntimeType(id.ty), scope.qualified(id))))
   case None    => Left(UndeclaredIdentifierErr(id))
 
-def generateAnnonLambda(scope: Scope, lambda: typed.Lambda): Result =
+def generateAnnonLambda(scope: Scope, lambda: stitched.Lambda): Result =
   scope.forked(lambda.ptr) { subscope =>
     val exposure =
       if scope.isToplevel
@@ -89,30 +89,30 @@ def generateAnnonLambda(scope: Scope, lambda: typed.Lambda): Result =
   }
 
 def generateCall(scope: Scope, lambda: Ir, args: List[Ir]): Result = lambda match
-  case id: typed.Id if scope.contains(id) =>
+  case id: stitched.Id if scope.contains(id) =>
     scope.get(id) match
-      case Some(id: typed.Id)      => generateCallId(scope, args, id)
-      case Some(app: typed.App)    => generateCallApp(scope, args, app)
-      case Some(lam: typed.Lambda) => generateCallId(scope, args, id)
+      case Some(id: stitched.Id)      => generateCallId(scope, args, id)
+      case Some(app: stitched.App)    => generateCallApp(scope, args, app)
+      case Some(lam: stitched.Lambda) => generateCallId(scope, args, id)
       case Some(_)                    => Left(BadCallErr(lambda))
       case None                       => Left(UndeclaredIdentifierErr(id))
 
-  case lam: typed.Lambda =>
+  case lam: stitched.Lambda =>
     for
       call <- generateCallLambda(scope, args, lam)
       func <- generate(scope, lam)
     yield
       call ++ func
 
-  case id: typed.Id   => generateCallId(scope, args, id)
-  case app: typed.App => generateCallApp(scope, args, app)
-  case _: typed.Let   => generateCallResultOf(scope, args, lambda)
-  case _: typed.Cond  => generateCallResultOf(scope, args, lambda)
-  case _: typed.Begin => generateCallResultOf(scope, args, lambda)
+  case id: stitched.Id   => generateCallId(scope, args, id)
+  case app: stitched.App => generateCallApp(scope, args, app)
+  case _: stitched.Let   => generateCallResultOf(scope, args, lambda)
+  case _: stitched.Cond  => generateCallResultOf(scope, args, lambda)
+  case _: stitched.Begin => generateCallResultOf(scope, args, lambda)
 
   case _ => Left(BadCallErr(lambda))
 
-def generateOpcode(scope: Scope, node: typed.Opcode): Result =
+def generateOpcode(scope: Scope, node: stitched.Opcode): Result =
   node.expr.instructions.map(generateOpcode(scope, _, node.expr.location)).squished.map(_.flatten)
 def generateOpcode(scope: Scope, expr: OpcodeExpr, loc: Location): Result = expr match
   case InstructionExpr(ast.Id("add", _),     Some(ast.Id("I32", _)),  Nil                   ) => Right(group(scope, Add(I32)))
@@ -149,15 +149,15 @@ def generateOpcode(scope: Scope, expr: OpcodeExpr, loc: Location): Result = expr
   case LabelExpr(ast.Id(label, _)                                                           ) => Right(group(scope, Label(label)))
   case _                                                                                      => Left(UnknownUserOpcodeErr(expr, loc))
 
-def generateCallId(scope: Scope, args: List[Ir], id: typed.Id): Result =
+def generateCallId(scope: Scope, args: List[Ir], id: stitched.Id): Result =
   scope.qualified2(id) match
     case Some(name) => generateCallWithArgs(scope, args, Call(name))
     case None => Left(LookupErr(id.expr))
 
-def generateCallLambda(scope: Scope, args: List[Ir], lambda: typed.Lambda): Result =
+def generateCallLambda(scope: Scope, args: List[Ir], lambda: stitched.Lambda): Result =
   generateCallWithArgs(scope, args, Call(lambda.ptr))
 
-def generateCallApp(scope: Scope, args: List[Ir], app: typed.App): Result =
+def generateCallApp(scope: Scope, args: List[Ir], app: stitched.App): Result =
   for
     call1 <- generateCall(scope, app.lambda, app.args)
     mov    = group(scope, Mov(Jm, None))
@@ -166,7 +166,7 @@ def generateCallApp(scope: Scope, args: List[Ir], app: typed.App): Result =
   yield
     codes
 
-def generateCallResultOf(scope: Scope, args: List[Ir], node: typed.Ir): Result =
+def generateCallResultOf(scope: Scope, args: List[Ir], node: stitched.Ir): Result =
   for
     body <- generate(scope, node)
     mov   = group(scope, Mov(Jm, None))
@@ -182,7 +182,7 @@ def generateCallWithArgs(scope: Scope, args: List[Ir], call: Instruction): Resul
 
 def generateCallArgsLoad(scope: Scope, args: List[Ir]): Result =
   args.map {
-    case lam: typed.Lambda =>
+    case lam: stitched.Lambda =>
       // TODO Fully qualify all anonymous functions
       generate(scope, lam).map { lamop =>
         scope.define(lam.ptr, lam)
@@ -223,16 +223,16 @@ def generateCond(scope: Scope, cond: Ir, pass: Ir, fail: Ir): Result =
   * work. What we should do instead is use `generatePushReturnedRef` like other
   * expression kinds do.
   */
-def generateLet(scope: Scope, bindings: List[typed.Binding], body: Ir): Result =
+def generateLet(scope: Scope, bindings: List[stitched.Binding], body: Ir): Result =
   scope.unique { subscope =>
-    val header = bindings.map { case typed.Binding(label, value, _, _) =>
+    val header = bindings.map { case stitched.Binding(label, value, _, _) =>
       subscope.define(label, value)
       for
         valueCode <- generate(subscope, value)
         storeCode <- generateStore(subscope, label.lexeme, value)
       yield
         value match
-          case lam: typed.Lambda =>
+          case lam: stitched.Lambda =>
             valueCode ++ group(subscope, Push(Ref, runtime.value.Id(lam.ptr))) ++ storeCode
           case _ =>
             valueCode ++ storeCode
@@ -246,7 +246,7 @@ def generateLet(scope: Scope, bindings: List[typed.Binding], body: Ir): Result =
   }
 
 def generateDef(scope: Scope, name: String, value: Ir): Result = value match
-  case lam: typed.Lambda =>
+  case lam: stitched.Lambda =>
     scope.define(name, lam)
     scope.scoped(name) { subscope =>
       generateLambda(subscope, lam.params, lam.body)
@@ -258,13 +258,13 @@ def generateDef(scope: Scope, name: String, value: Ir): Result = value match
     generate(scope, value)
       .map(_ ++ group(scope, Store(I32, scope.qualified(name))))
 
-def generateLambda(scope: Scope, params: List[typed.Param], body: Ir): Result =
+def generateLambda(scope: Scope, params: List[stitched.Param], body: Ir): Result =
   val init = group(scope,
     FrameInit(params.size),
   )
 
-  val storeArgs = params.reverse.flatMap { case param @ typed.Param(expr @ ast.Id(label, _), ty) =>
-    scope.define(param, typed.Id(expr, ty, None))
+  val storeArgs = params.reverse.flatMap { case param @ stitched.Param(expr @ ast.Id(label, _), ty) =>
+    scope.define(param, stitched.Id(expr, ty, Source.local))
     group(scope, Swap, Store(toRuntimeType(ty), scope.qualified(label)))
   }
 
@@ -290,21 +290,21 @@ def generateLambda(scope: Scope, params: List[typed.Param], body: Ir): Result =
   generate(scope, body).map(init ++ storeArgs ++ callerInfo ++ _ ++ retCode)
 
 def generateStore(scope: Scope, label: String, value: Ir): Result = (value, toRuntimeType(value.ty)) match
-  case (_: typed.Def, ty)    => Left(CannotStoreErr(value))
-  case (_: typed.Opcode, ty) => Left(CannotStoreErr(value))
+  case (_: stitched.Def, ty)    => Left(CannotStoreErr(value))
+  case (_: stitched.Opcode, ty) => Left(CannotStoreErr(value))
 
-  case (_: typed.Lambda, ty) => Right(group(scope, Store(ty, scope.qualified(label))))
-  case (_: typed.Num, ty)    => Right(group(scope, Store(ty, scope.qualified(label))))
-  case (_: typed.Str, ty)    => Right(group(scope, Store(ty, scope.qualified(label))))
-  case (_: typed.Bool, ty)   => Right(group(scope, Store(ty, scope.qualified(label))))
-  case (_: typed.Begin, ty)  => Right(group(scope, Store(ty, scope.qualified(label))))
-  case (_: typed.Let, ty)    => Right(group(scope, Store(ty, scope.qualified(label))))
-  case (_: typed.Cond, ty)   => Right(group(scope, Store(ty, scope.qualified(label))))
-  case (_: typed.App, ty)    => Right(group(scope, Store(ty, scope.qualified(label))))
-  case (_: typed.Symbol, ty) => Right(group(scope, Store(ty, scope.qualified(label))))
+  case (_: stitched.Lambda, ty) => Right(group(scope, Store(ty, scope.qualified(label))))
+  case (_: stitched.Num, ty)    => Right(group(scope, Store(ty, scope.qualified(label))))
+  case (_: stitched.Str, ty)    => Right(group(scope, Store(ty, scope.qualified(label))))
+  case (_: stitched.Bool, ty)   => Right(group(scope, Store(ty, scope.qualified(label))))
+  case (_: stitched.Begin, ty)  => Right(group(scope, Store(ty, scope.qualified(label))))
+  case (_: stitched.Let, ty)    => Right(group(scope, Store(ty, scope.qualified(label))))
+  case (_: stitched.Cond, ty)   => Right(group(scope, Store(ty, scope.qualified(label))))
+  case (_: stitched.App, ty)    => Right(group(scope, Store(ty, scope.qualified(label))))
+  case (_: stitched.Symbol, ty) => Right(group(scope, Store(ty, scope.qualified(label))))
 
-  case (id: typed.Id, ty) => scope.get(id) match
-    case Some(v: typed.Id) if v.expr.lexeme == id.expr.lexeme =>
+  case (id: stitched.Id, ty) => scope.get(id) match
+    case Some(v: stitched.Id) if v.expr.lexeme == id.expr.lexeme =>
       Right(group(scope, Store(ty, scope.qualified(label))))
     case Some(v) => generateStore(scope, label, v)
     case None    => Left(UndeclaredIdentifierErr(id))
@@ -321,7 +321,7 @@ def generateBegin(scope: Scope, irs: List[Ir]): Result =
   */
 def generatePushReturnedRef(scope: Scope, ir: Ir): Output =
   ir match
-    case lam: typed.Lambda => group(scope, Push(Scope, value.Id(lam.ptr)))
+    case lam: stitched.Lambda => group(scope, Push(Scope, value.Id(lam.ptr)))
     case _ => List.empty
 
 def group(scope: Scope, insts: (Instruction | Label)*): Output =

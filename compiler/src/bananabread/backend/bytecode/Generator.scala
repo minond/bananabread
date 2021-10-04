@@ -3,7 +3,7 @@ package backend.bytecode
 
 import backend.opcode.error.GeneratorErr
 import runtime.instruction._
-import ir.typed.Ir
+import ir.stitched.Ir
 
 
 type Bytes = List[Byte]
