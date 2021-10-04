@@ -33,6 +33,7 @@ class Substitution:
       case (v: Var, ty) => set(v, ty)
       case (ty, v: Var) => set(v, ty)
       case (Void, _) => Right(())
+      case (_, Void) => Right(())
       case (a: Lambda, b: Lambda) => unifyLambdaLambda(this, a, b, node)
       case _ => Left(UnificationErr(a, b, node))
 

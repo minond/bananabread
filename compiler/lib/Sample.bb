@@ -2,6 +2,8 @@ module Sample
 
 import Prelude exposing (-, println)
 
+operator(infix, 2, '-)
+
 def loop(i : I32, fn : I32 -> Void) : Void =
   if i
   then begin

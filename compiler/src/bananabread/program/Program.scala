@@ -12,7 +12,7 @@ case class Name(value: String)
 case class Module(name: Name, ir: List[typed.Ir]):
   def get(name: String): Option[typed.Ir] =
     ir.find {
-      case typed.Def(ast.Id(name, _), _, _, _) => true
+      case typed.Def(ast.Id(name2, _), _, _, _) if name == name2 => true
       case _ => false
     }
 
