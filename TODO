@@ -1,4 +1,5 @@
 - Fully qualify all anonymous functions
+- Qualify symbols to their corresponding package instead of "main".
 - Module system, imports/exports
 - Parsing errors:
 
