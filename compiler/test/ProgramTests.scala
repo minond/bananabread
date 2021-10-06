@@ -9,6 +9,6 @@ import matchers._
 class ProgramTests extends AnyFlatSpec with should.Matchers:
   for path <- internalTestProgramPaths() do
     it should s"execute $path" in {
-      val test = program.readFile(path)
+      val test = loader.readFile(path)
       outputOf(test) shouldEqual expectedOutput(test)
     }

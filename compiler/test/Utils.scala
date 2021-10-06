@@ -33,10 +33,10 @@ def astOf(code: String, syntax: Syntax = stdOps) =
   exprsOf(code, syntax).head
 
 def resultOf(code: String) =
-  val prelude = program.loadSource("Prelude")
+  val prelude = loader.loadSource("Prelude")
   val interpreter =
     for
-      sources <- program.load("<test>", prelude + code)
+      sources <- loader.load("<test>", prelude + code)
       ir <- program.lift(sources.head)
       ins <- backend.opcode.compile(ir)
       interpreter = Interpreter(ins, false, false)
