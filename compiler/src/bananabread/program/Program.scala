@@ -11,6 +11,17 @@ case class SourceFile(module: Option[ast.Module], imports: List[ast.Import], tre
 case class SourceContext(module: Option[ast.Module], imports: List[ast.Import])
 
 
+def sourceStructure(tree: ast.Tree): (Option[ast.Module], List[ast.Import], ast.Tree) =
+  tree.nodes.foldLeft[(Option[ast.Module], List[ast.Import], ast.Tree)]((None, List.empty, ast.Tree.empty)) {
+    case ((_, imports, tree), stmt: ast.Module) =>
+      (Some(stmt), imports, tree)
+    case ((module, imports, tree), stmt: ast.Import) =>
+      (module, imports :+ stmt, tree)
+    case ((module, imports, ast.Tree(nodes)), node) =>
+      (module, imports, ast.Tree(nodes :+ node))
+  }
+
+
 case class ModDef(name: String)
 object ModDef:
   def main = ModDef("main")

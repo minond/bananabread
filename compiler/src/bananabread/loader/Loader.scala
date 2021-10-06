@@ -3,7 +3,7 @@ package loader
 
 import error._
 import parsing.ast
-import program.SourceFile
+import program.{SourceFile, sourceStructure}
 import utils.squished
 
 import scala.io.Source
@@ -22,7 +22,7 @@ def load(fileName: String): Either[Err, List[SourceFile]] =
 def load(fileName: String, code: String): Either[Err, List[SourceFile]] =
   for
     nodes <- parsing.language.parse(fileName, code)
-    (module, imports, tree) = parsing.program.structure(nodes)
+    (module, imports, tree) = sourceStructure(nodes)
     rest <- imports.map(load).squished
   yield
     SourceFile(module, imports, tree) +: rest.flatten
