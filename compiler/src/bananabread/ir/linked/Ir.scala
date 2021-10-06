@@ -3,6 +3,7 @@ package ir
 package linked
 
 import parsing.ast
+import program.ModDef
 import ast.{Expr, Stmt}
 import error._
 import utils.{Print, squished}
@@ -11,7 +12,7 @@ import utils.{Print, squished}
 sealed trait Ir { def expr: Expr | Stmt }
 case class Num(expr: ast.Num) extends Ir with Print(s"(num ${expr.lexeme})")
 case class Str(expr: ast.Str) extends Ir with Print(s"(str ${expr.lexeme})")
-case class Id(expr: ast.Id, source: Option[ast.Ref]) extends Ir with Print(s"(id ${source.map(_.id).getOrElse("self")}.${expr.lexeme})")
+case class Id(expr: ast.Id, source: ModDef) extends Ir with Print(s"(id ${source.name}.${expr.lexeme})")
 case class Symbol(expr: ast.Symbol) extends Ir with Print(s"(symbol ${expr.lexeme})")
 case class App(lambda: Ir, args: List[Ir], expr: Expr) extends Ir with Print(s"(app lambda: ${lambda} args: (${args.mkString(" ")}))")
 case class Lambda(params: List[ast.Param], body: Ir, tyVars: List[ast.TyId], expr: ast.Lambda) extends Ir with Print(s"(lambda params: (${params.mkString(" ")}) body: $body)")
@@ -65,9 +66,9 @@ def liftId(node: typeless.Id, module: Option[ast.Module], imports: List[ast.Impo
   }
 
   (local, module, source) match
-    case (true, Some(mod), _) => Right((Id(node.expr, Some(mod.name)), locals))
-    case (true, None, _) => Right((Id(node.expr, None), locals))
-    case (_, _, Some(imp)) => Right((Id(node.expr, Some(imp.name)), locals))
+    case (true, Some(mod), _) => Right((Id(node.expr, ModDef.from(mod)), locals))
+    case (true, None, _) => Right((Id(node.expr, ModDef.main), locals))
+    case (_, _, Some(imp)) => Right((Id(node.expr, ModDef.from(imp)), locals))
     case (_, _, _) => Left(UndeclaredIdentifierErr(node))
 
 def liftApp(node: typeless.App, module: Option[ast.Module], imports: List[ast.Import], locals: List[ast.Id]): Scoped[App] =

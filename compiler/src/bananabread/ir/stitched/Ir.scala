@@ -107,7 +107,7 @@ def liftId(node: typed.Id, source: ModDef, space: ModuleSpace): Stitched =
   val expr = node.expr
   val label = expr.lexeme
   val ty = node.ty
-  val id = Id(expr, ty, ModDef.from(node.source))
+  val id = Id(expr, ty, node.source)
 
   space.locate(node.source, label) match
     case (Some(mod), Some(definition)) =>

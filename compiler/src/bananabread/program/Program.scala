@@ -16,6 +16,8 @@ object ModDef:
   def from(maybeSource: Option[ast.Ref]) = maybeSource match
     case None => main
     case Some(ref) => ModDef(ref.id.lexeme)
+  def from(imp: ast.Import) = ModDef(imp.name.id.lexeme)
+  def from(mod: ast.Module) = ModDef(mod.name.id.lexeme)
 
 case class Module(defn: ModDef, ir: List[typed.Ir]):
   def get(name: String): Option[typed.Ir] =
@@ -28,20 +30,11 @@ case class Module(defn: ModDef, ir: List[typed.Ir]):
 type ModuleSpace = Map[String, Module]
 
 extension (space: ModuleSpace)
-  def search(maybeSource: Option[ast.Ref], name: String): Option[typed.Ir] =
-    locate(maybeSource, name)._2
-  def search(ref: ast.Ref, name: String): Option[typed.Ir] =
-    locate(ref, name)._2
-  def search(source: String, name: String): Option[typed.Ir] =
+  def search(source: ModDef, name: String): Option[typed.Ir] =
     locate(source, name)._2
-  def locate(maybeSource: Option[ast.Ref], name: String): (Option[Module], Option[typed.Ir]) =
-    maybeSource match
-      case None => (None, None)
-      case Some(ref) => locate(ref, name)
-  def locate(ref: ast.Ref, name: String): (Option[Module], Option[typed.Ir]) =
-    locate(ref.id.lexeme, name)
-  def locate(source: String, name: String): (Option[Module], Option[typed.Ir]) =
-    space.get(source) match
+
+  def locate(source: ModDef, name: String): (Option[Module], Option[typed.Ir]) =
+    space.get(source.name) match
       case None => (None, None)
       case Some(mod) => (Some(mod), mod.get(name))
 

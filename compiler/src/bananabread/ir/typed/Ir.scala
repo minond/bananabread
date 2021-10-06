@@ -5,7 +5,7 @@ package typed
 import error._
 import parsing.ast
 import parsing.ast.{Expr, Stmt}
-import program.{ModuleSpace, search}
+import program.{ModuleSpace, ModDef, search}
 import typechecker.{ty, infer, expect, signature, fresh, Scope, TypeScope}
 import typechecker.ty.{Type, Void}
 import typechecker.error.InferenceErr
@@ -29,7 +29,7 @@ trait OfType(typ: Type) {
 
 case class Num(expr: ast.Num, ty: Type) extends Ir
 case class Str(expr: ast.Str) extends Ir, OfType(ty.Str) with PtrWith("str", () => expr.lexeme.hashCode)
-case class Id(expr: ast.Id, ty: Type, source: Option[ast.Ref]) extends Ir
+case class Id(expr: ast.Id, ty: Type, source: ModDef) extends Ir
 case class Symbol(expr: ast.Symbol) extends Ir, OfType(ty.Symbol) with Ptr("symbol")
 case class App(lambda: Ir, args: List[Ir], expr: Expr, ty: Type) extends Ir
 case class Cond(cond: Ir, pass: Ir, fail: Ir, expr: Expr, ty: Type) extends Ir
