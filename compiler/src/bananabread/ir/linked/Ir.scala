@@ -3,7 +3,7 @@ package ir
 package linked
 
 import parsing.ast
-import program.ModDef
+import program.{SourceContext, ModDef}
 import ast.{Expr, Stmt}
 import error._
 import utils.{Print, squished}
@@ -34,92 +34,92 @@ type Lifted[T] = Either[LiftErr, T]
 type Scoped[T] = Lifted[(T, Locals)]
 
 
-def lift(nodes: List[typeless.Ir], module: Option[ast.Module], imports: List[ast.Import]): Lifted[List[Ir]] =
+def lift(nodes: List[typeless.Ir], srcCtx: SourceContext): Lifted[List[Ir]] =
   nodes.foldLeft[Scoped[List[Ir]]](Right((List.empty, List.empty))) {
     case (Left(err), _) =>
       Left(err)
     case (Right((irs, locals)), node) =>
-      lift(node, module, imports, locals).map { (lifted, newLocals) =>
+      lift(node, srcCtx, locals).map { (lifted, newLocals) =>
         (irs :+ lifted, newLocals)
       }
   }.map(_._1)
-def lift(node: typeless.Ir, module: Option[ast.Module], imports: List[ast.Import], locals: List[ast.Id]): Scoped[Ir] = node match
+def lift(node: typeless.Ir, srcCtx: SourceContext, locals: List[ast.Id]): Scoped[Ir] = node match
   case typeless.Num(expr)    => Right((Num(expr), locals))
   case typeless.Str(expr)    => Right((Str(expr), locals))
   case typeless.True(expr)   => Right((True(expr), locals))
   case typeless.False(expr)  => Right((False(expr), locals))
   case typeless.Symbol(expr) => Right((Symbol(expr), locals))
   case typeless.Opcode(expr) => Right((Opcode(expr), locals))
-  case node: typeless.Id     => liftId(node, module, imports, locals)
-  case node: typeless.App    => liftApp(node, module, imports, locals)
-  case node: typeless.Lambda => liftLambda(node, module, imports, locals)
-  case node: typeless.Cond   => liftCond(node, module, imports, locals)
-  case node: typeless.Let    => liftLet(node, module, imports, locals)
-  case node: typeless.Begin  => liftBegin(node, module, imports, locals)
-  case node: typeless.Def    => liftDef(node, module, imports, locals)
+  case node: typeless.Id     => liftId(node, srcCtx, locals)
+  case node: typeless.App    => liftApp(node, srcCtx, locals)
+  case node: typeless.Lambda => liftLambda(node, srcCtx, locals)
+  case node: typeless.Cond   => liftCond(node, srcCtx, locals)
+  case node: typeless.Let    => liftLet(node, srcCtx, locals)
+  case node: typeless.Begin  => liftBegin(node, srcCtx, locals)
+  case node: typeless.Def    => liftDef(node, srcCtx, locals)
 
-def liftId(node: typeless.Id, module: Option[ast.Module], imports: List[ast.Import], locals: List[ast.Id]): Scoped[Id] =
+def liftId(node: typeless.Id, srcCtx: SourceContext, locals: List[ast.Id]): Scoped[Id] =
   val id = node.expr.lexeme
   val local = locals.map(_.lexeme).contains(id)
-  val source = imports.find { stmt =>
+  val source = srcCtx.imports.find { stmt =>
     stmt.exposing.map(_.id.lexeme).contains(id)
   }
 
-  (local, module, source) match
+  (local, srcCtx.module, source) match
     case (true, Some(mod), _) => Right((Id(node.expr, ModDef.from(mod)), locals))
     case (true, None, _) => Right((Id(node.expr, ModDef.main), locals))
     case (_, _, Some(imp)) => Right((Id(node.expr, ModDef.from(imp)), locals))
     case (_, _, _) => Left(UndeclaredIdentifierErr(node))
 
-def liftApp(node: typeless.App, module: Option[ast.Module], imports: List[ast.Import], locals: List[ast.Id]): Scoped[App] =
+def liftApp(node: typeless.App, srcCtx: SourceContext, locals: List[ast.Id]): Scoped[App] =
   for
-    liftedLamda <- lift(node.lambda, module, imports, locals).map(_._1)
-    liftedArgs  <- node.args.map(lift(_, module, imports, locals)).squished.map(_.map(_._1))
+    liftedLamda <- lift(node.lambda, srcCtx, locals).map(_._1)
+    liftedArgs  <- node.args.map(lift(_, srcCtx, locals)).squished.map(_.map(_._1))
   yield
     (App(liftedLamda, liftedArgs, node.expr), locals)
 
-def liftLambda(node: typeless.Lambda, module: Option[ast.Module], imports: List[ast.Import], locals: List[ast.Id]): Scoped[Lambda] =
+def liftLambda(node: typeless.Lambda, srcCtx: SourceContext, locals: List[ast.Id]): Scoped[Lambda] =
   for
-    liftedBody <- lift(node.body, module, imports, locals ++ node.params.map(_.name)).map(_._1)
+    liftedBody <- lift(node.body, srcCtx, locals ++ node.params.map(_.name)).map(_._1)
   yield
     (Lambda(node.params, liftedBody, node.tyVars, node.expr), locals)
 
-def liftCond(node: typeless.Cond, module: Option[ast.Module], imports: List[ast.Import], locals: List[ast.Id]): Scoped[Cond] =
+def liftCond(node: typeless.Cond, srcCtx: SourceContext, locals: List[ast.Id]): Scoped[Cond] =
   for
-    liftedCond <- lift(node.cond, module, imports, locals).map(_._1)
-    liftedPass <- lift(node.pass, module, imports, locals).map(_._1)
-    liftedFail <- lift(node.fail, module, imports, locals).map(_._1)
+    liftedCond <- lift(node.cond, srcCtx, locals).map(_._1)
+    liftedPass <- lift(node.pass, srcCtx, locals).map(_._1)
+    liftedFail <- lift(node.fail, srcCtx, locals).map(_._1)
   yield
     (Cond(liftedCond, liftedPass, liftedFail, node.expr), locals)
 
-def liftLet(node: typeless.Let, module: Option[ast.Module], imports: List[ast.Import], locals: List[ast.Id]): Scoped[Let] =
+def liftLet(node: typeless.Let, srcCtx: SourceContext, locals: List[ast.Id]): Scoped[Let] =
   for
-    bindingsLift <- liftLetBindings(node, module, imports, locals)
+    bindingsLift <- liftLetBindings(node, srcCtx, locals)
     liftedBindings = bindingsLift._1._1
     recLocals = bindingsLift._1._2
-    liftedBody <- lift(node.body, module, imports, recLocals).map(_._1)
+    liftedBody <- lift(node.body, srcCtx, recLocals).map(_._1)
   yield
     (Let(liftedBindings, liftedBody, node.expr), locals)
 
-def liftLetBindings(node: typeless.Let, module: Option[ast.Module], imports: List[ast.Import], locals: List[ast.Id]): Scoped[(List[Binding], List[ast.Id])] =
+def liftLetBindings(node: typeless.Let, srcCtx: SourceContext, locals: List[ast.Id]): Scoped[(List[Binding], List[ast.Id])] =
   node.bindings.foldLeft[Scoped[(List[Binding], List[ast.Id])]](Right(((List.empty, locals), locals))) {
     case (Left(err), _) =>
       Left(err)
     case (Right(((liftedBindings, locals), _)), binding) =>
       val recLocals = locals :+ binding.label
-      lift(binding.value, module, imports, recLocals).map(_._1).map { ir =>
+      lift(binding.value, srcCtx, recLocals).map(_._1).map { ir =>
         ((liftedBindings :+ Binding(binding.label, ir, binding.expr), recLocals), locals)
       }
   }
 
-def liftBegin(node: typeless.Begin, module: Option[ast.Module], imports: List[ast.Import], locals: List[ast.Id]): Scoped[Begin] =
+def liftBegin(node: typeless.Begin, srcCtx: SourceContext, locals: List[ast.Id]): Scoped[Begin] =
   for
-    liftedIns <- node.ins.map(lift(_, module, imports, locals)).squished.map(_.map(_._1))
+    liftedIns <- node.ins.map(lift(_, srcCtx, locals)).squished.map(_.map(_._1))
   yield
     (Begin(liftedIns, node.expr), locals)
 
-def liftDef(node: typeless.Def, module: Option[ast.Module], imports: List[ast.Import], locals: List[ast.Id]): Scoped[Def] =
+def liftDef(node: typeless.Def, srcCtx: SourceContext, locals: List[ast.Id]): Scoped[Def] =
   for
-    liftedValue <- lift(node.value, module, imports, locals :+ node.name).map(_._1)
+    liftedValue <- lift(node.value, srcCtx, locals :+ node.name).map(_._1)
   yield
     (Def(node.name, liftedValue, node.expr), locals :+ node.name)

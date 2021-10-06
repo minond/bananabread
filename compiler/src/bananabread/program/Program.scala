@@ -8,6 +8,7 @@ import error.Err
 
 
 case class SourceFile(module: Option[ast.Module], imports: List[ast.Import], tree: ast.Tree)
+case class SourceContext(module: Option[ast.Module], imports: List[ast.Import])
 
 
 case class ModDef(name: String)
@@ -53,7 +54,7 @@ def lift(source: SourceFile): Either[Err, List[stitched.Ir]] =
 
     ir0 <- typeless.lift(source.tree)
     ir1  = typeless.pass(ir0)
-    ir2 <- linked.lift(ir1, source.module, source.imports)
+    ir2 <- linked.lift(ir1, SourceContext(source.module, source.imports))
     ir3 <- typed.lift(ir2, space)
     ir4 <- stitched.lift(ir3, space)
   yield
@@ -62,7 +63,7 @@ def lift(source: SourceFile): Either[Err, List[stitched.Ir]] =
 def lift0(source: SourceFile): Either[Err, List[typed.Ir]] =
   for
     ir0 <- typeless.lift(source.tree)
-    ir1 <- linked.lift(ir0, source.module, source.imports)
+    ir1 <- linked.lift(ir0, SourceContext(source.module, source.imports))
     ir2 <- typed.lift(ir1, ModuleSpace.empty)
   yield
     ir2
