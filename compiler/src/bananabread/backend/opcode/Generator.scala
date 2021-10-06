@@ -48,11 +48,11 @@ def generate(scope: Scope, node: Ir): Result = node match
   case id: stitched.Id      => generateLoad(scope, id)
   case lam: stitched.Lambda => generateAnnonLambda(scope, lam)
   case op: stitched.Opcode  => generateOpcode(scope, op)
+  case defn: stitched.Def   => generateDef(scope, defn)
   case stitched.App(lambda, args, _, _, _)      => generateCall(scope, lambda, args)
   case stitched.Cond(cond, pass, fail, _, _, _) => generateCond(scope, cond, pass, fail)
   case stitched.Let(bindings, body, _, _, _)    => generateLet(scope, bindings, body)
   case stitched.Begin(irs,_ , _, _)             => generateBegin(scope, irs)
-  case stitched.Def(name, value, _, _, source)  => generateDef(scope, name.lexeme, value, source)
 
 def generatePush(scope: Scope, node: Ir, ty: Type): Result = (ty, node) match
   case (I32, num: stitched.Num) =>
@@ -245,18 +245,23 @@ def generateLet(scope: Scope, bindings: List[stitched.Binding], body: Ir): Resul
       regroup(subscope, scope, lets.flatten ++ code)
   }
 
-def generateDef(scope: Scope, name: String, value: Ir, source: Module): Result = value match
-  case lam: stitched.Lambda =>
-    scope.define(name, lam)
-    scope.scoped(name) { subscope =>
-      generateLambda(subscope, lam.params, lam.body)
-        .map(Label(lam.ptr) +: _)
-    }
+def generateDef(scope: Scope, defn: stitched.Def): Result =
+  val name = defn.name.lexeme
+  val value = defn.value
+  val source = defn.source
 
-  case _ =>
-    scope.define(name, value)
-    generate(scope, value)
-      .map(_ ++ group(scope, Store(I32, scope.qualified(name))))
+  value match
+    case lam: stitched.Lambda =>
+      scope.define(name, lam)
+      scope.scoped(name) { subscope =>
+        generateLambda(subscope, lam.params, lam.body)
+          .map(Label(lam.ptr) +: _)
+      }
+
+    case _ =>
+      scope.define(name, value)
+      generate(scope, value)
+        .map(_ ++ group(scope, Store(I32, scope.qualified(name))))
 
 def generateLambda(scope: Scope, params: List[stitched.Param], body: Ir): Result =
   val init = group(scope,
