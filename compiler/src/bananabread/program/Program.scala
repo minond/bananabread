@@ -8,10 +8,10 @@ import error.Err
 
 
 case class SourceFile(module: Option[ast.Module], imports: List[ast.Import], tree: ast.Tree)
-case class Name(value: String)
 
 
-case class Module(name: Name, ir: List[typed.Ir]):
+case class ModDef(name: String)
+case class Module(defn: ModDef, ir: List[typed.Ir]):
   def get(name: String): Option[typed.Ir] =
     ir.find {
       case typed.Def(ast.Id(name2, _), _, _, _) if name == name2 => true
@@ -19,7 +19,7 @@ case class Module(name: Name, ir: List[typed.Ir]):
     }
 
 
-type ModuleSpace = Map[Name, Module]
+type ModuleSpace = Map[String, Module]
 
 extension (space: ModuleSpace)
   def search(maybeSource: Option[ast.Ref], name: String): Option[typed.Ir] =
@@ -35,7 +35,7 @@ extension (space: ModuleSpace)
   def locate(ref: ast.Ref, name: String): (Option[Module], Option[typed.Ir]) =
     locate(ref.id.lexeme, name)
   def locate(source: String, name: String): (Option[Module], Option[typed.Ir]) =
-    space.get(Name(source)) match
+    space.get(source) match
       case None => (None, None)
       case Some(mod) => (Some(mod), mod.get(name))
 
@@ -43,9 +43,7 @@ object ModuleSpace:
   def empty: ModuleSpace =
     Map.empty
   def from(name: String, ir: List[typed.Ir]): ModuleSpace =
-    from(Name(name), ir)
-  def from(name: Name, ir: List[typed.Ir]): ModuleSpace =
-    Map(name -> Module(name, ir))
+    Map(name -> Module(ModDef(name), ir))
 
 
 def lift(source: SourceFile): Either[Err, List[stitched.Ir]] =

@@ -19,7 +19,7 @@ object Module:
     case None => main
     case Some(ref) => Module(ref.id.lexeme)
   def from(pmod: program.Module) =
-    Module(pmod.name.value)
+    Module(pmod.defn.name)
 
 
 sealed trait Ir {
