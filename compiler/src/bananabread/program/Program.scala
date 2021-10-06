@@ -22,18 +22,18 @@ case class Module(name: Name, ir: List[typed.Ir]):
 type ModuleSpace = Map[Name, Module]
 
 extension (space: ModuleSpace)
-  def search(maybeSource: Option[ast.Import], name: String): Option[typed.Ir] =
+  def search(maybeSource: Option[ast.Ref], name: String): Option[typed.Ir] =
     locate(maybeSource, name)._2
-  def search(stmt: ast.Import, name: String): Option[typed.Ir] =
-    locate(stmt, name)._2
+  def search(ref: ast.Ref, name: String): Option[typed.Ir] =
+    locate(ref, name)._2
   def search(source: String, name: String): Option[typed.Ir] =
     locate(source, name)._2
-  def locate(maybeSource: Option[ast.Import], name: String): (Option[Module], Option[typed.Ir]) =
+  def locate(maybeSource: Option[ast.Ref], name: String): (Option[Module], Option[typed.Ir]) =
     maybeSource match
       case None => (None, None)
-      case Some(stmt) => locate(stmt, name)
-  def locate(stmt: ast.Import, name: String): (Option[Module], Option[typed.Ir]) =
-    locate(stmt.name.id.lexeme, name)
+      case Some(ref) => locate(ref, name)
+  def locate(ref: ast.Ref, name: String): (Option[Module], Option[typed.Ir]) =
+    locate(ref.id.lexeme, name)
   def locate(source: String, name: String): (Option[Module], Option[typed.Ir]) =
     space.get(Name(source)) match
       case None => (None, None)
@@ -56,7 +56,7 @@ def lift(source: SourceFile): Either[Err, List[stitched.Ir]] =
 
     ir0 <- typeless.lift(source.tree)
     ir1  = typeless.pass(ir0)
-    ir2 <- linked.lift(ir1, source.imports)
+    ir2 <- linked.lift(ir1, source.module, source.imports)
     ir3 <- typed.lift(ir2, space)
     ir4 <- stitched.lift(ir3, space)
   yield
@@ -65,7 +65,7 @@ def lift(source: SourceFile): Either[Err, List[stitched.Ir]] =
 def lift0(source: SourceFile): Either[Err, List[typed.Ir]] =
   for
     ir0 <- typeless.lift(source.tree)
-    ir1 <- linked.lift(ir0, source.imports)
+    ir1 <- linked.lift(ir0, source.module, source.imports)
     ir2 <- typed.lift(ir1, ModuleSpace.empty)
   yield
     ir2

@@ -15,9 +15,9 @@ import utils.{squished, Ptr, PtrWith}
 case class Module(name: String)
 object Module:
   def main = Module("main")
-  def from(maybeSource: Option[ast.Import]) = maybeSource match
+  def from(maybeSource: Option[ast.Ref]) = maybeSource match
     case None => main
-    case Some(stmt) => Module(stmt.name.id.lexeme)
+    case Some(ref) => Module(ref.id.lexeme)
   def from(pmod: program.Module) =
     Module(pmod.name.value)
 
@@ -106,23 +106,26 @@ def lift(node: typed.Ir, source: Module, space: ModuleSpace): Stitched = node ma
   case node: typed.Begin   => liftBegin(node, source, space)
   case node: typed.Let     => liftLet(node, source, space)
 
+/** This was returning a `MissingSourceErr` error when the node had a souce but
+  * it was not found in the module space. This upstream irs are not setting
+  * sources more often, this got changed to assume that a missing module in the
+  * space is due to the node being defined in the main entry module. One way to
+  * update this code to no longer assume that would be to somehow add the main
+  * module to the module space.
+  */
 def liftId(node: typed.Id, source: Module, space: ModuleSpace): Stitched =
   val expr = node.expr
   val label = expr.lexeme
   val ty = node.ty
   val id = Id(expr, ty, Module.from(node.source))
 
-  (node.source, space.locate(node.source, label)) match
-    case (None, _) => Right(Stitch.inlined(id))
-    case (Some(_), (Some(mod), Some(definition))) =>
+  space.locate(node.source, label) match
+    case (Some(mod), Some(definition)) =>
       for
         liftedDef <- lift(definition, Module.from(mod), space)
       yield
         Stitch.inlined(id).above(liftedDef.stitch)
-    case (Some(home), (None, _)) =>
-      Left(MissingSourceErr(node))
-    case (Some(home), (_, None)) =>
-      Left(MissingSourceErr(node))
+    case _ => Right(Stitch.inlined(id))
 
 def liftDef(node: typed.Def, source: Module, space: ModuleSpace): Stitched =
   val name = node.name

@@ -208,7 +208,7 @@ def signatureLambdaRet(lam: linked.Lambda, tyScope: TypeScope): Inferred[(Type, 
       Right((fresh(), tyScope))
 
 
-def lookup(ir: Ir, label: String, source: Option[ast.Import], scope: Scope, space: ModuleSpace): Either[LookupErr, Type] =
+def lookup(ir: Ir, label: String, source: Option[ast.Ref], scope: Scope, space: ModuleSpace): Either[LookupErr, Type] =
   (scope.get(label), space.search(source, label)) match
     case (None, None)  => Left(LookupErr(label, ir))
     case (_, Some(ir)) => Right(ir.ty)
