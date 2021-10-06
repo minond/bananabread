@@ -6,7 +6,7 @@ import error._
 import dsl._
 
 import ir.stitched
-import ir.stitched.{Ir, Source}
+import ir.stitched.{Ir, Module}
 
 import parsing.location.Location
 import parsing.opcode.Expr => OpcodeExpr
@@ -48,11 +48,11 @@ def generate(scope: Scope, node: Ir): Result = node match
   case id: stitched.Id      => generateLoad(scope, id)
   case lam: stitched.Lambda => generateAnnonLambda(scope, lam)
   case op: stitched.Opcode  => generateOpcode(scope, op)
-  case stitched.App(lambda, args, _, _)      => generateCall(scope, lambda, args)
-  case stitched.Cond(cond, pass, fail, _, _) => generateCond(scope, cond, pass, fail)
-  case stitched.Let(bindings, body, _, _)    => generateLet(scope, bindings, body)
-  case stitched.Begin(irs,_ , _)             => generateBegin(scope, irs)
-  case stitched.Def(name, value, _, _)       => generateDef(scope, name.lexeme, value)
+  case stitched.App(lambda, args, _, _, _)      => generateCall(scope, lambda, args)
+  case stitched.Cond(cond, pass, fail, _, _, _) => generateCond(scope, cond, pass, fail)
+  case stitched.Let(bindings, body, _, _, _)    => generateLet(scope, bindings, body)
+  case stitched.Begin(irs,_ , _, _)             => generateBegin(scope, irs)
+  case stitched.Def(name, value, _, _, source)  => generateDef(scope, name.lexeme, value, source)
 
 def generatePush(scope: Scope, node: Ir, ty: Type): Result = (ty, node) match
   case (I32, num: stitched.Num) =>
@@ -245,7 +245,7 @@ def generateLet(scope: Scope, bindings: List[stitched.Binding], body: Ir): Resul
       regroup(subscope, scope, lets.flatten ++ code)
   }
 
-def generateDef(scope: Scope, name: String, value: Ir): Result = value match
+def generateDef(scope: Scope, name: String, value: Ir, source: Module): Result = value match
   case lam: stitched.Lambda =>
     scope.define(name, lam)
     scope.scoped(name) { subscope =>
@@ -264,7 +264,7 @@ def generateLambda(scope: Scope, params: List[stitched.Param], body: Ir): Result
   )
 
   val storeArgs = params.reverse.flatMap { case param @ stitched.Param(expr @ ast.Id(label, _), ty) =>
-    scope.define(param, stitched.Id(expr, ty, Source.local))
+    scope.define(param, stitched.Id(expr, ty, Module.main))
     group(scope, Swap, Store(toRuntimeType(ty), scope.qualified(label)))
   }
 

@@ -23,15 +23,21 @@ type ModuleSpace = Map[Name, Module]
 
 extension (space: ModuleSpace)
   def search(maybeSource: Option[ast.Import], name: String): Option[typed.Ir] =
-    maybeSource match
-      case None => None
-      case Some(stmt) => search(stmt, name)
+    locate(maybeSource, name)._2
   def search(stmt: ast.Import, name: String): Option[typed.Ir] =
-    search(stmt.name.id.lexeme, name)
+    locate(stmt, name)._2
   def search(source: String, name: String): Option[typed.Ir] =
+    locate(source, name)._2
+  def locate(maybeSource: Option[ast.Import], name: String): (Option[Module], Option[typed.Ir]) =
+    maybeSource match
+      case None => (None, None)
+      case Some(stmt) => locate(stmt, name)
+  def locate(stmt: ast.Import, name: String): (Option[Module], Option[typed.Ir]) =
+    locate(stmt.name.id.lexeme, name)
+  def locate(source: String, name: String): (Option[Module], Option[typed.Ir]) =
     space.get(Name(source)) match
-      case None => None
-      case Some(mod) => mod.get(name)
+      case None => (None, None)
+      case Some(mod) => (Some(mod), mod.get(name))
 
 object ModuleSpace:
   def empty: ModuleSpace =
