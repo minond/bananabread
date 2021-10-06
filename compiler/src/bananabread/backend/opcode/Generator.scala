@@ -6,7 +6,8 @@ import error._
 import dsl._
 
 import ir.stitched
-import ir.stitched.{Ir, Module}
+import ir.stitched.Ir
+import program.ModDef
 
 import parsing.location.Location
 import parsing.opcode.Expr => OpcodeExpr
@@ -269,7 +270,7 @@ def generateLambda(scope: Scope, params: List[stitched.Param], body: Ir): Result
   )
 
   val storeArgs = params.reverse.flatMap { case param @ stitched.Param(expr @ ast.Id(label, _), ty) =>
-    scope.define(param, stitched.Id(expr, ty, Module.main))
+    scope.define(param, stitched.Id(expr, ty, ModDef.main))
     group(scope, Swap, Store(toRuntimeType(ty), scope.qualified(label)))
   }
 

@@ -11,6 +11,12 @@ case class SourceFile(module: Option[ast.Module], imports: List[ast.Import], tre
 
 
 case class ModDef(name: String)
+object ModDef:
+  def main = ModDef("main")
+  def from(maybeSource: Option[ast.Ref]) = maybeSource match
+    case None => main
+    case Some(ref) => ModDef(ref.id.lexeme)
+
 case class Module(defn: ModDef, ir: List[typed.Ir]):
   def get(name: String): Option[typed.Ir] =
     ir.find {

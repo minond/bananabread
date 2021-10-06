@@ -5,52 +5,42 @@ package stitched
 import error._
 import parsing.ast
 import parsing.ast.{Expr, Stmt}
-import program.{ModuleSpace, search, locate}
+import program.{ModuleSpace, ModDef, search, locate}
 import typechecker.ty
 import typechecker.ty.Type
 
 import utils.{squished, Ptr, PtrWith}
 
 
-case class Module(name: String)
-object Module:
-  def main = Module("main")
-  def from(maybeSource: Option[ast.Ref]) = maybeSource match
-    case None => main
-    case Some(ref) => Module(ref.id.lexeme)
-  def from(pmod: program.Module) =
-    Module(pmod.defn.name)
-
-
 sealed trait Ir {
   def expr: Expr | Stmt
   def ty: Type
-  def source: Module
+  def source: ModDef
 }
 
 trait OfType(typ: Type) {
   def ty = typ
 }
 
-case class Num(expr: ast.Num, ty: Type, source: Module) extends Ir
-case class Str(expr: ast.Str, source: Module) extends Ir, OfType(ty.Str) with PtrWith("str", () => expr.lexeme.hashCode)
-case class Id(expr: ast.Id, ty: Type, source: Module) extends Ir
-case class Symbol(expr: ast.Symbol, source: Module) extends Ir, OfType(ty.Symbol) with Ptr("symbol")
-case class App(lambda: Ir, args: List[Ir], expr: Expr, ty: Type, source: Module) extends Ir
-case class Cond(cond: Ir, pass: Ir, fail: Ir, expr: Expr, ty: Type, source: Module) extends Ir
-case class Begin(ins: List[Ir], expr: Expr, ty: Type, source: Module) extends Ir
-case class Opcode(expr: ast.Opcode, source: Module) extends Ir, OfType(ty.Void)
-case class Def(name: ast.Id, value: Ir, expr: Stmt, ty: Type, source: Module) extends Ir
+case class Num(expr: ast.Num, ty: Type, source: ModDef) extends Ir
+case class Str(expr: ast.Str, source: ModDef) extends Ir, OfType(ty.Str) with PtrWith("str", () => expr.lexeme.hashCode)
+case class Id(expr: ast.Id, ty: Type, source: ModDef) extends Ir
+case class Symbol(expr: ast.Symbol, source: ModDef) extends Ir, OfType(ty.Symbol) with Ptr("symbol")
+case class App(lambda: Ir, args: List[Ir], expr: Expr, ty: Type, source: ModDef) extends Ir
+case class Cond(cond: Ir, pass: Ir, fail: Ir, expr: Expr, ty: Type, source: ModDef) extends Ir
+case class Begin(ins: List[Ir], expr: Expr, ty: Type, source: ModDef) extends Ir
+case class Opcode(expr: ast.Opcode, source: ModDef) extends Ir, OfType(ty.Void)
+case class Def(name: ast.Id, value: Ir, expr: Stmt, ty: Type, source: ModDef) extends Ir
 
-case class Lambda(params: List[Param], body: Ir, tyVars: List[ast.TyId], expr: Expr, ty: Type, source: Module) extends Ir with Ptr("lambda")
+case class Lambda(params: List[Param], body: Ir, tyVars: List[ast.TyId], expr: Expr, ty: Type, source: ModDef) extends Ir with Ptr("lambda")
 case class Param(name: ast.Id, ty: Type)
 
-case class Let(bindings: List[Binding], body: Ir, expr: Expr, ty: Type, source: Module) extends Ir
+case class Let(bindings: List[Binding], body: Ir, expr: Expr, ty: Type, source: ModDef) extends Ir
 case class Binding(label: ast.Id, value: Ir, expr: ast.Binding, ty: Type)
 
 sealed trait Bool extends Ir
-case class True(expr: ast.True, source: Module) extends Bool, OfType(ty.Bool)
-case class False(expr: ast.False, source: Module) extends Bool, OfType(ty.Bool)
+case class True(expr: ast.True, source: ModDef) extends Bool, OfType(ty.Bool)
+case class False(expr: ast.False, source: ModDef) extends Bool, OfType(ty.Bool)
 
 
 type Lifted[T] = Either[LiftErr, T]
@@ -89,9 +79,9 @@ def lift(nodes: List[typed.Ir], space: ModuleSpace): Lifted[List[Ir]] =
     case (Left(err), _) =>
       Left(err)
     case (Right(acc), node) =>
-      lift(node, Module.main, space).map { stitch => acc.add(stitch) }
+      lift(node, ModDef.main, space).map { stitch => acc.add(stitch) }
   }.map(_.stitch)
-def lift(node: typed.Ir, source: Module, space: ModuleSpace): Stitched = node match
+def lift(node: typed.Ir, source: ModDef, space: ModuleSpace): Stitched = node match
   case typed.Str(expr)     => Right(Stitch.inlined(Str(expr, source)))
   case typed.Symbol(expr)  => Right(Stitch.inlined(Symbol(expr, source)))
   case typed.True(expr)    => Right(Stitch.inlined(True(expr, source)))
@@ -113,21 +103,21 @@ def lift(node: typed.Ir, source: Module, space: ModuleSpace): Stitched = node ma
   * update this code to no longer assume that would be to somehow add the main
   * module to the module space.
   */
-def liftId(node: typed.Id, source: Module, space: ModuleSpace): Stitched =
+def liftId(node: typed.Id, source: ModDef, space: ModuleSpace): Stitched =
   val expr = node.expr
   val label = expr.lexeme
   val ty = node.ty
-  val id = Id(expr, ty, Module.from(node.source))
+  val id = Id(expr, ty, ModDef.from(node.source))
 
   space.locate(node.source, label) match
     case (Some(mod), Some(definition)) =>
       for
-        liftedDef <- lift(definition, Module.from(mod), space)
+        liftedDef <- lift(definition, mod.defn, space)
       yield
         Stitch.inlined(id).above(liftedDef.stitch)
     case _ => Right(Stitch.inlined(id))
 
-def liftDef(node: typed.Def, source: Module, space: ModuleSpace): Stitched =
+def liftDef(node: typed.Def, source: ModDef, space: ModuleSpace): Stitched =
   val name = node.name
   val value = node.value
   val expr = node.expr
@@ -139,7 +129,7 @@ def liftDef(node: typed.Def, source: Module, space: ModuleSpace): Stitched =
   yield
     Stitch.inlined(Def(name, liftedValue, expr, ty, source)).above(liftedValueRes.top)
 
-def liftLambda(node: typed.Lambda, source: Module, space: ModuleSpace): Stitched =
+def liftLambda(node: typed.Lambda, source: ModDef, space: ModuleSpace): Stitched =
   val tyVars = node.tyVars
   val params = node.params
   val body = node.body
@@ -153,7 +143,7 @@ def liftLambda(node: typed.Lambda, source: Module, space: ModuleSpace): Stitched
   yield
     Stitch.inlined(Lambda(liftedParams, liftedBody, tyVars, expr, ty, source)).above(liftedBodyRes.top)
 
-def liftApp(node: typed.App, source: Module, space: ModuleSpace): Stitched =
+def liftApp(node: typed.App, source: ModDef, space: ModuleSpace): Stitched =
   val lambda = node.lambda
   val args = node.args
   val expr = node.expr
@@ -169,7 +159,7 @@ def liftApp(node: typed.App, source: Module, space: ModuleSpace): Stitched =
   yield
     Stitch.inlined(App(liftedLam, liftedArgs, expr, ty, source)).above(top)
 
-def liftCond(node: typed.Cond, source: Module, space: ModuleSpace): Stitched =
+def liftCond(node: typed.Cond, source: ModDef, space: ModuleSpace): Stitched =
   val cond = node.cond
   val pass = node.pass
   val fail = node.fail
@@ -189,7 +179,7 @@ def liftCond(node: typed.Cond, source: Module, space: ModuleSpace): Stitched =
   yield
     Stitch.inlined(Cond(inlineCond, inlinePass, inlineFail, expr, ty, source)).above(top)
 
-def liftBegin(node: typed.Begin, source: Module, space: ModuleSpace): Stitched =
+def liftBegin(node: typed.Begin, source: ModDef, space: ModuleSpace): Stitched =
   val ins = node.ins
   val expr = node.expr
   val ty = node.ty
@@ -200,7 +190,7 @@ def liftBegin(node: typed.Begin, source: Module, space: ModuleSpace): Stitched =
   yield
     Stitch.inlined(Begin(restitched.inline, expr, ty, source)).above(restitched.top)
 
-def liftLet(node: typed.Let, source: Module, space: ModuleSpace): Stitched =
+def liftLet(node: typed.Let, source: ModDef, space: ModuleSpace): Stitched =
   val bindings = node.bindings
   val body = node.body
   val expr = node.expr
