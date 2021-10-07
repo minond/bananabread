@@ -79,12 +79,12 @@ def pp(err: Err, source: String): String = err match
     node.expr match
       case expr: ast.Expr =>
         lines(
-          generateRuntimeErrorLine(s"bad push, `${expr}` is not a valid runtime value", expr.location, source),
+          generateAnalysisErrorLine(Step.Compile, s"bad push, `${expr}` is not a valid runtime value", expr.location, source),
           isolateBadLine(expr.location, source),
         )
       case stmt: ast.Def =>
         lines(
-          generateRuntimeErrorLine(s"bad push, `${stmt.value}` is not a valid runtime value", stmt.value.location, source),
+          generateAnalysisErrorLine(Step.Compile, s"bad push, `${stmt.value}` is not a valid runtime value", stmt.value.location, source),
           isolateBadLine(stmt.value.location, source),
         )
       case node: (ast.Module | ast.Import) =>
@@ -95,13 +95,13 @@ def pp(err: Err, source: String): String = err match
 
   case genopErr.UndeclaredIdentifierErr(id) =>
     lines(
-      generateRuntimeErrorLine(s"${id.expr.lexeme} was referenced but not found", id.expr.location, source),
+      generateAnalysisErrorLine(Step.Compile, s"${id.expr.lexeme} was referenced but not found", id.expr.location, source),
       isolateBadLine(id.expr.location, source),
     )
 
   case genopErr.LookupErr(id) =>
     lines(
-      generateRuntimeErrorLine(s"${id.lexeme} was referenced but not found", id.location, source),
+      generateAnalysisErrorLine(Step.Compile, s"${id.lexeme} was referenced but not found", id.location, source),
       isolateBadLine(id.location, source),
     )
 
@@ -113,19 +113,19 @@ def pp(err: Err, source: String): String = err match
 
   case genopErr.BadCallErr(typed.Id(id, _, _)) =>
     lines(
-      generateRuntimeErrorLine(s"bad call to `${id.lexeme}`", id.location, source),
+      generateAnalysisErrorLine(Step.Compile, s"bad call to `${id.lexeme}`", id.location, source),
       isolateBadLine(id.location, source),
     )
 
   case genopErr.BadCallErr(node) =>
     lines(
-      generateRuntimeErrorLine(s"bad call to value of kind ${node.getClass.getSimpleName}", node.expr.location, source),
+      generateAnalysisErrorLine(Step.Compile, s"bad call to value of kind ${node.getClass.getSimpleName}", node.expr.location, source),
       isolateBadLine(node.expr.location, source),
     )
 
   case runtimeErr.RuntimeErr(msg, ins, codes, registers) =>
     lines(
-      generateOpcodeErrorLine(msg),
+      generateVmRuntimeErrorLine(msg),
       isolateBadOpcode(registers.pc.value, codes),
     )
 
@@ -159,30 +159,44 @@ def pp(err: Err, source: String): String = err match
       isolateBadLine(node.location, source),
     )
 
-  case linkedIrErr.UndeclaredIdentifierErr(node) =>
-    lines(
-      generateRuntimeErrorLine(s"${node.expr.lexeme} was referenced but not found", node.expr.location, source),
-      isolateBadLine(node.expr.location, source),
-    )
-
   case typedIrErr.UndeclaredIdentifierErr(linked.Id(id, _)) =>
     lines(
       generateTypeErrorLine(s"undeclared identifier `$id`", id.location, source),
       isolateBadLine(id.location, source),
     )
 
+  case linkedIrErr.UndeclaredIdentifierErr(node) =>
+    lines(
+      generateAnalysisErrorLine(Step.Linked, s"${node.expr.lexeme} was referenced but not found", node.expr.location, source),
+      isolateBadLine(node.expr.location, source),
+    )
+
   case _ =>
     s"${err.getClass.getCanonicalName}: ${err}"
 
 
+enum Step:
+  case Typeless
+  case Linked
+  case Typed
+  case Stitched
+  case Compile
+
+  override def toString = this match
+    case Typeless => "tl"
+    case Linked => "linked"
+    case Typed => "typed"
+    case Stitched => "stitched"
+    case Compile => "compile"
+
 def generateSyntaxErrorLine(message: String, loc: Location, source: String) =
   s"${BOLD}syntax error: ${message} in ${generateCoordinates(loc, source)}${RESET}"
 
-def generateRuntimeErrorLine(message: String, loc: Location, source: String) =
-  s"${BOLD}runtime error: ${message} in ${generateCoordinates(loc, source)}${RESET}"
+def generateAnalysisErrorLine(step: Step, message: String, loc: Location, source: String) =
+  s"${BOLD}analysis error: ${message} in ${generateCoordinates(loc, source)} [$step]${RESET}"
 
-def generateOpcodeErrorLine(message: String) =
-  s"${BOLD}opcode runtime error: ${message}${RESET}"
+def generateVmRuntimeErrorLine(message: String) =
+  s"${BOLD}runtime error: ${message}${RESET}"
 
 def generateTypeErrorLine(message: String, loc: Location, source: String) =
   s"${BOLD}type error: ${message} in ${generateCoordinates(loc, source)}${RESET}"
