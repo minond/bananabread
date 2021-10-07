@@ -1,15 +1,46 @@
 - Fully qualify all anonymous functions
 - Qualify symbols to their corresponding package instead of "main".
 - Module system, imports/exports
+  - Scope identifiers to their corresponding modules. Otherwise they override
+    each other. The code below results in the compiled output below it. Notice
+    how two "main.message" local variables initialized. Correct values but
+    incorrectly named.
+
+    // Module1.bb
+    module Module1
+    import Module2 exposing (print_message)
+    def message = "from module 1"
+    print_message()
+
+    // Module2.bb
+    module Module2
+    import Prelude exposing (println)
+    def message = "from module 2"
+    def print_message() = println(message)
+
+    // Output
+    main:
+        push      Const, str-2
+        store     I32, main.message
+        push      Const, str-4
+        store     I32, main.message
+        ...
+    main.print_message:
+        ...
+        load      Str, main.message
+        call      main.println
+        ...
+    .Str str-2: from module Prelude
+    .Str str-4: from module 1
+
 - Parsing errors:
+    - astOf("3 + 1 / 4 * 1 + 9") shouldEqual "(+ (+ 3 (/ 1 (* 4 1))) 9)"
+                           shouldReallyEqual "(+ (+ 3 (* (/ 1 4) 1)) 9)"
 
-    astOf("3 + 1 / 4 * 1 + 9") shouldEqual "(+ (+ 3 (/ 1 (* 4 1))) 9)"
-                         shouldReallyEqual "(+ (+ 3 (* (/ 1 4) 1)) 9)"
+    - it should "correctly order operator with equal precedence 2" in {
+        astOf("1 + 2 / 1 * 5") shouldEqual "(+ 1 (* (/ 2 1) 5))"
+      }
 
-    it should "correctly order operator with equal precedence 2" in {
-      astOf("1 + 2 / 1 * 5") shouldEqual "(+ 1 (* (/ 2 1) 5))"
-    }
-
-    it should "correctly order operator with equal precedence 4" in {
-      astOf("1 + 2 / 1 * 5 + 7") shouldEqual "(+ (+ 1 (* (/ 2 1) 5)) 7)"
-    }
+    - it should "correctly order operator with equal precedence 4" in {
+        astOf("1 + 2 / 1 * 5 + 7") shouldEqual "(+ (+ 1 (* (/ 2 1) 5)) 7)"
+      }
