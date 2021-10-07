@@ -47,17 +47,17 @@ type Lifted[T] = Either[LiftErr, T]
 type Stitched = Lifted[Stitch]
 
 
-case class Stitch(inline: List[Ir], top: List[Ir]):
-  def stitch = top ++ inline
-  def above(node: Ir) = Stitch(this.inline, top :+ node)
+case class Stitch(inline: List[Ir], top: Set[Ir]):
+  def stitch = top.toList ++ inline
+  def add(other: Stitch) = Stitch(this.inline ++ other.inline, this.top ++ other.top)
+  def above(node: Ir) = Stitch(this.inline, top + node)
+  def above(nodes: Set[Ir]) = Stitch(this.inline, top ++ nodes)
   def above(nodes: List[Ir]) = Stitch(this.inline, top ++ nodes)
-  def add(other: Stitch) =
-    Stitch(this.inline ++ other.inline, this.top ++ other.top)
+
 object Stitch:
-  def empty =
-    Stitch(List.empty[Ir], List.empty[Ir])
-  def inlined(node: Ir) = Stitch(List(node), List.empty)
-  def inlined(nodes: List[Ir]) = Stitch(nodes, List.empty)
+  def empty = Stitch(List.empty[Ir], Set.empty[Ir])
+  def inlined(node: Ir) = Stitch(List(node), Set.empty)
+  def inlined(nodes: List[Ir]) = Stitch(nodes, Set.empty)
 
 
 extension (stitches: List[Stitch])
@@ -73,6 +73,7 @@ extension (nodes: List[Ir])
     if nodes.size == 1
     then Right(nodes.head)
     else Left(ExpectedSingleLiftedMore(original))
+
 
 def lift(nodes: List[typed.Ir], space: ModuleSpace): Lifted[List[Ir]] =
   nodes.foldLeft[Lifted[Stitch]](Right(Stitch.empty)) {
