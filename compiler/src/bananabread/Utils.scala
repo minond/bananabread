@@ -7,13 +7,19 @@ import scala.util.{Try, Success, Failure}
 
 
 extension [T](xs: List[T])
-  def onlys[X : ClassTag]: Either[List[T], List[X]] =
+  def onlys[X <: T : ClassTag]: Either[List[T], List[X]] =
     xs.foldLeft[Either[List[T], List[X]]](Right(List())) {
       case (acc, x : X) => acc.flatMap(xs => Right(xs :+ x))
       case _ => return Left(xs)
     }
 
-  def without[X : ClassTag] =
+  def withonly[X <: T : ClassTag]: List[X] =
+    xs.foldLeft[List[X]](List.empty) {
+      case (acc, x: X) => acc :+ x
+      case (acc, _) => acc
+    }
+
+  def without[X <: T : ClassTag] =
     xs.filter {
       case _: X => false
       case _    => true
