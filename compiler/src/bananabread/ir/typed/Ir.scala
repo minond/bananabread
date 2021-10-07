@@ -11,7 +11,7 @@ import typechecker.ty.{Type, Void}
 import typechecker.error.InferenceErr
 import typechecker.unification.Substitution
 
-import utils.{squished, Ptr, PtrWith}
+import utils.{Ptr, PtrWith, squished, withonly}
 
 
 type Lifted[T] = Either[LiftErr | InferenceErr, T]
@@ -50,8 +50,12 @@ case class False(expr: ast.False) extends Bool, OfType(ty.Bool)
 
 def lift(nodes: List[linked.Ir], space: ModuleSpace): Lifted[List[Ir]] =
   val sub = Substitution.empty
+  val freshLocals = nodes.withonly[linked.Def]
+    .map(_.name.lexeme)
+    .map { name => (name, fresh()) }
+    .toMap
 
-  nodes.foldLeft[Scoped[List[Ir]]](Right((List.empty, Scope.empty))) {
+  nodes.foldLeft[Scoped[List[Ir]]](Right((List.empty, freshLocals))) {
     case (Left(err), _) =>
       Left(err)
     case (Right((acc, scope)), node) =>
