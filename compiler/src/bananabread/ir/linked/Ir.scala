@@ -6,7 +6,7 @@ import parsing.ast
 import program.{SourceContext, ModDef}
 import ast.{Expr, Stmt}
 import error._
-import utils.{Print, squished}
+import utils.{Print, squished, withonly}
 
 
 sealed trait Ir { def expr: Expr | Stmt }
@@ -35,7 +35,9 @@ type Scoped[T] = Lifted[(T, Locals)]
 
 
 def lift(nodes: List[typeless.Ir], srcCtx: SourceContext): Lifted[List[Ir]] =
-  nodes.foldLeft[Scoped[List[Ir]]](Right((List.empty, List.empty))) {
+  val locals = nodes.withonly[typeless.Def].map(_.name)
+
+  nodes.foldLeft[Scoped[List[Ir]]](Right((List.empty, locals))) {
     case (Left(err), _) =>
       Left(err)
     case (Right((irs, locals)), node) =>
