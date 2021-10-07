@@ -92,12 +92,11 @@ def generateAnnonLambda(scope: Scope, lambda: stitched.Lambda): Result =
 def generateCall(scope: Scope, lambda: Ir, args: List[Ir]): Result = lambda match
   case id: stitched.Id if scope.contains(id) =>
     scope.get(id) match
-      case Some(id: stitched.Id)      => generateCallId(scope, args, id)
-      case Some(app: stitched.App)    => generateCallApp(scope, args, app)
-      case Some(lam: stitched.Lambda) => generateCallId(scope, args, id)
-      case Some(_)                    => Left(BadCallErr(lambda))
-      case None                       => Left(UndeclaredIdentifierErr(id))
+      case Some(_) => generateCallId(scope, args, id)
+      case None    => Left(UndeclaredIdentifierErr(id))
 
+  case id: stitched.Id =>
+    generateCallId(scope, args, id)
   case lam: stitched.Lambda =>
     for
       call <- generateCallLambda(scope, args, lam)
@@ -105,7 +104,6 @@ def generateCall(scope: Scope, lambda: Ir, args: List[Ir]): Result = lambda matc
     yield
       call ++ func
 
-  case id: stitched.Id   => generateCallId(scope, args, id)
   case app: stitched.App => generateCallApp(scope, args, app)
   case _: stitched.Let   => generateCallResultOf(scope, args, lambda)
   case _: stitched.Cond  => generateCallResultOf(scope, args, lambda)
