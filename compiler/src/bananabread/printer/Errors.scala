@@ -153,6 +153,18 @@ def pp(err: Err, source: String): String = err match
       isolateBadLine(ir.expr.location, source),
     )
 
+  case typecheckerErr.TypeMismatchErr(expected, got, ir) =>
+    lines(
+      generateTypeErrorLine(s"expected value of type `$expected` but got value of type `$got`", ir.expr.location, source),
+      isolateBadLine(ir.expr.location, source),
+    )
+
+  case typecheckerErr.GenTypeMismatchErr(expected, got, ir) =>
+    lines(
+      generateTypeErrorLine(s"expected value of type `${expected.getSimpleName}` but got value of type `$got`", ir.expr.location, source),
+      isolateBadLine(ir.expr.location, source),
+    )
+
   case typelessIrErr.LiftinTheUnliftableErr(node) =>
     lines(
       generateInternalErrorLine(s"unable to process code", node.location, source),

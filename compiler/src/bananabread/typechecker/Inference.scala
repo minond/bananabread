@@ -11,7 +11,7 @@ import program.{ModuleSpace, ModDef, search}
 
 import utils.squished
 
-import scala.reflect.ClassTag
+import scala.reflect.{ClassTag, classTag}
 
 
 type Scoped[T] = Inferred[(T, Scope)]
@@ -92,7 +92,7 @@ def inferApp(app: linked.App, scope: Scope, sub: Substitution, space: ModuleSpac
               then app
               else app.args.head
     unifiedTy <- sub(calledTy, culprit)
-    fnTy   <- unifiedTy.expect[Lambda](app.lambda)
+    fnTy <- unifiedTy.expect[Lambda](app.lambda)
   yield
     (fnTy.app(argTys.size), scope)
 
@@ -239,12 +239,12 @@ def processType(tag: ast.Ty, tyScope: TypeScope): Either[UnknowTypeErr, Type] =
 
 
 extension (ty: Type)
-  def ensure(expected: Type, node: Ir): Either[TypeMismatchErr, Type] =
+  def expect(expected: Type, node: Ir): Either[TypeMismatchErr, Type] =
     if ty == expected
     then Right(ty)
     else Left(TypeMismatchErr(expected, ty, node))
 
-  def expect[T <: Type : ClassTag](node: Ir): Either[UnexpectedTypeErr[_], T] =
+  def expect[T <: Type : ClassTag](node: Ir): Either[GenTypeMismatchErr[_], T] =
     ty match
       case typed : T => Right(typed)
-      case _         => Left(UnexpectedTypeErr[T](ty, node))
+      case _         => Left(GenTypeMismatchErr(classTag[T].runtimeClass, ty, node))
