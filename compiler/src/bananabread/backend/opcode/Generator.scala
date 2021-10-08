@@ -259,8 +259,11 @@ def generateDef(scope: Scope, defn: stitched.Def): Result =
 
     case _ =>
       scope.define(name, value)
-      generate(scope, value)
-        .map(_ ++ group(scope, Store(I32, scope.qualified(name))))
+      for
+        valueCode <- generate(scope, value)
+        storeCode <- generateStore(scope, name, value)
+      yield
+        valueCode ++ storeCode
 
 def generateLambda(scope: Scope, params: List[stitched.Param], body: Ir): Result =
   val init = group(scope,
