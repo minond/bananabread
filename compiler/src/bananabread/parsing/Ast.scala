@@ -35,6 +35,7 @@ case class Num(lexeme: String, loc: Location) extends Token, At(loc) with Expr, 
 case class Str(lexeme: String, loc: Location) extends Token, At(loc) with Expr, Print(s""""$lexeme"""")
 case class Id(lexeme: String, loc: Location) extends Token, At(loc) with Expr, Print(lexeme)
 case class Symbol(lexeme: String, loc: Location) extends Token, At(loc) with Expr, Print(s"'$lexeme")
+case class Lista(items: List[Expr], loc: Location) extends Token, At(loc) with Expr, Print(s"[${items.mkString(", ")}]")
 
 sealed trait Bool extends Token with Expr
 case class True(loc: Location) extends Bool, At(loc), Print("true")

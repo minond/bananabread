@@ -57,6 +57,7 @@ def parsePrimary(head: Token, tail: Tokens, syntax: Syntax): Parsed[Expr] =
     case word: Id if is(word, "let")   => parseLet(word, tail, syntax)
     case word: Id if is(word, "begin") => parseBegin(word, tail, syntax)
     case head: OpenParen               => parseGroup(head, tail, syntax)
+    case head: OpenSquareBraket        => parseList(head, tail, syntax)
     case head: Percent                 => parseSpecial(head, tail, syntax)
     case lit: Num    => Right(lit)
     case lit: Str    => Right(lit)
@@ -258,6 +259,12 @@ def parseGroup(paren: Token, tail: Tokens, syntax: Syntax): Parsed[Expr] =
     _     <- eat[CloseParen](paren, tail)
   yield
     inner
+
+def parseList(head: Token, tail: Tokens, syntax: Syntax): Parsed[Lista] =
+  for
+    items <- parseByUntilWith[Comma, CloseSquareBraket, Expr](head, tail, syntax, parseExpr)
+  yield
+    Lista(items, head.location)
 
 def parseSpecial(head: Token, tail: Tokens, syntax: Syntax): Parsed[Expr] =
   lookahead(head, tail) match
