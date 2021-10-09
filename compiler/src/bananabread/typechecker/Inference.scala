@@ -57,6 +57,7 @@ def infer(node: Ir, scope: Scope, sub: Substitution, space: ModuleSpace): Scoped
   case _: linked.Symbol  => Right((ty.Symbol, scope))
   case _: linked.Bool    => Right((ty.Bool, scope))
   case _: linked.Opcode  => Right((ty.Void, scope))
+  case _: linked.Lista   => Right((ty.Lista, scope))
   case ir: linked.Id     => inferId(ir, scope, sub, space)
   case ir: linked.Begin  => inferBegin(ir, scope, sub, space)
   case ir: linked.Def    => inferDef(ir, scope, sub, space)
