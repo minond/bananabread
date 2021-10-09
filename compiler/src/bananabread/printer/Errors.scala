@@ -202,7 +202,7 @@ enum Step:
     case Compile => "compile"
 
 def generateSyntaxErrorLine(message: String, loc: Location, source: String) =
-  s"${BOLD}syntax error: ${message} in ${generateCoordinates(loc, source)}${RESET}"
+  s"${BOLD}${generateCoordinates(loc, source)}:syntax error: ${message}${RESET}"
 
 def generateAnalysisErrorLine(step: Step, message: String, loc: Location, source: String) =
   s"${BOLD}analysis error: ${message} in ${generateCoordinates(loc, source)} [$step]${RESET}"
