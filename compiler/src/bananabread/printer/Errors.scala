@@ -75,11 +75,11 @@ def pp(err: Err, source: String): String = err match
       isolateBadLine(after.location, source),
     )
 
-  case genopErr.BadPushErr(_, node) =>
+  case genopErr.BadPushErr(ty, node) =>
     node.expr match
       case expr: ast.Expr =>
         lines(
-          generateAnalysisErrorLine(Step.Compile, s"bad push, `${expr}` is not a valid runtime value", expr.location, source),
+          generateAnalysisErrorLine(Step.Compile, s"bad push, `${expr}` of type `${ty}` is not a valid runtime value", expr.location, source),
           isolateBadLine(expr.location, source),
         )
       case stmt: ast.Def =>
@@ -143,7 +143,7 @@ def pp(err: Err, source: String): String = err match
 
   case typecheckerErr.UnunifiedTypeVarErr(_, ir) =>
     lines(
-      generateTypeErrorNearLine(s"unable to unify expression, perhaps a type annotation is missing", ir.expr.location, source),
+      generateTypeErrorLine(s"unable to unify expression, perhaps a type annotation is missing", ir.expr.location, source),
       isolateBadLine(ir.expr.location, source),
     )
 
@@ -202,22 +202,22 @@ enum Step:
     case Compile => "compile"
 
 def generateSyntaxErrorLine(message: String, loc: Location, source: String) =
-  s"${BOLD}${generateCoordinates(loc, source)}:syntax error: ${message}${RESET}"
+  generateErrorLine("syntax error", message, loc, source)
 
 def generateAnalysisErrorLine(step: Step, message: String, loc: Location, source: String) =
-  s"${BOLD}analysis error: ${message} in ${generateCoordinates(loc, source)} [$step]${RESET}"
+  generateErrorLine("analysis error", s"${message} [${step}]", loc, source)
 
 def generateVmRuntimeErrorLine(message: String) =
   s"${BOLD}runtime error: ${message}${RESET}"
 
 def generateTypeErrorLine(message: String, loc: Location, source: String) =
-  s"${BOLD}type error: ${message} in ${generateCoordinates(loc, source)}${RESET}"
-
-def generateTypeErrorNearLine(message: String, loc: Location, source: String) =
-  s"${BOLD}type error: ${message} near ${generateCoordinates(loc, source)}${RESET}"
+  generateErrorLine("type error", message, loc, source)
 
 def generateInternalErrorLine(message: String, loc: Location, source: String) =
-  s"${BOLD}internal error: ${message} in ${generateCoordinates(loc, source)}${RESET}"
+  generateErrorLine("internal error", message, loc, source)
+
+def generateErrorLine(errtype: String, message: String, loc: Location, source: String) =
+  s"${BOLD}${generateCoordinates(loc, source)}: ${errtype}: ${message}${RESET}"
 
 
 def generateCoordinates(loc: Location, source: String) =
