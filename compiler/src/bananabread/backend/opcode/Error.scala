@@ -1,6 +1,7 @@
 package bananabread
 package backend.opcode.error
 
+import ir.stitched
 import ir.stitched.{Ir, Id, Opcode}
 import parsing.ast
 import parsing.ast.Str
@@ -18,3 +19,4 @@ case class CannotStoreErr(definition: Ir) extends GeneratorErr
 case class UnknownUserOpcodeErr(expr: OpcodeExpr, loc: Location) extends GeneratorErr
 case class InvalidI32Err(expr: OpcodeExpr) extends GeneratorErr
 case class LookupErr(id: ast.Id) extends GeneratorErr
+case class BadNumErr(node: stitched.Num) extends GeneratorErr
