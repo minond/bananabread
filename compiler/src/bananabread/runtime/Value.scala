@@ -2,6 +2,7 @@ package bananabread
 package runtime
 package value
 
+import memory.Heap
 import utils.Print
 
 
@@ -17,7 +18,5 @@ case object True extends Bool with Print("true")
 case object False extends Bool with Print("false")
 
 sealed trait Pointer extends Value
-case class Ptr(addr: Int) extends Pointer with Print(s"<$addr>")
 case object Nullptr extends Pointer with Print("nullptr")
-
-
+case class Ptr(addr: Int, container: Heap) extends Pointer with Print(s"<$addr>")
