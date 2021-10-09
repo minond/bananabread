@@ -34,10 +34,10 @@ trait Memory:
   override def toString: String =
     data.mkString(", ")
 
-  def ensureAccessible(i: Int): Unit =
+  private[memory] def ensureAccessible(i: Int): Unit =
     if i >= data.size then
       growBy(1)
       ensureAccessible(i)
 
-  def growBy(size: Int) =
+  private[memory] def growBy(size: Int) =
     data.appendAll(List.fill(size)(Nullptr))
