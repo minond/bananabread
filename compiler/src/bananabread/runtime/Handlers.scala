@@ -1,7 +1,7 @@
 package bananabread
 package runtime
 
-import value.{Value, Ptr}
+import value.Value
 import instruction.{Value => Value_, Label => Label_, _}
 import register.{Rt, Ebp, Esp}
 
