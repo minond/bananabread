@@ -45,6 +45,7 @@ def generate(scope: Scope, node: Ir): Result = node match
   case num: stitched.Num    => generatePush(scope, num, I32)
   case str: stitched.Str    => generatePush(scope, str, Str)
   case sym: stitched.Symbol => generatePush(scope, sym, Symbol)
+  case lis: stitched.Lista  => generatePush(scope, lis, Lista)
   case bool: stitched.Bool  => generatePush(scope, bool, Bool)
   case id: stitched.Id      => generateLoad(scope, id)
   case lam: stitched.Lambda => generateAnnonLambda(scope, lam)
@@ -309,6 +310,7 @@ def generateStore(scope: Scope, label: String, value: Ir): Result = (value, toRu
   case (_: stitched.Cond, ty)   => Right(group(scope, Store(ty, scope.qualified(label))))
   case (_: stitched.App, ty)    => Right(group(scope, Store(ty, scope.qualified(label))))
   case (_: stitched.Symbol, ty) => Right(group(scope, Store(ty, scope.qualified(label))))
+  case (_: stitched.Lista, ty)  => Right(group(scope, Store(ty, scope.qualified(label))))
 
   case (id: stitched.Id, ty) => scope.get(id) match
     case Some(v: stitched.Id) if v.expr.lexeme == id.expr.lexeme =>
