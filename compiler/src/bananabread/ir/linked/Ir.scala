@@ -14,6 +14,7 @@ case class Num(expr: ast.Num) extends Ir with Print(s"(num ${expr.lexeme})")
 case class Str(expr: ast.Str) extends Ir with Print(s"(str ${expr.lexeme})")
 case class Id(expr: ast.Id, source: ModDef) extends Ir with Print(s"(id ${source.name}.${expr.lexeme})")
 case class Symbol(expr: ast.Symbol) extends Ir with Print(s"(symbol ${expr.lexeme})")
+case class Lista(items: List[Ir], expr: ast.Lista) extends Ir with Print(expr.toString)
 case class App(lambda: Ir, args: List[Ir], expr: Expr) extends Ir with Print(s"(app lambda: ${lambda} args: (${args.mkString(" ")}))")
 case class Lambda(params: List[ast.Param], body: Ir, tyVars: List[ast.TyId], expr: ast.Lambda) extends Ir with Print(s"(lambda params: (${params.mkString(" ")}) body: $body)")
 case class Cond(cond: Ir, pass: Ir, fail: Ir, expr: Expr) extends Ir with Print(s"(if cond: $cond then: $pass else: $fail)")
@@ -59,6 +60,7 @@ def lift(node: typeless.Ir, srcCtx: SourceContext, locals: List[ast.Id]): Scoped
   case node: typeless.Let    => liftLet(node, srcCtx, locals)
   case node: typeless.Begin  => liftBegin(node, srcCtx, locals)
   case node: typeless.Def    => liftDef(node, srcCtx, locals)
+  case node: typeless.Lista  => liftLista(node, srcCtx, locals)
 
 def liftId(node: typeless.Id, srcCtx: SourceContext, locals: List[ast.Id]): Scoped[Id] =
   val id = node.expr.lexeme
@@ -125,3 +127,9 @@ def liftDef(node: typeless.Def, srcCtx: SourceContext, locals: List[ast.Id]): Sc
     liftedValue <- lift(node.value, srcCtx, locals :+ node.name).map(_._1)
   yield
     (Def(node.name, liftedValue, node.expr), locals :+ node.name)
+
+def liftLista(node: typeless.Lista, srcCtx: SourceContext, locals: List[ast.Id]): Scoped[Lista] =
+  for
+    liftedItems <- node.items.map(lift(_, srcCtx, locals)).squished.map(_.map(_._1))
+  yield
+    (Lista(liftedItems, node.expr), locals)

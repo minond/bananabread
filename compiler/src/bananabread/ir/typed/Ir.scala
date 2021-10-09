@@ -31,6 +31,7 @@ case class Num(expr: ast.Num, ty: Type) extends Ir
 case class Str(expr: ast.Str) extends Ir, OfType(ty.Str) with PtrWith("str", () => expr.lexeme.hashCode)
 case class Id(expr: ast.Id, ty: Type, source: ModDef) extends Ir
 case class Symbol(expr: ast.Symbol) extends Ir, OfType(ty.Symbol) with Ptr("symbol")
+case class Lista(items: List[Ir], expr: ast.Lista) extends Ir, OfType(ty.Lista) with Ptr("list")
 case class App(lambda: Ir, args: List[Ir], expr: Expr, ty: Type) extends Ir
 case class Cond(cond: Ir, pass: Ir, fail: Ir, expr: Expr, ty: Type) extends Ir
 case class Begin(ins: List[Ir], expr: Expr, ty: Type) extends Ir
@@ -77,6 +78,7 @@ def lift(node: linked.Ir, scope: Scope, sub: Substitution, space: ModuleSpace): 
   case node: linked.Cond   => liftCond(node, scope, sub, space)
   case node: linked.Begin  => liftBegin(node, scope, sub, space)
   case node: linked.Let    => liftLet(node, scope, sub, space)
+  case node: linked.Lista  => liftLista(node, scope, sub, space)
 
 def liftId(node: linked.Id, scope: Scope, sub: Substitution, space: ModuleSpace): Scoped[Ir] =
   val expr = node.expr
@@ -207,3 +209,13 @@ def liftLet(node: linked.Let, scope: Scope, sub: Substitution, space: ModuleSpac
     }
   yield
     (Let(liftedBindings, liftedBody, expr, liftedBody.ty), scope)
+
+def liftLista(node: linked.Lista, scope: Scope, sub: Substitution, space: ModuleSpace): Scoped[Lista] =
+  val items = node.items
+  val expr = node.expr
+
+  for
+    liftedRes <- items.map(lift(_, scope, sub, space)).squished
+    liftedItems = liftedRes.map(_._1)
+  yield
+    (Lista(liftedItems, expr), scope)

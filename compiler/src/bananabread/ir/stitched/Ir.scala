@@ -26,6 +26,7 @@ case class Num(expr: ast.Num, ty: Type, source: ModDef) extends Ir
 case class Str(expr: ast.Str, source: ModDef) extends Ir, OfType(ty.Str) with PtrWith("str", () => expr.lexeme.hashCode)
 case class Id(expr: ast.Id, ty: Type, source: ModDef) extends Ir
 case class Symbol(expr: ast.Symbol, source: ModDef) extends Ir, OfType(ty.Symbol) with Ptr("symbol")
+case class Lista(items: List[Ir], expr: ast.Lista, source: ModDef) extends Ir, OfType(ty.Lista) with Ptr("list")
 case class App(lambda: Ir, args: List[Ir], expr: Expr, ty: Type, source: ModDef) extends Ir
 case class Cond(cond: Ir, pass: Ir, fail: Ir, expr: Expr, ty: Type, source: ModDef) extends Ir
 case class Begin(ins: List[Ir], expr: Expr, ty: Type, source: ModDef) extends Ir
@@ -96,6 +97,7 @@ def lift(node: typed.Ir, source: ModDef, space: ModuleSpace): Stitched = node ma
   case node: typed.Cond    => liftCond(node, source, space)
   case node: typed.Begin   => liftBegin(node, source, space)
   case node: typed.Let     => liftLet(node, source, space)
+  case node: typed.Lista   => liftLista(node, source, space)
 
 /** This was returning a `MissingSourceErr` error when the node had a souce but
   * it was not found in the module space. This upstream irs are not setting
@@ -219,3 +221,13 @@ def liftLet(node: typed.Let, source: ModDef, space: ModuleSpace): Stitched =
     top = liftedBodyRes.top ++ liftedBindingsRes.map(_.top).flatten
   yield
     Stitch.inlined(Let(liftedBindings, liftedBody, expr, ty, source)).above(top)
+
+def liftLista(node: typed.Lista, source: ModDef, space: ModuleSpace): Stitched =
+  val items = node.items
+  val expr = node.expr
+
+  for
+    liftedRes <- items.map(lift(_, source, space)).squished
+    restitched = liftedRes.flat
+  yield
+    Stitch.inlined(Lista(restitched.inline, expr, source)).above(restitched.top)

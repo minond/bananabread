@@ -12,6 +12,8 @@ def listReferencedIds(node: Ir): Set[String] =
     case _: Bool   => Set.empty
     case _: Symbol => Set.empty
     case _: Opcode => Set.empty
+    case Lista(items, _) =>
+      items.map(listReferencedIds).flatten.toSet
     case Id(name)  =>
       Set(name.lexeme)
     case App(Id(name), args, _) =>

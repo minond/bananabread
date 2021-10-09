@@ -17,6 +17,7 @@ case class Num(expr: ast.Num) extends Ir with Print(s"(num ${expr.lexeme})")
 case class Str(expr: ast.Str) extends Ir with Print(s"(str ${expr.lexeme})"), PtrWith("str", () => expr.lexeme.hashCode)
 case class Id(expr: ast.Id) extends Ir with Print(s"(id ${expr.lexeme})")
 case class Symbol(expr: ast.Symbol) extends Ir with Print(s"(symbol ${expr.lexeme})"), Ptr("symbol")
+case class Lista(items: List[Ir], expr: ast.Lista) extends Ir with Print(s"(list ${expr})"), Ptr("list")
 case class App(lambda: Ir, args: List[Ir], expr: Expr) extends Ir with Print(s"(app lambda: ${lambda} args: (${args.mkString(" ")}))")
 case class Lambda(params: List[ast.Param], body: Ir, tyVars: List[ast.TyId], expr: ast.Lambda) extends Ir with Print(s"(lambda params: (${params.mkString(" ")}) body: $body)"), Ptr("lambda")
 case class Cond(cond: Ir, pass: Ir, fail: Ir, expr: Expr) extends Ir with Print(s"(if cond: $cond then: $pass else: $fail)")
@@ -55,6 +56,7 @@ def lift(node: Stmt | Expr): Lifted[Ir] = node match
   case expr: ast.Let    => liftLet(expr)
   case expr: ast.Begin  => liftBegin(expr)
   case stmt: ast.Def    => liftDef(stmt)
+  case expr: ast.Lista  => liftLista(expr)
   case _: ast.Module    => Left(LiftinTheUnliftableErr(node))
   case _: ast.Import    => Left(LiftinTheUnliftableErr(node))
 
@@ -114,3 +116,9 @@ def liftDef(defStmt: ast.Def): Lifted[Def] =
     valueIr <- lift(defStmt.value)
   yield
     Def(defStmt.name, valueIr, defStmt)
+
+def liftLista(lista: ast.Lista): Lifted[Lista] =
+  for
+    items <- lista.items.map(lift).squished
+  yield
+    Lista(items, lista)
