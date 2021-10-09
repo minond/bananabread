@@ -8,7 +8,7 @@ import scala.collection.mutable.ListBuffer
 
 
 class Heap() extends Memory:
-  var curr = 0
+  private[this] var curr = 0
 
   def alloc(size: Int): Ptr =
     curr = curr + size
@@ -29,7 +29,7 @@ class Stack() extends Memory:
 
 
 trait Memory:
-  val data = ListBuffer.empty[Value]
+  private[memory] val data = ListBuffer.empty[Value]
 
   override def toString: String =
     data.mkString(", ")
