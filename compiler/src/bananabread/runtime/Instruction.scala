@@ -13,6 +13,7 @@ case object Reg extends Type
 case object Ref extends Type
 case object Bool extends Type
 case object Symbol extends Type
+case object Lista extends Type
 case object Scope extends Type
 case object Const extends Type
 
@@ -28,6 +29,7 @@ def toRuntimeType(typ: ty.Type): Type = typ match
   case ty.Symbol => Symbol
   case ty.Bool => Bool
   case ty.Void => ???
+  case ty.Lista => Ref
   case _: ty.Tuple => Ref
   case _: ty.Lambda => Ref
   case _: ty.Var => Ref
