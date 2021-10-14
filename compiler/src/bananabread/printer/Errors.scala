@@ -253,7 +253,7 @@ def isolateBadOpcode(pc: Int, codes: List[instruction.Code]) =
   bads.foldLeft[List[String]](List.empty) {
     case (acc, (line, index)) =>
       val code = line match
-        case op: instruction.Value       => instructions.pp(op)
+        case op: instruction.Data        => instructions.pp(op)
         case op: instruction.Label       => s"    ${instructions.pp(op)}"
         case op: instruction.Instruction => s"        ${instructions.pp(op)}"
       val formatted =

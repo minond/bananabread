@@ -18,7 +18,7 @@ import runtime.value.Id
 import runtime.register._
 import runtime.instruction
 import runtime.instruction._
-import runtime.instruction.{Value, Label, Instruction}
+import runtime.instruction.{Data, Label, Instruction}
 import runtime.instruction.{Bool, Type, I32, Str, Symbol}
 
 import utils.{safeToInt, squished, genUnique}
@@ -29,7 +29,7 @@ import scala.language.postfixOps
 
 
 case class Grouped(section: String, data: Instruction | Label)
-type Output = List[Grouped | Value | Label]
+type Output = List[Grouped | Data | Label]
 type Result = Either[GeneratorErr, Output]
 
 
@@ -66,10 +66,10 @@ def generatePush(scope: Scope, node: Ir, ty: Type): Result = (ty, node) match
   case (Bool, _: stitched.False) =>
     Right(group(scope, Push(Bool, value.False)))
   case (Str, str: stitched.Str) =>
-    Right(Value(Str, str.ptr, value.Str(str.expr.lexeme)) +:
+    Right(Data(Str, str.ptr, value.Str(str.expr.lexeme)) +:
           group(scope, Push(Const, value.Id(str.ptr))))
   case (Symbol, sym: stitched.Symbol) =>
-    Right(Value(Symbol, sym.ptr, value.Symbol(sym.expr.lexeme)) +:
+    Right(Data(Symbol, sym.ptr, value.Symbol(sym.expr.lexeme)) +:
           group(scope, Push(Const, value.Id(sym.ptr))))
   case _ =>
     Left(BadPushErr(ty, node))
@@ -380,7 +380,7 @@ extension (output: Output)
         sections.get(section) match
           case Some(q) => q.addOne(item)
           case None    => sections.update(section, Queue(item))
-      case value: Value =>
+      case data: Data =>
       case label: Label =>
     }
 
@@ -392,25 +392,25 @@ extension (output: Output)
     }
 
   def deduped: Output =
-    output.foldLeft[(Output, ImMap[String, Value])]((List.empty, ImMap.empty)) {
-      case ((output, values), Value(_, label, _)) if values.contains(label) =>
+    output.foldLeft[(Output, ImMap[String, Data])]((List.empty, ImMap.empty)) {
+      case ((output, values), Data(_, label, _)) if values.contains(label) =>
         (output, values)
-      case ((output, values), value @ Value(_, label, _value)) =>
-        (output :+ value, values + (label -> value))
+      case ((output, values), data @ Data(_, label, _value)) =>
+        (output :+ data, values + (label -> data))
       case ((output, values), inst) =>
         (output :+ inst, values)
     }._1
 
   def labeled: Output =
     val sections = Map[String, Queue[Grouped | Label]]()
-    val values = Queue[Value]()
+    val datum = Queue[Data]()
 
     output.foreach {
       case item @ Grouped(section, _) =>
         sections.get(section) match
           case Some(q) => q.addOne(item)
           case None    => sections.update(section, Queue(item))
-      case value: Value => values.addOne(value)
+      case data: Data => datum.addOne(data)
       case label: Label =>
     }
 
@@ -418,11 +418,11 @@ extension (output: Output)
     sections.get("main").getOrElse(Queue.empty).toList ++
     (for (section, instructions) <- sections if section != "main"
      yield group(section, Label(section)) ++ instructions).flatten ++
-    values
+    datum
 
   def sectioned: List[Code] =
     val sections = Map[String, Queue[Code]]()
-    val values = Queue[Value]()
+    val datum = Queue[Data]()
 
     output.foreach {
       case Grouped(section, inst: Instruction) =>
@@ -433,11 +433,11 @@ extension (output: Output)
         sections.get(section) match
           case Some(q) => q.addOne(label)
           case None    => sections.update(section, Queue(label))
-      case value: Value => values.addOne(value)
+      case data: Data  => datum.addOne(data)
       case label: Label =>
     }
 
     sections("main").toList ++
     List(Halt) ++
     sections.filter { (name, i) => name != "main" }.values.flatten.toList ++
-    values
+    datum

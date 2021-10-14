@@ -36,7 +36,7 @@ def toRuntimeType(typ: ty.Type): Type = typ match
 
 
 case class Label(label: String)
-case class Value(typ: Type, label: String, _value: value.Value)
+case class Data(typ: Type, label: String, _value: value.Value)
 
 
 sealed trait Instruction
@@ -62,7 +62,7 @@ case class FrameInit(argc: Int) extends Instruction
 
 
 type Code = Label
-          | Value
+          | Data
           | Instruction
 
 extension (codes: List[Code])
@@ -73,5 +73,5 @@ extension (codes: List[Code])
 
   def constants: Map[String, value.Value] =
     codes.collect {
-      case Value(_, label, value) => (label, value)
+      case Data(_, label, value) => (label, value)
     }.toMap

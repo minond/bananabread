@@ -2,13 +2,13 @@ package bananabread
 package runtime
 
 import value.Value
-import instruction.{Value => Value_, Label => Label_, _}
+import instruction._
 import register.{Rt, Ebp, Esp}
 
 
 def handle(code: Code, state: State): Dispatch = code match
-  case _: Value_ => Cont
-  case _: Label_ => Cont
+  case _: Data   => Cont
+  case _: Label  => Cont
   case Halt      => Stop
   case op: FrameInit => Error("unknown operator", op)
   case op: Jz    => handleJz(op, state)

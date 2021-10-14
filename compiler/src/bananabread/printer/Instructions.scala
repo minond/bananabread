@@ -7,13 +7,13 @@ import runtime.instruction._
 
 def pp(codes: List[Code]): String =
   codes.zipWithIndex.map {
-    case (op: Value, _) => pp(op)
+    case (op: Data, _) => pp(op)
     case (op: Label, i) => f"${i}%016d    ${pp(op)}"
     case (op: Instruction, i) => f"${i}%016d        ${pp(op)}"
   }.mkString("\n")
 def pp(code: Code, align: Boolean = true): String = code match
   case Label(l)             => s"$l:"
-  case Value(t, l, v)       => f".$t ${(l + ":").padTo(14, ' ')} $v"
+  case Data(t, l, v)        => f".$t ${(l + ":").padTo(14, ' ')} $v"
   case Halt                 => "halt"
   case Call0                => "call0"
   case Ret                  => "ret"
