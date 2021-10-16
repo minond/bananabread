@@ -12,6 +12,7 @@ case class Str(value: String) extends Value with Print(value)
 case class Id(label: String) extends Value with Print(label)
 case class Scope(label: String, frame: Frame) extends Value with Print(s"<$label>")
 case class Symbol(value: String) extends Value with Print(value)
+case class Lista(items: List[Value]) extends Value with Print(s"<list[${items.size}]>")
 
 sealed trait Bool extends Value
 case object True extends Bool with Print("true")
@@ -19,4 +20,4 @@ case object False extends Bool with Print("false")
 
 sealed trait Pointer extends Value
 case object Nullptr extends Pointer with Print("nullptr")
-case class Ptr(addr: Int, container: Heap) extends Pointer with Print(s"<$addr>")
+case class Ptr(addr: Int) extends Pointer with Print(s"<$addr>")

@@ -13,7 +13,7 @@ class Heap() extends Memory:
   def alloc(size: Int): Ptr =
     curr = curr + size
     ensureAccessible(curr)
-    Ptr(curr, this)
+    Ptr(curr)
 
 
 class Stack() extends Memory:
