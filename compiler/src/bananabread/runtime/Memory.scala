@@ -15,6 +15,10 @@ class Heap() extends Memory:
     ensureAccessible(curr)
     Ptr(curr)
 
+  def lookup(ptr: Ptr): Value =
+    ensureAccessible(ptr.addr)
+    data(ptr.addr)
+
 
 class Stack() extends Memory:
   def set(i: I32, v: Value): Unit = set(i.value, v)
