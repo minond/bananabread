@@ -3,9 +3,9 @@ package runtime
 
 import error._
 import register.{Registers, Esp}
-import memory.Stack
+import memory.{Stack, Heap}
 import instruction.{Code, Instruction, labels, constants}
-import value.Value
+import value.{Value, Ptr}
 import printer.pp
 
 
@@ -18,10 +18,10 @@ case class Error(msg: String, instruction: Instruction) extends Dispatch
 
 
 case class State(
+  val heap: Heap,
   val stack: Stack,
   val frames: Frames,
   val registers: Registers,
-  val constants: Map[String, Value],
   val labels: Map[String, Int],
 ):
   def pop: Value =
@@ -34,16 +34,15 @@ case class State(
 
 object State:
   def from(i: Interpreter) =
-    State(i.stack, i.frames, i.registers, i.constants, i.labels)
+    State(i.heap, i.stack, i.frames, i.registers, i.labels)
 
 
 class Interpreter(codes: List[Code], private val debug: Boolean = false, private val step: Boolean = false):
+  val heap = Heap(codes.constants)
   val stack = Stack()
   val frames = Frames()
   val registers = Registers()
-
   val labels = codes.labels
-  val constants = codes.constants
 
   def debugging = Interpreter(codes, true, step)
   def stepping  = Interpreter(codes, debug, true)

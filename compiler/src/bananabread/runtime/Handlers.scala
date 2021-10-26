@@ -203,12 +203,12 @@ def goto(op: Instruction, label: String, state: State): Dispatch = state.labels.
   case _ => Goto(label)
 
 def const(op: Instruction, label: String, state: State)(f: Value => Dispatch): Dispatch =
-  state.constants.get(label) match
+  state.heap.lookup(label) match
     case None => Error(s"missing const: ${label}", op)
     case Some(value) => f(value)
 
 def pointer(op: Instruction, label: String, state: State)(f: Value => Dispatch): Dispatch =
-  (state.constants.get(label), state.labels.get(label)) match
+  (state.heap.lookup(label), state.labels.get(label)) match
     case (None, None) => Error(s"invalid pointer: ${label}", op)
     case (Some(value), _) => f(value)
     case (_, Some(_)) => f(value.Id(label))

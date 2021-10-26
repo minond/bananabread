@@ -6,7 +6,11 @@ import memory.Heap
 import utils.Print
 
 
-sealed trait Value
+/** TODO Value sizes need to reflect how much space they would take up in
+  * memory instead of being hard-coded to the same size.
+  */
+sealed trait Value { def size = 1 }
+
 case class I32(value: Int) extends Value with Print(value.toString)
 case class Str(value: String) extends Value with Print(value)
 case class Id(label: String) extends Value with Print(label)

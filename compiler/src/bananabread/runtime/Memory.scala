@@ -4,20 +4,40 @@ package memory
 
 import value.{Value, Ptr, Nullptr, I32}
 
-import scala.collection.mutable.ListBuffer
+import scala.collection.mutable.{ListBuffer, Map => MutableMap}
 
 
-class Heap() extends Memory:
+class Heap(constants: Map[String, Value]) extends Memory:
   private[this] var curr = 0
+  private[this] var map = MutableMap.empty[String, Ptr]
 
-  def alloc(size: Int): Ptr =
+  constants.foreach {
+    case (name, value) => store(name, value)
+  }
+
+  def malloc(size: Int): Ptr =
     curr = curr + size
     ensureAccessible(curr)
     Ptr(curr)
 
+  def store(v: Value): Ptr =
+    val ptr = malloc(v.size)
+    data.update(ptr.addr, v)
+    ptr
+
+  def store(label: String, v: Value): Ptr =
+    val ptr = store(v)
+    map.update(label, ptr)
+    ptr
+
   def lookup(ptr: Ptr): Value =
     ensureAccessible(ptr.addr)
     data(ptr.addr)
+
+  def lookup(label: String): Option[Value] =
+    map.get(label) match
+      case None => None
+      case Some(ptr) => Some(lookup(ptr))
 
 
 class Stack() extends Memory:
