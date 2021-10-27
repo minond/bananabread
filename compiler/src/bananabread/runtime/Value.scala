@@ -16,7 +16,8 @@ case class Str(value: String) extends Value with Print(value)
 case class Id(label: String) extends Value with Print(label)
 case class Scope(label: String, frame: Frame) extends Value with Print(s"<$label>")
 case class Symbol(value: String) extends Value with Print(value)
-case class Lista(items: List[Value]) extends Value with Print(s"<list[${items.size}]>")
+case class Lista(items: List[Value]) extends Value with Print(s"<list[${items.size}]>"):
+  override def size = items.size
 
 sealed trait Bool extends Value
 case object True extends Bool with Print("true")

@@ -2,7 +2,7 @@ package bananabread
 package runtime
 package memory
 
-import value.{Value, Ptr, Nullptr, I32}
+import value.{Value, Ptr, Nullptr, I32, Lista}
 
 import scala.collection.mutable.{ListBuffer, Map => MutableMap}
 
@@ -16,14 +16,24 @@ class Heap(constants: Map[String, Value]) extends Memory:
   }
 
   def malloc(size: Int): Ptr =
-    curr = curr + size
-    ensureAccessible(curr)
-    Ptr(curr)
-
-  def store(v: Value): Ptr =
-    val ptr = malloc(v.size)
-    data.update(ptr.addr, v)
+    val ptr = Ptr(curr)
+    val end = curr + size
+    ensureAccessible(end)
+    curr = end
     ptr
+
+  def store(v: Value): Ptr = v match
+    case lista: Lista =>
+      val ptr = malloc(lista.size)
+      lista.items.zipWithIndex.foreach {
+        case (v, i) =>
+          data.update(ptr.addr + i, v)
+      }
+      ptr
+    case _ =>
+      val ptr = malloc(v.size)
+      data.update(ptr.addr, v)
+      ptr
 
   def store(label: String, v: Value): Ptr =
     val ptr = store(v)
