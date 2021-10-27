@@ -93,7 +93,7 @@ def inferApp(app: linked.App, scope: Scope, sub: Substitution, space: ModuleSpac
               then app
               else app.args.head
     unifiedTy <- sub(calledTy, culprit)
-    fnTy <- unifiedTy.expect[Lambda](app.lambda)
+    fnTy <- unifiedTy.expect[Applicable](app.lambda)
   yield
     (fnTy.app(argTys.size), scope)
 

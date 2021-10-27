@@ -35,6 +35,11 @@ class Substitution:
       case (Void, _) => Right(())
       case (_, Void) => Right(())
       case (a: Lambda, b: Lambda) => unifyLambdaLambda(this, a, b, node)
+      case (a: Lambda, Lista) =>
+        for
+          _ <- unify(I32, a.in.head, node)
+        yield
+          I32 /** XXX Return 'a from Lista['a] */
       case _ => Left(UnificationErr(a, b, node))
 
   def apply(ty: Type, node: linked.Ir): Applied =
@@ -45,6 +50,7 @@ class Substitution:
       case Void => Right(Void)
       case Str => Right(Str)
       case ty: Lambda => applyLambda(this, ty, node)
+      case Lista => Right(Lista)
       case _ => ???
 
 
