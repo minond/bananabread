@@ -111,6 +111,12 @@ def generateCall(scope: Scope, lambda: Ir, args: List[Ir]): Result = lambda matc
     yield
       call ++ func
 
+  case lst: stitched.Lista =>
+    for
+      argCode <- generate(scope, args.head)
+    yield
+      group(scope, push Ref lst.ptr) ++ argCode
+
   case app: stitched.App => generateCallApp(scope, args, app)
   case _: stitched.Let   => generateCallResultOf(scope, args, lambda)
   case _: stitched.Cond  => generateCallResultOf(scope, args, lambda)
