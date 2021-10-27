@@ -71,6 +71,12 @@ def generatePush(scope: Scope, node: Ir, ty: Type): Result = (ty, node) match
   case (Symbol, sym: stitched.Symbol) =>
     Right(Data(Symbol, sym.ptr, value.Symbol(sym.expr.lexeme)) +:
           group(scope, Push(Const, value.Id(sym.ptr))))
+  case (Lista, lista: stitched.Lista) =>
+    for
+      liftedRes <- lift(lista)
+    yield
+      Data(Lista, lista.ptr, liftedRes) +:
+           group(scope, Push(Ref, value.Id(lista.ptr)))
   case _ =>
     Left(BadPushErr(ty, node))
 
