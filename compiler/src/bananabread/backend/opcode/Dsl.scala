@@ -5,6 +5,7 @@ package dsl
 import runtime.register => reg
 import runtime.register._
 import runtime.instruction._
+import runtime.instruction => inst
 import runtime.value
 
 
@@ -43,3 +44,8 @@ object mov:
   def Lr(v: Int) = Mov(reg.Lr, Some(value.I32(v)))
   def Jm(v: Int) = Mov(reg.Jm, Some(value.I32(v)))
   def Rt(v: Int) = Mov(reg.Rt, Some(value.I32(v)))
+
+object push:
+  def Ref(v: String) = Push(inst.Ref, value.Id(v))
+  def Ref(v: value.Id) = Push(inst.Ref, v)
+  def Str(v: value.Id) = Push(inst.Str, v)

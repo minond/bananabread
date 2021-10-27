@@ -124,8 +124,8 @@ def generateOpcode(scope: Scope, expr: OpcodeExpr, loc: Location): Result = expr
   case InstructionExpr(ast.Id("add", _),     Some(ast.Id("I32", _)),  Nil                   ) => Right(group(scope, Add(I32)))
   case InstructionExpr(ast.Id("sub", _),     Some(ast.Id("I32", _)),  Nil                   ) => Right(group(scope, Sub(I32)))
   case InstructionExpr(ast.Id("push", _),    Some(ast.Id("I32", _)),  List(ast.Id(str, _))  ) => withI32(expr, str) { i => group(scope, Push(I32, value.I32(i))) }
-  case InstructionExpr(ast.Id("push", _),    Some(ast.Id("Str", _)),  List(label: ast.Id)   ) => withQualifiedId(scope, label) { id => group(scope, Push(Str, id)) }
-  case InstructionExpr(ast.Id("push", _),    Some(ast.Id("Ref", _)),  List(label: ast.Id)   ) => withQualifiedId(scope, label) { id => group(scope, Push(Ref, id)) }
+  case InstructionExpr(ast.Id("push", _),    Some(ast.Id("Str", _)),  List(label: ast.Id)   ) => withQualifiedId(scope, label) { id => group(scope, push Str id) }
+  case InstructionExpr(ast.Id("push", _),    Some(ast.Id("Ref", _)),  List(label: ast.Id)   ) => withQualifiedId(scope, label) { id => group(scope, push Ref id) }
   case InstructionExpr(ast.Id("load", _),    Some(ast.Id("I32", _)),  List(label: ast.Id)   ) => withQualifiedLabel(scope, label) { label => group(scope, Load(I32, label)) }
   case InstructionExpr(ast.Id("load", _),    Some(ast.Id("Bool", _)), List(label: ast.Id)   ) => withQualifiedLabel(scope, label) { label => group(scope, Load(Bool, label)) }
   case InstructionExpr(ast.Id("load", _),    Some(ast.Id("Str", _)),  List(label: ast.Id)   ) => withQualifiedLabel(scope, label) { label => group(scope, Load(Str, label)) }
@@ -140,10 +140,10 @@ def generateOpcode(scope: Scope, expr: OpcodeExpr, loc: Location): Result = expr
   case InstructionExpr(ast.Id("mov", _),     Some(ast.Id("Lr", _)),   Nil                   ) => Right(group(scope, mov Lr))
   case InstructionExpr(ast.Id("mov", _),     Some(ast.Id("Jm", _)),   Nil                   ) => Right(group(scope, mov Jm))
   case InstructionExpr(ast.Id("mov", _),     Some(ast.Id("Rt", _)),   Nil                   ) => Right(group(scope, mov Rt))
-  case InstructionExpr(ast.Id("mov", _),     Some(ast.Id("Pc", _)),   List(ast.Id(str, _))  ) => withI32(expr, str) { i => group(scope, mov Pc(i)) }
-  case InstructionExpr(ast.Id("mov", _),     Some(ast.Id("Lr", _)),   List(ast.Id(str, _))  ) => withI32(expr, str) { i => group(scope, mov Lr(i)) }
-  case InstructionExpr(ast.Id("mov", _),     Some(ast.Id("Jm", _)),   List(ast.Id(str, _))  ) => withI32(expr, str) { i => group(scope, mov Jm(i)) }
-  case InstructionExpr(ast.Id("mov", _),     Some(ast.Id("Rt", _)),   List(ast.Id(str, _))  ) => withI32(expr, str) { i => group(scope, mov Rt(i)) } // XXX May not always be an I32
+  case InstructionExpr(ast.Id("mov", _),     Some(ast.Id("Pc", _)),   List(ast.Id(str, _))  ) => withI32(expr, str) { i => group(scope, mov Pc i) }
+  case InstructionExpr(ast.Id("mov", _),     Some(ast.Id("Lr", _)),   List(ast.Id(str, _))  ) => withI32(expr, str) { i => group(scope, mov Lr i) }
+  case InstructionExpr(ast.Id("mov", _),     Some(ast.Id("Jm", _)),   List(ast.Id(str, _))  ) => withI32(expr, str) { i => group(scope, mov Jm i) }
+  case InstructionExpr(ast.Id("mov", _),     Some(ast.Id("Rt", _)),   List(ast.Id(str, _))  ) => withI32(expr, str) { i => group(scope, mov Rt i) } // XXX May not always be an I32
   case InstructionExpr(ast.Id("stw", _),     None,                    List(ast.Id("Rt", _)) ) => Right(group(scope, Stw(Rt)))
   case InstructionExpr(ast.Id("ldw", _),     None,                    List(ast.Id("Rt", _)) ) => Right(group(scope, Ldw(Rt)))
   case InstructionExpr(ast.Id("concat", _),  None,                    Nil                   ) => Right(group(scope, Concat))
