@@ -39,6 +39,9 @@ def pp(code: Code, align: Boolean = true): String = code match
       case lista: value.Lista =>
         val sb = StringBuilder()
         sb.append(s"$l:")
+        sb.append("\n")
+        sb.append(" " * 8)
+        sb.append(s".size     ${lista.size}")
         for (item <- lista.items)
           sb.append("\n")
           sb.append(" " * 8)
