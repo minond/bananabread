@@ -4,6 +4,7 @@ package instruction
 
 import typechecker.ty
 import register.Register
+import value.{I32, Id, Value}
 
 
 sealed trait Type
@@ -36,19 +37,19 @@ def toRuntimeType(typ: ty.Type): Type = typ match
 
 
 case class Label(label: String)
-case class Data(typ: Type, label: String, _value: value.Value)
+case class Data(typ: Type, label: String, value: Value)
 
 
 sealed trait Instruction
 case object Halt extends Instruction
 case class Jz(label: String) extends Instruction
 case class Jmp(label: String) extends Instruction
-case class Push(typ: Type, _value: value.Value) extends Instruction
+case class Push(typ: Type, value: Value) extends Instruction
 case class Call(label: String) extends Instruction
 case object Call0 extends Instruction
 case object Ret extends Instruction
 case object Swap extends Instruction
-case class Mov(reg: Register, addr: Option[value.Id], offset: Option[value.I32]) extends Instruction
+case class Mov(reg: Register, addr: Option[Id], offset: Option[I32]) extends Instruction
 case class Stw(reg: Register) extends Instruction
 case class Ldw(reg: Register) extends Instruction
 case class Load(typ: Type, label: String) extends Instruction
@@ -71,7 +72,7 @@ extension (codes: List[Code])
       case (Label(label), index) => (label, index)
     }.toMap
 
-  def constants: Map[String, value.Value] =
+  def constants: Map[String, Value] =
     codes.collect {
       case Data(_, label, value) => (label, value)
     }.toMap
