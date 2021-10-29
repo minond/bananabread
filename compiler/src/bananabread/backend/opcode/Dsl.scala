@@ -23,6 +23,7 @@ object stw:
   val Rt = Stw(reg.Rt)
   val Ebp = Stw(reg.Ebp)
   val Esp = Stw(reg.Esp)
+  val Rax = Stw(reg.Rax)
 
 object ldw:
   val Rt = Ldw(reg.Rt)

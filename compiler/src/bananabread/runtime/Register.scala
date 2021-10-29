@@ -19,9 +19,9 @@ class Registers:
   private var pcVal  = I32(0)
   private var espVal = I32(0)
   private var ebpVal = I32(0)
-  private var raxVal = I32(0)
   private var lrVal  = I32(0)
   private var jmVal  = I32(0)
+  private var raxVal: Value = Nullptr
   private var rtVal: Value = Nullptr
 
   def pc          = pcVal
@@ -36,10 +36,6 @@ class Registers:
   def ebp(v: I32) = ebpVal = v
   def ebp(i: Int) = ebpVal = I32(i)
 
-  def rax         = raxVal
-  def rax(v: I32) = raxVal = v
-  def rax(i: Int) = raxVal = I32(i)
-
   def lr          = lrVal
   def lr(v: I32)  = lrVal = v
   def lr(i: Int)  = lrVal = I32(i)
@@ -48,45 +44,51 @@ class Registers:
   def jm(v: I32)  = jmVal = v
   def jm(i: Int)  = jmVal = I32(i)
 
+  def rax           = raxVal
+  def rax(v: Value) = raxVal = v
+
   def rt            = rtVal
   def rt(v: Value)  = rtVal = v
 
   def inc(reg: Register) = reg match
     case Rt  => throw new Exception("invalid operation on rt register")
+    case Rax => throw new Exception("invalid operation on rax register")
     case Pc  => pc(pcVal.value + 1)
     case Esp => esp(espVal.value + 1)
     case Ebp => ebp(ebpVal.value + 1)
-    case Rax => rax(raxVal.value + 1)
     case Lr  => lr(lrVal.value + 1)
     case Jm  => jm(jmVal.value + 1)
 
   def dec(reg: Register) = reg match
     case Rt  => throw new Exception("invalid operation on rt register")
+    case Rax => throw new Exception("invalid operation on rax register")
     case Pc  => pc(pcVal.value - 1)
     case Esp => esp(espVal.value - 1)
     case Ebp => ebp(ebpVal.value - 1)
-    case Rax => rax(raxVal.value - 1)
     case Lr  => lr(lrVal.value - 1)
     case Jm  => jm(jmVal.value - 1)
 
   def get(reg: Register): I32 = reg match
     case Rt  => throw new Exception("invalid operation on rt register")
+    case Rax => throw new Exception("invalid operation on rax register")
     case Pc  => pc
     case Esp => esp
     case Ebp => ebp
-    case Rax => rax
     case Lr  => lr
     case Jm  => jm
 
   def set(reg: Register, v: Int): Unit = set(reg, I32(v))
   def set(reg: Register, v: I32): Unit = reg match
     case Rt  => throw new Exception("invalid operation on rt register")
+    case Rax => throw new Exception("invalid operation on rax register")
     case Pc  => pc(v)
     case Esp => esp(v)
     case Ebp => ebp(v)
-    case Rax => rax(v)
     case Lr  => lr(v)
     case Jm  => jm(v)
+
+  def setValue(reg: Register, v: Value): Unit = reg match
+    case Rax => rax(v)
 
   override def toString: String =
     f"pc => ${pc.value}, esp => $esp, ebp -> $ebp, rax -> $rax, lr => ${lr.value}, jm => ${jm.value}, rt => $rt"

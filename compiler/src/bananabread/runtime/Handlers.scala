@@ -3,7 +3,7 @@ package runtime
 
 import value.Value
 import instruction._
-import register.{Rt, Ebp, Esp}
+import register._
 
 
 def handle(code: Code, state: State): Dispatch = code match
@@ -100,7 +100,7 @@ def handleMov(op: Mov, state: State): Dispatch = op match
     state.heap.mapped(addr.label) match
       case Some(ptr) =>
         val data = state.heap.lookup(ptr.addr + offset.value)
-        state.push(data)
+        state.registers.setValue(reg, data)
         Cont
       case None =>
         Error(s"bad mov: missing label ${addr.label}", op)
@@ -141,6 +141,9 @@ def handleStw(op: Stw, state: State): Dispatch =
       Cont
     case Esp =>
       state.push(state.registers.esp)
+      Cont
+    case Rax =>
+      state.push(state.registers.rax)
       Cont
     case _ =>
       Error("bad stw: register does not accept user data", op)
