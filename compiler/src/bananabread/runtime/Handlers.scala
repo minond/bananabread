@@ -96,12 +96,20 @@ def handleSwap(op: Instruction, state: State): Dispatch =
     Cont
 
 def handleMov(op: Mov, state: State): Dispatch = op match
-  case Mov(reg, Some(offset)) =>
+  case Mov(reg, Some(addr), Some(offset)) =>
+    state.heap.mapped(addr.label) match
+      case Some(ptr) =>
+        val data = state.heap.lookup(ptr.addr + offset.value)
+        state.push(data)
+        Cont
+      case None =>
+        Error(s"bad mov: missing label ${addr.label}", op)
+  case Mov(reg, None, Some(offset)) =>
     val curr = state.registers.get(reg)
     val next = value.I32(curr.value + offset.value)
     state.push(next)
     Cont
-  case Mov(reg, None) => state.pop match
+  case Mov(reg, None, None) => state.pop match
     case addr: value.I32 =>
       state.registers.set(reg, addr)
       Cont

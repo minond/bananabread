@@ -172,7 +172,7 @@ def generateCallLambda(scope: Scope, args: List[Ir], lambda: stitched.Lambda): R
 def generateCallApp(scope: Scope, args: List[Ir], app: stitched.App): Result =
   for
     call1 <- generateCall(scope, app.lambda, app.args)
-    mov    = group(scope, Mov(Jm, None))
+    mov    = group(scope, Mov(Jm, None, None))
     call2 <- generateCallWithArgs(scope, args, Call0)
     codes  = call1 ++ mov ++ call2
   yield
@@ -181,7 +181,7 @@ def generateCallApp(scope: Scope, args: List[Ir], app: stitched.App): Result =
 def generateCallResultOf(scope: Scope, args: List[Ir], node: stitched.Ir): Result =
   for
     body <- generate(scope, node)
-    mov   = group(scope, Mov(Jm, None))
+    mov   = group(scope, Mov(Jm, None, None))
     call <- generateCallWithArgs(scope, args, Call0)
     codes = body ++ mov ++ call
   yield

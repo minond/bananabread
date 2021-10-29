@@ -40,14 +40,18 @@ class Heap(constants: Map[String, Value]) extends Memory:
     map.update(label, ptr)
     ptr
 
-  def lookup(ptr: Ptr): Value =
-    ensureAccessible(ptr.addr)
-    data(ptr.addr)
+  def lookup(ptr: Ptr): Value = lookup(ptr.addr)
+  def lookup(addr: Int): Value =
+    ensureAccessible(addr)
+    data(addr)
 
   def lookup(label: String): Option[Value] =
     map.get(label) match
       case None => None
       case Some(ptr) => Some(lookup(ptr))
+
+  def mapped(label: String): Option[Ptr] =
+    map.get(label)
 
 
 class Stack() extends Memory:

@@ -24,8 +24,6 @@ def pp(code: Code, align: Boolean = true): String = code match
   case Jmp(l)            => if align then s"jmp       $l"              else s"jmp $l"
   case Push(t, v)        => if align then s"push      $t, $v"          else s"push $t, $v"
   case Call(l)           => if align then s"call      $l"              else s"call $l"
-  case Mov(reg, None)    => if align then s"mov       $reg"            else s"mov $reg"
-  case Mov(reg, Some(v)) => if align then s"mov       $reg, $v"        else s"mov $reg, $v"
   case Stw(reg)          => if align then s"stw       $reg"            else s"stw $reg"
   case Ldw(reg)          => if align then s"ldw       $reg"            else s"ldw $reg"
   case Load(t, l)        => if align then s"load      $t, $l"          else s"load $t, $l"
@@ -34,7 +32,13 @@ def pp(code: Code, align: Boolean = true): String = code match
   case Sub(t)            => if align then s"sub       $t"              else s"sub $t"
   case Frame(argc)       => if align then s"frame     $argc" else s"frame $argc"
   case FrameInit(argc)   => if align then s"frame!    $argc" else s"frame! $argc"
-  case Data(t, l, v)     =>
+
+  case Mov(reg, None, None)               => if align then s"mov       $reg"                 else s"mov $reg"
+  case Mov(reg, None, Some(v))            => if align then s"mov       $reg, $v"             else s"mov $reg, $v"
+  case Mov(reg, Some(addr), None)         => if align then s"mov       $reg, %$addr"         else s"mov $reg, %$addr"
+  case Mov(reg, Some(addr), Some(offset)) => if align then s"mov       $reg, %$addr+$offset" else s"mov $reg, %$addr+$offset"
+
+  case Data(t, l, v) =>
     v match
       case lista: value.Lista =>
         val sb = StringBuilder()

@@ -48,7 +48,7 @@ case class Call(label: String) extends Instruction
 case object Call0 extends Instruction
 case object Ret extends Instruction
 case object Swap extends Instruction
-case class Mov(reg: Register, data: Option[value.I32]) extends Instruction
+case class Mov(reg: Register, addr: Option[value.Id], offset: Option[value.I32]) extends Instruction
 case class Stw(reg: Register) extends Instruction
 case class Ldw(reg: Register) extends Instruction
 case class Load(typ: Type, label: String) extends Instruction

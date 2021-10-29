@@ -30,20 +30,20 @@ object ldw:
   val Esp = Ldw(reg.Esp)
 
 object mov:
-  val Pc = Mov(reg.Pc, None)
-  val Lr = Mov(reg.Lr, None)
-  val Jm = Mov(reg.Jm, None)
-  val Rt = Mov(reg.Rt, None)
+  val Pc = Mov(reg.Pc, None, None)
+  val Lr = Mov(reg.Lr, None, None)
+  val Jm = Mov(reg.Jm, None, None)
+  val Rt = Mov(reg.Rt, None, None)
 
-  def Pc(v: value.I32) = Mov(reg.Pc, Some(v))
-  def Lr(v: value.I32) = Mov(reg.Lr, Some(v))
-  def Jm(v: value.I32) = Mov(reg.Jm, Some(v))
-  def Rt(v: value.I32) = Mov(reg.Rt, Some(v))
+  def Pc(v: value.I32) = Mov(reg.Pc, None, Some(v))
+  def Lr(v: value.I32) = Mov(reg.Lr, None, Some(v))
+  def Jm(v: value.I32) = Mov(reg.Jm, None, Some(v))
+  def Rt(v: value.I32) = Mov(reg.Rt, None, Some(v))
 
-  def Pc(v: Int) = Mov(reg.Pc, Some(value.I32(v)))
-  def Lr(v: Int) = Mov(reg.Lr, Some(value.I32(v)))
-  def Jm(v: Int) = Mov(reg.Jm, Some(value.I32(v)))
-  def Rt(v: Int) = Mov(reg.Rt, Some(value.I32(v)))
+  def Pc(v: Int) = Mov(reg.Pc, None, Some(value.I32(v)))
+  def Lr(v: Int) = Mov(reg.Lr, None, Some(value.I32(v)))
+  def Jm(v: Int) = Mov(reg.Jm, None, Some(value.I32(v)))
+  def Rt(v: Int) = Mov(reg.Rt, None, Some(value.I32(v)))
 
 object push:
   def Ref(v: String) = Push(inst.Ref, value.Id(v))
