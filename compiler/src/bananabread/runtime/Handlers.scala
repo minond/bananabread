@@ -112,10 +112,7 @@ def handleMov(op: Mov, state: State): Dispatch = op match
       case None =>
         Error(s"bad mov: missing label ${addr.label}", op)
   case Mov(reg, None, Some(offset)) =>
-    val curr = state.registers.get(reg)
-    val next = value.I32(curr.value + offset.value)
-    state.push(next)
-    Cont
+    ???
   case Mov(reg, None, None) => state.pop match
     case addr: value.I32 =>
       state.registers.set(reg, addr)
