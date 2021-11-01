@@ -103,7 +103,7 @@ def handleSwap(op: Instruction, state: State): Dispatch =
     Cont
 
 def handleMov(op: Mov, state: State): Dispatch = op match
-  case Mov(reg, Some(addr), Some(offset)) =>
+  case Mov(reg, Some(addr), Some(offset), None) =>
     state.heap.mapped(addr.label) match
       case Some(ptr) =>
         val data = state.heap.lookup(ptr.addr + offset.value)
@@ -111,9 +111,19 @@ def handleMov(op: Mov, state: State): Dispatch = op match
         Cont
       case None =>
         Error(s"bad mov: missing label ${addr.label}", op)
-  case Mov(reg, None, Some(offset)) =>
+  case Mov(reg, None, Some(offset), None) =>
     ???
-  case Mov(reg, None, None) => state.pop match
+  case Mov(reg, Some(addr), None, Some(offsetReg)) =>
+    (state.heap.mapped(addr.label), state.registers.getValue(offsetReg)) match
+      case (Some(ptr), offset: value.I32) =>
+        val data = state.heap.lookup(ptr.addr + offset.value)
+        state.registers.setValue(reg, data)
+        Cont
+      case (Some(ptr), v) =>
+        Error(s"bad mov: ${offsetReg} register did not contain a valid offset", op)
+      case (None, _) =>
+        Error(s"bad mov: missing label ${addr.label}", op)
+  case Mov(reg, None, None, None) => state.pop match
     case addr: value.I32 =>
       state.registers.set(reg, addr)
       Cont
@@ -154,8 +164,8 @@ def handleStw(op: Stw, state: State): Dispatch =
 
 def handleLdw(op: Ldw, state: State): Dispatch =
   (op.reg, state.pop) match
-    case (Rt, v) =>
-      state.registers.rt(v)
+    case (Rt | Rax, v) =>
+      state.registers.setValue(op.reg, v)
       Cont
     case (Ebp, v : value.I32) =>
       state.registers.ebp(v.value)

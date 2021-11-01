@@ -153,9 +153,11 @@ def generateCallLista(scope: Scope, args: List[Ir], lst: stitched.Lista): Result
     data <- generate(scope, lst)
     pushBase = group(scope, Push(Ptr, value.Id(lst.ptr)))
     pushOffset <- generate(scope, args.head)
-    add = group(scope, Add(I32))
+    loadOffset = group(scope, Ldw(Rax))
+    readAddr = group(scope, Mov(Rax, Some(value.Id(lst.ptr)), None, Some(Rax)))
+    unloadReg = group(scope, Stw(Rax))
   yield
-    data ++ pushBase ++ pushOffset ++ add
+    data ++ pushBase ++ pushOffset ++ loadOffset ++ readAddr ++ unloadReg
 
 def generateCallId(scope: Scope, args: List[Ir], id: stitched.Id): Result =
   scope.qualified2(id) match
@@ -172,7 +174,7 @@ def generateCallLambda(scope: Scope, args: List[Ir], lambda: stitched.Lambda): R
 def generateCallApp(scope: Scope, args: List[Ir], app: stitched.App): Result =
   for
     call1 <- generateCall(scope, app.lambda, app.args)
-    mov    = group(scope, Mov(Jm, None, None))
+    mov    = group(scope, Mov(Jm, None, None, None))
     call2 <- generateCallWithArgs(scope, args, Call0)
     codes  = call1 ++ mov ++ call2
   yield
@@ -181,7 +183,7 @@ def generateCallApp(scope: Scope, args: List[Ir], app: stitched.App): Result =
 def generateCallResultOf(scope: Scope, args: List[Ir], node: stitched.Ir): Result =
   for
     body <- generate(scope, node)
-    mov   = group(scope, Mov(Jm, None, None))
+    mov   = group(scope, Mov(Jm, None, None, None))
     call <- generateCallWithArgs(scope, args, Call0)
     codes = body ++ mov ++ call
   yield

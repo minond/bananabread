@@ -33,10 +33,12 @@ def pp(code: Code, align: Boolean = true): String = code match
   case Frame(argc)       => if align then s"frame     $argc" else s"frame $argc"
   case FrameInit(argc)   => if align then s"frame!    $argc" else s"frame! $argc"
 
-  case Mov(reg, None, None)               => if align then s"mov       $reg"                  else s"mov $reg"
-  case Mov(reg, None, Some(v))            => if align then s"mov       $reg, $v"              else s"mov $reg, $v"
-  case Mov(reg, Some(addr), None)         => if align then s"mov       $reg, %$addr"          else s"mov $reg, %$addr"
-  case Mov(reg, Some(addr), Some(offset)) => if align then s"mov       $reg, $offset(%$addr)" else s"mov $reg, $offset(%$addr)"
+  case Mov(reg, None, None, None)               => if align then s"mov       $reg"                  else s"mov $reg"
+  case Mov(reg, None, Some(v), None)            => if align then s"mov       $reg, $v"              else s"mov $reg, $v"
+  case Mov(reg, Some(addr), None, None)         => if align then s"mov       $reg, %$addr"          else s"mov $reg, %$addr"
+  case Mov(reg, Some(addr), Some(offset), None) => if align then s"mov       $reg, $offset(%$addr)" else s"mov $reg, $offset(%$addr)"
+  case Mov(reg, Some(addr), None, Some(offset)) => if align then s"mov       $reg, %$addr+$offset"  else s"mov $reg, %$addr+$offset"
+  case Mov(reg, _, _, _)                        => if align then s"mov       $reg, <invalid>"       else s"mov $reg, <invalid>"
 
   case Data(t, l, v) =>
     v match

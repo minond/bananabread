@@ -69,13 +69,22 @@ class Registers:
     case Jm  => jm(jmVal.value - 1)
 
   def get(reg: Register): I32 = reg match
-    case Rt  => throw new Exception("invalid operation on rt register")
-    case Rax => throw new Exception("invalid operation on rax register")
+    case Rt  => throw new Exception(s"invalid operation on $reg register")
+    case Rax => throw new Exception(s"invalid operation on $reg register")
     case Pc  => pc
     case Esp => esp
     case Ebp => ebp
     case Lr  => lr
     case Jm  => jm
+
+  def getValue(reg: Register): Value = reg match
+    case Rt  => rt
+    case Rax => rax
+    case Pc  => throw new Exception(s"invalid operation on $reg register")
+    case Esp => throw new Exception(s"invalid operation on $reg register")
+    case Ebp => throw new Exception(s"invalid operation on $reg register")
+    case Lr  => throw new Exception(s"invalid operation on $reg register")
+    case Jm  => throw new Exception(s"invalid operation on $reg register")
 
   def set(reg: Register, v: Int): Unit = set(reg, I32(v))
   def set(reg: Register, v: I32): Unit = reg match
@@ -88,7 +97,13 @@ class Registers:
     case Jm  => jm(v)
 
   def setValue(reg: Register, v: Value): Unit = reg match
+    case Rt  => rt(v)
     case Rax => rax(v)
+    case Pc  => throw new Exception(s"invalid operation on $reg register")
+    case Esp => throw new Exception(s"invalid operation on $reg register")
+    case Ebp => throw new Exception(s"invalid operation on $reg register")
+    case Lr  => throw new Exception(s"invalid operation on $reg register")
+    case Jm  => throw new Exception(s"invalid operation on $reg register")
 
   override def toString: String =
     f"pc => ${pc.value}, esp => $esp, ebp -> $ebp, rax -> $rax, lr => ${lr.value}, jm => ${jm.value}, rt => $rt"
