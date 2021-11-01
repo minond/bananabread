@@ -75,6 +75,7 @@ class Interpreter(codes: List[Code], private val debug: Boolean = false, private
       printState
 
   def printState =
+    println(s"  Heap ---------- [${heap}]")
     println(s"  Stack --------- [${stack}]")
     println(s"  Registers ----- {$registers}")
     println(s"  Frame --------- {${frames.curr}}")
