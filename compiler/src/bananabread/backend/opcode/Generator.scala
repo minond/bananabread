@@ -102,23 +102,14 @@ def generateCall(scope: Scope, lambda: Ir, args: List[Ir]): Result = lambda matc
       case Some(lst: stitched.Lista) => generateCallLista(scope, args, lst)
       case Some(_)                   => generateCallId(scope, args, id)
       case None                      => Left(UndeclaredIdentifierErr(id))
-
-  case id: stitched.Id =>
-    generateCallId(scope, args, id)
-  case lam: stitched.Lambda =>
-    for
-      call <- generateCallLambda(scope, args, lam)
-      func <- generate(scope, lam)
-    yield
-      call ++ func
-
-  case lst: stitched.Lista => generateCallLista(scope, args, lst)
-  case app: stitched.App   => generateCallApp(scope, args, app)
-  case _: stitched.Let     => generateCallResultOf(scope, args, lambda)
-  case _: stitched.Cond    => generateCallResultOf(scope, args, lambda)
-  case _: stitched.Begin   => generateCallResultOf(scope, args, lambda)
-
-  case _ => Left(BadCallErr(lambda))
+  case id: stitched.Id      => generateCallId(scope, args, id)
+  case lam: stitched.Lambda => generateCallLambda(scope, args, lam)
+  case lst: stitched.Lista  => generateCallLista(scope, args, lst)
+  case app: stitched.App    => generateCallApp(scope, args, app)
+  case _: stitched.Let      => generateCallResultOf(scope, args, lambda)
+  case _: stitched.Cond     => generateCallResultOf(scope, args, lambda)
+  case _: stitched.Begin    => generateCallResultOf(scope, args, lambda)
+  case _                    => Left(BadCallErr(lambda))
 
 def generateOpcode(scope: Scope, node: stitched.Opcode): Result =
   node.expr.instructions.map(generateOpcode(scope, _, node.expr.location)).squished.map(_.flatten)
@@ -172,7 +163,11 @@ def generateCallId(scope: Scope, args: List[Ir], id: stitched.Id): Result =
     case None => Left(LookupErr(id.expr))
 
 def generateCallLambda(scope: Scope, args: List[Ir], lambda: stitched.Lambda): Result =
-  generateCallWithArgs(scope, args, Call(lambda.ptr))
+  for
+    call <- generateCallWithArgs(scope, args, Call(lambda.ptr))
+    func <- generate(scope, lambda)
+  yield
+    call ++ func
 
 def generateCallApp(scope: Scope, args: List[Ir], app: stitched.App): Result =
   for
