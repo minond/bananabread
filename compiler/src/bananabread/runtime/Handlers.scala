@@ -55,6 +55,13 @@ def handlePush(op: Push, state: State): Dispatch = op match
       state.push(const)
       Cont
     }
+  case Push(Ptr, value.Id(label)) =>
+    state.heap.mapped(label) match
+      case None =>
+        Error("bad push: invalid pointer", op)
+      case Some(ptr) =>
+        state.push(value.I32(ptr.addr))
+        Cont
   case _ =>
     Error("bad push", op)
 

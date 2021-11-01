@@ -114,10 +114,11 @@ def generateCall(scope: Scope, lambda: Ir, args: List[Ir]): Result = lambda matc
   case lst: stitched.Lista =>
     for
       data <- generate(scope, lst)
-      load = group(scope, Mov(Rax, Some(value.Id(lst.ptr)), Some(value.I32(1))))
-      push = group(scope, stw Rax)
+      pushBase = group(scope, Push(Ptr, value.Id(lst.ptr)))
+      pushOffset <- generate(scope, args.head)
+      add = group(scope, Add(I32))
     yield
-      data ++ load ++ push
+      data ++ pushBase ++ pushOffset ++ add
 
   case app: stitched.App => generateCallApp(scope, args, app)
   case _: stitched.Let   => generateCallResultOf(scope, args, lambda)

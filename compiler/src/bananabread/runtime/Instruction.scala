@@ -12,6 +12,7 @@ case object I32 extends Type
 case object Str extends Type
 case object Reg extends Type
 case object Ref extends Type
+case object Ptr extends Type
 case object Bool extends Type
 case object Symbol extends Type
 case object Lista extends Type
