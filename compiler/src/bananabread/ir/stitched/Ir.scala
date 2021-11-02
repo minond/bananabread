@@ -16,6 +16,8 @@ sealed trait Ir {
   def expr: Expr | Stmt
   def ty: Type
   def source: ModDef
+
+  def is(otherTy: Type) = ty == otherTy
 }
 
 trait OfType(typ: Type) {

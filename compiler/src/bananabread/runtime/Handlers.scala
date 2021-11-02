@@ -56,10 +56,17 @@ def handlePush(op: Push, state: State): Dispatch = op match
       Cont
     }
   case Push(Ptr, value.Id(label)) =>
-    state.heap.mapped(label) match
-      case None =>
+    (state.frames.curr.get(label), state.heap.mapped(label)) match
+      case (None, None) =>
         Error("bad push: invalid pointer", op)
-      case Some(ptr) =>
+      case (Some(id: value.Id), _) =>
+        state.heap.mapped(id.label) match
+          case None =>
+            Error("bad push: invalid dereferenced pointer", op)
+          case Some(ptr) =>
+            state.push(value.I32(ptr.addr))
+            Cont
+      case (_, Some(ptr)) =>
         state.push(value.I32(ptr.addr))
         Cont
   case _ =>
@@ -111,8 +118,14 @@ def handleMov(op: Mov, state: State): Dispatch = op match
         Cont
       case None =>
         Error(s"bad mov: missing label ${addr.label}", op)
-  case Mov(reg, None, Some(offset), None) =>
-    ???
+  case Mov(reg, None, None, Some(addrReg)) =>
+    state.registers.getValue(addrReg) match
+      case addr: value.I32 =>
+        val data = state.heap.lookup(addr.value)
+        state.registers.setValue(reg, data)
+        Cont
+      case _ =>
+        Error("bad mov: address register did not contain a valid address", op)
   case Mov(reg, Some(addr), None, Some(offsetReg)) =>
     (state.heap.mapped(addr.label), state.registers.getValue(offsetReg)) match
       case (Some(ptr), offset: value.I32) =>

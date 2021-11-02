@@ -80,11 +80,11 @@ class Registers:
   def getValue(reg: Register): Value = reg match
     case Rt  => rt
     case Rax => rax
-    case Pc  => throw new Exception(s"invalid operation on $reg register")
-    case Esp => throw new Exception(s"invalid operation on $reg register")
-    case Ebp => throw new Exception(s"invalid operation on $reg register")
-    case Lr  => throw new Exception(s"invalid operation on $reg register")
-    case Jm  => throw new Exception(s"invalid operation on $reg register")
+    case Pc  => pc
+    case Esp => esp
+    case Ebp => ebp
+    case Lr  => lr
+    case Jm  => jm
 
   def set(reg: Register, v: Int): Unit = set(reg, I32(v))
   def set(reg: Register, v: I32): Unit = reg match

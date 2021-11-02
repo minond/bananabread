@@ -8,6 +8,7 @@ import dsl._
 import ir.stitched
 import ir.stitched.Ir
 import program.ModDef
+import typechecker.ty
 
 import parsing.location.Location
 import parsing.opcode.Expr => OpcodeExpr
@@ -99,12 +100,13 @@ def generateAnnonLambda(scope: Scope, lambda: stitched.Lambda): Result =
 def generateCall(scope: Scope, lambda: Ir, args: List[Ir]): Result = lambda match
   case id: stitched.Id if scope.contains(id) =>
     scope.get(id) match
-      case Some(lst: stitched.Lista) => generateCallLista(scope, args, lst)
+      case Some(lst: stitched.Lista) => generateCallDirectLista(scope, args, lst)
+      case Some(v) if v.is(ty.Lista) => generateCallIndirectLista(scope, args, id)
       case Some(_)                   => generateCallId(scope, args, id)
       case None                      => Left(UndeclaredIdentifierErr(id))
   case id: stitched.Id      => generateCallId(scope, args, id)
   case lam: stitched.Lambda => generateCallLambda(scope, args, lam)
-  case lst: stitched.Lista  => generateCallLista(scope, args, lst)
+  case lst: stitched.Lista  => generateCallDirectLista(scope, args, lst)
   case app: stitched.App    => generateCallApp(scope, args, app)
   case _: stitched.Let      => generateCallResultOf(scope, args, lambda)
   case _: stitched.Cond     => generateCallResultOf(scope, args, lambda)
@@ -148,16 +150,27 @@ def generateOpcode(scope: Scope, expr: OpcodeExpr, loc: Location): Result = expr
   case LabelExpr(ast.Id(label, _)                                                           ) => Right(group(scope, Label(label)))
   case _                                                                                      => Left(UnknownUserOpcodeErr(expr, loc))
 
-def generateCallLista(scope: Scope, args: List[Ir], lst: stitched.Lista): Result =
+def generateCallDirectLista(scope: Scope, args: List[Ir], lst: stitched.Lista): Result =
   for
     data <- generate(scope, lst)
-    pushBase = group(scope, Push(Ptr, value.Id(lst.ptr)))
+    pushBase <- Right(group(scope, Push(Ptr, value.Id(lst.ptr))))
     pushOffset <- generate(scope, args.head)
     loadOffset = group(scope, Ldw(Rax))
     readAddr = group(scope, Mov(Rax, Some(value.Id(lst.ptr)), None, Some(Rax)))
     unloadReg = group(scope, Stw(Rax))
   yield
     data ++ pushBase ++ pushOffset ++ loadOffset ++ readAddr ++ unloadReg
+
+def generateCallIndirectLista(scope: Scope, args: List[Ir], ptr: stitched.Id): Result =
+  for
+    pushBase <- Right(group(scope, Push(Ptr, value.Id(scope.qualified(ptr.expr.lexeme)))))
+    pushOffset <- generate(scope, args.head)
+    add = group(scope, Add(I32))
+    loadAddr = group(scope, Ldw(Rax))
+    readAddr = group(scope, Mov(Rax, None, None, Some(Rax)))
+    unloadReg = group(scope, Stw(Rax))
+  yield
+    pushBase ++ pushOffset ++ add ++ loadAddr ++ readAddr ++ unloadReg
 
 def generateCallId(scope: Scope, args: List[Ir], id: stitched.Id): Result =
   scope.qualified2(id) match
