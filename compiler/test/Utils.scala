@@ -38,7 +38,7 @@ def resultOf(code: String) =
     for
       sources <- loader.load("<test>", prelude + code)
       ir <- program.lift(sources.head)
-      ins <- backend.opcode.compile(ir)
+      ins <- backend.bytecode.compile(ir)
       interpreter = Interpreter(ins, false, false)
     yield interpreter
 

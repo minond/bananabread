@@ -1,5 +1,5 @@
 package bananabread
-package backend.opcode
+package backend.bytecode
 
 import error._
 import ir.stitched

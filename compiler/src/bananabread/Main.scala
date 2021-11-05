@@ -23,7 +23,7 @@ def main(args: Array[String]) =
     for
       sources <- loader.load(fileName, code)
       ir <- program.lift(sources.head)
-      ins <- backend.opcode.compile(ir)
+      ins <- backend.bytecode.compile(ir)
       _    = if doPrintOpcodes then
                println("~~~~~~~~~~~~~~~~~~~~~~~")
                println(pp(ins))

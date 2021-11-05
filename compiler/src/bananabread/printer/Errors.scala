@@ -9,7 +9,7 @@ import parsing.location.Location
 import runtime.instruction
 
 import error.Err
-import backend.opcode.error => genopErr
+import backend.bytecode.error => genopErr
 import parsing.error => parseErr
 import runtime.error => runtimeErr
 import typechecker.error => typecheckerErr

@@ -1,5 +1,5 @@
 package bananabread
-package backend.opcode
+package backend.bytecode
 package dsl
 
 import runtime.register => reg

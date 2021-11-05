@@ -1,7 +1,7 @@
 package bananabread
 package error
 
-import backend.opcode.error => genop
+import backend.bytecode.error => genop
 import parsing.error => parse
 import runtime.error => runtime
 import typechecker.error => typechecker

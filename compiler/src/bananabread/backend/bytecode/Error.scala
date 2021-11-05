@@ -1,5 +1,5 @@
 package bananabread
-package backend.opcode.error
+package backend.bytecode.error
 
 import ir.stitched
 import ir.stitched.{Ir, Id, Opcode}
