@@ -40,7 +40,7 @@ class Substitution:
           _ <- unify(I32, a.in.head, node)
         yield
           I32 /** XXX Return 'a from Lista['a] */
-      case _ => Left(UnificationErr(b, a, node))
+      case _ => Left(UnificationErr(a, b, node))
 
   def apply(ty: Type, node: linked.Ir): Applied =
     ty match
@@ -68,7 +68,7 @@ def unifyVarVar(sub: Substitution, a: Var, b: Var, node: linked.Ir): Attempt =
   */
 def unifyLambdaLambda(sub: Substitution, a: Lambda, b: Lambda, node: linked.Ir): Attempt =
   a.zip(b).zipWithIndex.map { case ((a, b), i) =>
-    sub.unify(a, b, node) match
+    sub.unify(b, a, node) match
       case Right(ok) =>
         Right(ok)
       case Left(UnificationErr(expected, got, ir)) =>
