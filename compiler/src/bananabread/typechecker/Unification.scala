@@ -40,7 +40,7 @@ class Substitution:
           _ <- unify(I32, a.in.head, node)
         yield
           I32 /** XXX Return 'a from Lista['a] */
-      case _ => Left(UnificationErr(a, b, node))
+      case _ => Left(UnificationErr(b, a, node))
 
   def apply(ty: Type, node: linked.Ir): Applied =
     ty match
