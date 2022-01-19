@@ -1,23 +1,14 @@
 module Sample
 
-import Prelude exposing (-, println)
+import Prelude exposing (-, +, ++, println)
 
 operator(infix, 2, '-)
+operator(infix, 2, '+)
+operator(infix, 2, '++)
 
-def loop(i : I32, fn : I32 -> Void) : Void =
-  if i
-  then begin
-    fn(i)
-    loop(i - 1, fn)
-  end
-  else fn(0)
+println("testing")
 
+def x(n) = n
+def y = x
 
-loop(10,
-  (func (y : I32) : I32 -> Void =
-    func (x : I32) : Void =
-      begin
-        println(y)
-        println(x)
-      end
-    )(123))
+// println(y("head") ++ "tail")
