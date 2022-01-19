@@ -153,6 +153,19 @@ def pp(err: Err, source: String): String = err match
       isolateBadLine(ir.expr.location, source),
     )
 
+  case typecheckerErr.ArgUnificationErr(expected, got, linked.App(_, args, _), index) if args.size > index =>
+    val ir = args(index)
+    lines(
+      generateTypeErrorLine(s"expected value of type `$expected` but got value of type `$got`", ir.expr.location, source),
+      isolateBadLine(ir.expr.location, source),
+    )
+
+  case typecheckerErr.ArgUnificationErr(expected, got, ir, index) =>
+    lines(
+      generateTypeErrorLine(s"expected value of type `$expected` but got value of type `$got`", ir.expr.location, source),
+      isolateBadLine(ir.expr.location, source),
+    )
+
   case typecheckerErr.TypeMismatchErr(expected, got, ir) =>
     lines(
       generateTypeErrorLine(s"expected value of type `$expected` but got value of type `$got`", ir.expr.location, source),

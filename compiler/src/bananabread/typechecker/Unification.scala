@@ -67,7 +67,13 @@ def unifyVarVar(sub: Substitution, a: Var, b: Var, node: linked.Ir): Attempt =
 /** TODO Ensure arity match
   */
 def unifyLambdaLambda(sub: Substitution, a: Lambda, b: Lambda, node: linked.Ir): Attempt =
-  a.zip(b).map { (a, b) => sub.unify(a, b, node) }.squished
+  a.zip(b).zipWithIndex.map { case ((a, b), i) =>
+    sub.unify(a, b, node) match
+      case Right(ok) =>
+        Right(ok)
+      case Left(UnificationErr(expected, got, ir)) =>
+        Left(ArgUnificationErr(expected, got, ir, i))
+  }.squished
 
 def applyLambda(sub: Substitution, lam: Lambda, node: linked.Ir): Applied =
   for

@@ -14,3 +14,4 @@ case class GenTypeMismatchErr[T](expected: Class[T], got: Type, node: Ir) extend
 case class UnknowTypeErr(tag: ast.TyId) extends InferenceErr
 case class UnunifiedTypeVarErr(v: Var, node: Ir) extends InferenceErr
 case class UnificationErr(expected: Type, got: Type, node: Ir) extends InferenceErr
+case class ArgUnificationErr(expected: Type, got: Type, node: Ir, index: Int) extends InferenceErr
