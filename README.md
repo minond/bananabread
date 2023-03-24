@@ -62,7 +62,10 @@ instruction set. The opcodes are the following:
 - `sub <type>` subtracts the top two items on the stack.
 
 
-This is a sample program and the resulting instructions:
+A working version of the compiler and VM can be found in the `compiler`
+directory. There is an imcomplete version of the VM in the `new-vm` directory
+as well, but it doesn't do much right now. This is a sample program and the
+resulting instructions:
 
 ```
 module Sample
