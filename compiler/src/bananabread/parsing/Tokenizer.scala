@@ -39,7 +39,7 @@ def nextToken(
     tail.headOption match
       case Some('/', _) =>
         val comment = takeWhile(skip(tail), not(isNewline))
-        Right(Comment(comment.mkString.strip, loc))
+        Right(Comment(comment.mkString, loc))
       case _ => nextToken(head, tail, loc, syntax, ignoreComment=true)
 
   case '%' if !ignorePString =>
